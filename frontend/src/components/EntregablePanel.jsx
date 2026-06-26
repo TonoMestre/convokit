@@ -9,6 +9,15 @@ const SALIDAS = [
   { num: 5, label: "Lista de documentación + correo al cliente", ext: "md", hasJson: true },
 ];
 
+function Spinner({ className = "" }) {
+  return (
+    <span
+      className={`inline-block border-2 border-current border-t-transparent rounded-full animate-spin ${className}`}
+      aria-hidden="true"
+    />
+  );
+}
+
 function downloadFile(content, filename) {
   const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
   const url = URL.createObjectURL(blob);
@@ -19,7 +28,17 @@ function downloadFile(content, filename) {
   URL.revokeObjectURL(url);
 }
 
-function EntregableItem({ salida, texto, hasJsonData, convocatoriaId, isOpen, onToggle, onRegenerate, regenerating }) {
+function EntregableItem({
+  salida,
+  texto,
+  hasJsonData,
+  convocatoriaId,
+  isOpen,
+  onToggle,
+  onRegenerate,
+  regenerating,
+  progress,
+}) {
   const { API } = useApp();
   const [copied, setCopied] = useState(false);
   const [downloadingJson, setDownloadingJson] = useState(false);
@@ -64,77 +83,89 @@ function EntregableItem({ salida, texto, hasJsonData, convocatoriaId, isOpen, on
     onRegenerate();
   }
 
+  const open = isOpen;
   const btnBase = "text-xs px-2.5 py-1 border transition-colors";
-  const btnLight = "border-gray-300 text-gray-600 hover:border-brand-blue hover:text-brand-blue";
   const btnDark = "border-white/40 text-white hover:bg-white hover:text-brand-blue";
+  const btnLight = "border-gray-300 text-gray-600 hover:border-brand-blue hover:text-brand-blue";
+
+  // Mensaje de progreso para el indicador de carga
+  let loadingMsg = "Generando...";
+  if (progress) {
+    if (progress.actual === 0) {
+      loadingMsg = "Identificando apartados...";
+    } else {
+      loadingMsg = `Apartado ${progress.actual} de ${progress.total}`;
+    }
+  }
 
   return (
-    <div className={`border-b border-gray-200 last:border-b-0 ${isOpen ? "bg-white" : ""}`}>
+    <div className={`border-b border-gray-200 last:border-b-0 ${open ? "bg-white" : ""}`}>
       {/* Cabecera — siempre visible */}
       <div
         onClick={onToggle}
         className={`flex items-center gap-3 px-4 py-3 cursor-pointer select-none transition-colors ${
-          isOpen ? "bg-brand-blue" : "bg-white hover:bg-gray-50"
+          open ? "bg-brand-blue" : "bg-white hover:bg-gray-50"
         }`}
       >
         {/* Número */}
-        <span
-          className={`font-slab font-bold text-sm w-5 shrink-0 ${
-            isOpen ? "text-white" : "text-brand-red"
-          }`}
-        >
+        <span className={`font-slab font-bold text-sm w-5 shrink-0 ${open ? "text-white" : "text-brand-red"}`}>
           {salida.num}
         </span>
 
         {/* Título */}
-        <span
-          className={`font-slab font-semibold text-sm flex-1 ${
-            isOpen ? "text-white" : "text-brand-blue"
-          }`}
-        >
+        <span className={`font-slab font-semibold text-sm flex-1 ${open ? "text-white" : "text-brand-blue"}`}>
           {salida.label}
         </span>
 
         {/* Botones de acción — siempre accesibles */}
         <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-          <button onClick={handleCopy} className={`${btnBase} ${isOpen ? btnDark : btnLight}`}>
+          <button onClick={handleCopy} className={`${btnBase} ${open ? btnDark : btnLight}`}>
             {copied ? "¡Copiado!" : "Copiar"}
           </button>
-          <button onClick={handleDownload} className={`${btnBase} ${isOpen ? btnDark : btnLight}`}>
+          <button onClick={handleDownload} className={`${btnBase} ${open ? btnDark : btnLight}`}>
             .{salida.ext}
           </button>
           {salida.hasJson && hasJsonData && (
             <button
               onClick={handleDownloadJson}
               disabled={downloadingJson}
-              className={`${btnBase} disabled:opacity-40 ${isOpen ? btnDark : btnLight}`}
+              className={`${btnBase} disabled:opacity-40 ${open ? btnDark : btnLight}`}
             >
-              {downloadingJson ? "..." : ".json"}
+              {downloadingJson ? <Spinner className="w-3 h-3" /> : ".json"}
             </button>
           )}
-          <button
-            onClick={handleRegenerate}
-            disabled={regenerating}
-            className={`${btnBase} disabled:opacity-40 ${
-              isOpen
-                ? "border-brand-red bg-brand-red text-white hover:opacity-80"
-                : "border-brand-red text-brand-red hover:bg-brand-red hover:text-white"
-            }`}
-          >
-            {regenerating ? "..." : "Regenerar"}
-          </button>
+
+          {/* Indicador de carga / botón regenerar */}
+          {regenerating ? (
+            <span
+              className={`flex items-center gap-1.5 text-xs ${open ? "text-white" : "text-brand-red"}`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Spinner className="w-3 h-3" />
+              <span className="whitespace-nowrap">{loadingMsg}</span>
+            </span>
+          ) : (
+            <button
+              onClick={handleRegenerate}
+              className={`${btnBase} ${
+                open
+                  ? "border-brand-red bg-brand-red text-white hover:opacity-80"
+                  : "border-brand-red text-brand-red hover:bg-brand-red hover:text-white"
+              }`}
+            >
+              Regenerar
+            </button>
+          )}
         </div>
 
         {/* Chevron */}
-        <span
-          className={`text-xs shrink-0 ml-1 ${isOpen ? "text-white" : "text-gray-400"}`}
-        >
-          {isOpen ? "▲" : "▼"}
+        <span className={`text-xs shrink-0 ml-1 ${open ? "text-white" : "text-gray-400"}`}>
+          {open ? "▲" : "▼"}
         </span>
       </div>
 
       {/* Contenido plegable */}
-      {isOpen && (
+      {open && (
         <div className="px-5 py-5 border-t border-gray-100">
           <pre className="whitespace-pre-wrap text-sm text-gray-800 font-sans leading-relaxed">
             {texto}
@@ -149,10 +180,10 @@ export default function EntregablePanel({ convocatoria, onUpdate }) {
   const { API } = useApp();
   const entregables = convocatoria.entregables_json ?? {};
 
-  // Acordeón: solo un entregable abierto a la vez. null = todos cerrados.
   const [openNum, setOpenNum] = useState(null);
   const [selected, setSelected] = useState([]);
   const [generating, setGenerating] = useState({});
+  const [progress, setProgress] = useState(null); // { actual: number, total: number } para salida 4
   const [error, setError] = useState(null);
 
   function toggleAccordion(num) {
@@ -167,33 +198,81 @@ export default function EntregablePanel({ convocatoria, onUpdate }) {
 
   async function generate(types) {
     setError(null);
-    setGenerating((prev) => ({ ...prev, ...Object.fromEntries(types.map((n) => [n, true])) }));
+    setGenerating(Object.fromEntries(types.map((n) => [n, true])));
+    setProgress(null);
 
     try {
-      const res = await fetch(`${API}/convocatorias/${convocatoria.id}/generate`, {
+      const res = await fetch(`${API}/convocatorias/${convocatoria.id}/generate/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ output_types: types }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail ?? "Error al generar.");
-      onUpdate(data.entregables);
-      setSelected([]);
-      // Abrir automáticamente el primero que se acabe de generar.
-      if (types.length === 1) setOpenNum(types[0]);
+
+      // Si la respuesta falla antes de empezar a streamear (validación, 4xx, 5xx)
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail ?? "Error al generar.");
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        // SSE usa \n\n como separador de eventos
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop() ?? "";
+
+        for (const part of parts) {
+          const dataLine = part.split("\n").find((l) => l.startsWith("data: "));
+          if (!dataLine) continue;
+
+          let event;
+          try {
+            event = JSON.parse(dataLine.slice(6));
+          } catch {
+            continue;
+          }
+
+          switch (event.tipo) {
+            case "inicio_4":
+              setProgress({ actual: 0, total: event.total });
+              break;
+            case "progreso_4":
+              setProgress({ actual: event.actual, total: event.total });
+              break;
+            case "salida_completada":
+              setGenerating((prev) => {
+                const next = { ...prev };
+                delete next[event.num];
+                return next;
+              });
+              if (event.num === 4) setProgress(null);
+              break;
+            case "completado":
+              onUpdate(event.entregables);
+              setSelected([]);
+              if (types.length === 1) setOpenNum(types[0]);
+              break;
+            case "error":
+              throw new Error(event.mensaje);
+          }
+        }
+      }
     } catch (err) {
       setError(err.message);
     } finally {
-      setGenerating((prev) => {
-        const next = { ...prev };
-        types.forEach((n) => delete next[n]);
-        return next;
-      });
+      setGenerating({});
+      setProgress(null);
     }
   }
 
   const pendientes = SALIDAS.filter((s) => !entregables[String(s.num)]);
-  const generadas  = SALIDAS.filter((s) =>  entregables[String(s.num)]);
+  const generadas = SALIDAS.filter((s) => entregables[String(s.num)]);
 
   return (
     <div>
@@ -214,6 +293,7 @@ export default function EntregablePanel({ convocatoria, onUpdate }) {
                   type="checkbox"
                   checked={selected.includes(s.num)}
                   onChange={() => toggleSalida(s.num)}
+                  disabled={!!generating[s.num]}
                   className="accent-brand-red w-4 h-4"
                 />
                 <span className="text-sm text-gray-700 group-hover:text-brand-blue transition-colors">
@@ -221,7 +301,14 @@ export default function EntregablePanel({ convocatoria, onUpdate }) {
                   {s.label}
                 </span>
                 {generating[s.num] && (
-                  <span className="text-xs text-gray-400 italic">Generando...</span>
+                  <span className="flex items-center gap-1.5 text-xs text-brand-red">
+                    <Spinner className="w-3 h-3" />
+                    {s.num === 4 && progress
+                      ? progress.actual === 0
+                        ? "Identificando apartados..."
+                        : `Apartado ${progress.actual} de ${progress.total}`
+                      : "Generando..."}
+                  </span>
                 )}
               </label>
             ))}
@@ -253,6 +340,7 @@ export default function EntregablePanel({ convocatoria, onUpdate }) {
                 isOpen={openNum === s.num}
                 onToggle={() => toggleAccordion(s.num)}
                 regenerating={!!generating[s.num]}
+                progress={s.num === 4 && generating[s.num] ? progress : null}
                 onRegenerate={() => generate([s.num])}
               />
             ))}

@@ -11,6 +11,7 @@ import anthropic
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 load_dotenv()
@@ -362,6 +363,164 @@ def generate_outputs(convocatoria_id: int, body: GenerateRequest):
         "generados": [k for k in generated if not k.endswith("_json")],
         "entregables": result_entregables,
     }
+
+
+# ---------------------------------------------------------------------------
+# Generación con streaming SSE (salida 4 emite progreso por sección)
+# ---------------------------------------------------------------------------
+
+@app.post("/convocatorias/{convocatoria_id}/generate/stream")
+def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
+    """
+    Genera entregables con respuesta SSE (Server-Sent Events).
+
+    Eventos emitidos:
+      {"tipo": "inicio_4", "total": N}              — salida 4: N secciones detectadas
+      {"tipo": "progreso_4", "actual": i, "total": N} — salida 4: sección i completada
+      {"tipo": "salida_completada", "num": N}        — cada salida completada
+      {"tipo": "completado", "entregables": {...}}   — todo listo; incluye _json: true para señalar JSON disponible
+      {"tipo": "error", "mensaje": "..."}            — error irrecuperable
+    """
+    # Validaciones síncronas antes de abrir el stream.
+    conv = db.get_convocatoria(convocatoria_id)
+    if conv is None:
+        raise HTTPException(status_code=404, detail="Convocatoria no encontrada.")
+    if not conv["documentos_json"]:
+        raise HTTPException(
+            status_code=422,
+            detail="Esta convocatoria no tiene documentos. Sube los archivos antes de generar entregables.",
+        )
+    requested = set(body.output_types)
+    unknown = requested - set(range(1, 6))
+    if unknown:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Tipos de salida no válidos: {sorted(unknown)}. Usa números del 1 al 5.",
+        )
+
+    context = extractors.build_context(conv["documentos_json"])
+    client = _get_anthropic_client()
+
+    def _evt(data: dict) -> str:
+        return f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+    def stream():
+        generated: dict[str, str] = {}
+
+        for output_type in sorted(requested):
+            try:
+                if output_type == 4:
+                    # Paso 1: extraer secciones
+                    raw_sections = _claude(
+                        client,
+                        system=p.SECTION_EXTRACTOR_PROMPT,
+                        user=f"Documentos de la convocatoria '{conv['nombre']}':\n\n{context}",
+                        max_tokens=1500,
+                    )
+                    try:
+                        secciones = _parse_json(raw_sections).get("secciones", [])
+                    except Exception:
+                        yield _evt({"tipo": "error", "mensaje": "No se pudieron identificar los apartados de la memoria. Comprueba que has subido la plantilla de memoria."})
+                        return
+
+                    n = len(secciones)
+                    if n == 0:
+                        yield _evt({"tipo": "error", "mensaje": "No se encontraron apartados en la plantilla de memoria."})
+                        return
+
+                    yield _evt({"tipo": "inicio_4", "total": n})
+
+                    # Paso 2: generar prompt por sección
+                    header = (
+                        f"# Set de prompts para la memoria — {conv['nombre']}\n\n"
+                        "> **Nota de uso:** El **Perfil Estratégico de Empresa** (documento de Ruta i40) "
+                        "es la fuente principal de información sobre la empresa. Tenlo abierto antes de usar "
+                        "estos prompts: cubre historia, actividad, datos económicos, estructura accionarial, "
+                        "mercados y experiencia previa. Cada prompt indica únicamente la documentación "
+                        "ADICIONAL específica del proyecto que el Perfil no cubre.\n\n---"
+                    )
+                    markdown_parts = [header]
+                    json_sections: list[dict] = []
+
+                    for i, seccion in enumerate(secciones):
+                        user_msg = (
+                            f"Convocatoria: {conv['nombre']}\n"
+                            f"Apartado: {seccion['codigo']} — {seccion['nombre']} "
+                            f"(puntos_max: {seccion.get('puntos_max') or 'no especificado'}, "
+                            f"habilitante: {seccion.get('es_habilitante', False)})\n\n"
+                            f"Documentos de la convocatoria:\n{context}"
+                        )
+                        raw_section = _claude(client, system=p.SECTION_PROMPT_SYSTEM, user=user_msg, max_tokens=2000)
+
+                        try:
+                            section_data = _parse_json(raw_section)
+                            markdown_parts.append(section_data.get("markdown", f"### Sección {seccion['codigo']}: {seccion['nombre']}\n\n_Error al generar._"))
+                            json_sections.append({
+                                "codigo": seccion["codigo"],
+                                "nombre": seccion["nombre"],
+                                "puntos_max": seccion.get("puntos_max"),
+                                "inputs_minimos": section_data.get("inputs_minimos", []),
+                                "inputs_puntuacion_completa": section_data.get("inputs_puntuacion_completa", []),
+                                "documentos_requeridos": section_data.get("documentos_requeridos", []),
+                                "prompt": section_data.get("prompt_texto", ""),
+                            })
+                        except Exception:
+                            markdown_parts.append(f"### Sección {seccion['codigo']}: {seccion['nombre']}\n\n{raw_section}")
+                            json_sections.append({
+                                "codigo": seccion["codigo"],
+                                "nombre": seccion["nombre"],
+                                "puntos_max": seccion.get("puntos_max"),
+                                "inputs_minimos": [],
+                                "inputs_puntuacion_completa": [],
+                                "documentos_requeridos": [],
+                                "prompt": "",
+                            })
+
+                        yield _evt({"tipo": "progreso_4", "actual": i + 1, "total": n})
+
+                    generated["4"] = "\n\n---\n\n".join(markdown_parts)
+                    generated["4_json"] = json.dumps(json_sections, ensure_ascii=False)
+
+                elif output_type == 5:
+                    md_text = _claude(
+                        client,
+                        system=p.SYSTEM_PROMPTS[5],
+                        user=f"Documentos de la convocatoria '{conv['nombre']}':\n\n{context}",
+                        max_tokens=p.MAX_TOKENS[5],
+                    )
+                    generated["5"] = md_text
+                    generated["5_json"] = json.dumps(
+                        _generate_output_5_json(client, md_text), ensure_ascii=False
+                    )
+
+                else:
+                    generated[str(output_type)] = _claude(
+                        client,
+                        system=p.SYSTEM_PROMPTS[output_type],
+                        user=f"Documentos de la convocatoria '{conv['nombre']}':\n\n{context}",
+                        max_tokens=p.MAX_TOKENS[output_type],
+                    )
+
+                yield _evt({"tipo": "salida_completada", "num": output_type})
+
+            except anthropic.APITimeoutError:
+                yield _evt({"tipo": "error", "mensaje": f"La generación de la salida {output_type} superó el tiempo límite. Inténtalo de nuevo."})
+                return
+            except anthropic.APIError:
+                yield _evt({"tipo": "error", "mensaje": f"Error al comunicarse con la API de Claude al generar la salida {output_type}. Inténtalo de nuevo."})
+                return
+
+        db.update_entregables(convocatoria_id, generated)
+
+        # Devolver texto completo para renderizado + señal booleana para claves _json.
+        result = {k: (True if k.endswith("_json") else v) for k, v in generated.items()}
+        yield _evt({"tipo": "completado", "entregables": result})
+
+    return StreamingResponse(
+        stream(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 # ---------------------------------------------------------------------------

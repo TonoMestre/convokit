@@ -5,3 +5,4 @@ pymupdf
 python-docx
 openpyxl
 python-multipart
+python-dotenv

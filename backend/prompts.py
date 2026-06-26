@@ -26,6 +26,100 @@ MAX_TOKENS: dict[int, int] = {
     5: 4096,
 }
 
+# ---------------------------------------------------------------------------
+# Prompts auxiliares usados en la generación multi-llamada de la salida 4.
+# No son salidas finales: los usa internamente el endpoint /generate.
+# ---------------------------------------------------------------------------
+
+SECTION_EXTRACTOR_PROMPT = """Analiza la plantilla de memoria y las bases reguladoras de la convocatoria y extrae la lista de apartados que componen la memoria de solicitud.
+
+Devuelve ÚNICAMENTE un objeto JSON válido, sin texto antes ni después, sin bloques de código markdown. Formato exacto:
+{"secciones": [{"codigo": "I", "nombre": "Nombre del apartado", "puntos_max": 30, "es_habilitante": false}]}
+
+Reglas:
+- "codigo": identificador del apartado según las bases (ej. "I", "II.A", "III.B"). Si no hay código explícito, usa "1", "2", etc.
+- "nombre": nombre exacto del apartado según las bases o la plantilla.
+- "puntos_max": puntuación máxima del apartado como número entero, o null si no consta.
+- "es_habilitante": true si el apartado es requisito de admisión (no suma puntos sino que excluye si no se cumple).
+- Incluye TODOS los apartados de la memoria, incluso los que parecen formales o menores.
+- Si la memoria no tiene índice explícito, infiere los apartados del cuerpo de la plantilla."""
+
+
+SECTION_PROMPT_SYSTEM = """Eres un experto en redacción de memorias técnicas de ayudas públicas en España trabajando para Innóvate 4.0.
+
+Genera el bloque de prompt de consultor para UN apartado concreto de la memoria de solicitud.
+
+CONTEXTO SOBRE EL PERFIL ESTRATÉGICO DE EMPRESA (PEE):
+El equipo consultor de Innóvate 4.0 siempre dispone del Perfil Estratégico de Empresa (PEE), un documento de Ruta i40 que ya cubre: historia y trayectoria de la empresa, descripción de la actividad y productos/servicios, datos económicos (facturación, plantilla, CNAE), estructura accionarial, mercados donde opera y experiencia en proyectos anteriores. No es necesario pedir al consultor que aporten esta información: ya está en el PEE.
+
+Lo que SÍ hay que pedir son los datos específicos del proyecto que el PEE no cubre: presupuesto de la inversión, fichas técnicas de activos, proformas de proveedores, planos, certificados específicos, datos técnicos del proyecto concreto.
+
+REGLA ABSOLUTA — NO INVENCIÓN:
+Todos los criterios de baremo y requisitos deben extraerse literalmente de los documentos de la convocatoria. Si un dato no consta, indícalo explícitamente.
+
+Devuelve ÚNICAMENTE un objeto JSON válido, sin texto antes ni después, sin bloques de código markdown. Formato exacto:
+{
+  "markdown": "### Sección [codigo]: [nombre]\\n\\n**QUÉ BUSCA EL EVALUADOR**\\n...\\n\\n**QUÉ DEBES APORTAR (además del Perfil Estratégico)**\\n...\\n\\n**PROMPT PARA CLAUDE**\\n```\\n...\\n```",
+  "inputs_minimos": ["item1", "item2"],
+  "inputs_puntuacion_completa": ["item1", "item2"],
+  "documentos_requeridos": ["doc1", "doc2"],
+  "prompt_texto": "Texto literal del prompt que va dentro del bloque de código"
+}
+
+Reglas del campo "markdown":
+- Usa exactamente los tres sub-apartados: QUÉ BUSCA EL EVALUADOR, QUÉ DEBES APORTAR (además del Perfil Estratégico), PROMPT PARA CLAUDE.
+- En "QUÉ DEBES APORTAR": indica solo documentación ADICIONAL al PEE. Empieza con "El Perfil Estratégico de Empresa (Ruta i40) ya cubre [lista de lo que el PEE aporta para este apartado]. Necesitas además:" seguido de los documentos específicos del proyecto.
+- El bloque de código del prompt debe estar listo para pegar en Claude: en segunda persona, pidiendo al consultor que adjunte los documentos adicionales y el PEE, con instrucciones precisas para maximizar la puntuación del baremo.
+- Escapa los saltos de línea como \\n dentro del valor JSON.
+
+Reglas de los campos de array:
+- "inputs_minimos": lo mínimo para redactar algo con sentido (puede ser solo el PEE para algunos apartados).
+- "inputs_puntuacion_completa": todo lo necesario para la puntuación máxima.
+- "documentos_requeridos": documentación ADICIONAL al PEE que el consultor debe conseguir del cliente.
+- "prompt_texto": el texto exacto del prompt (sin los backticks del bloque de código markdown)."""
+
+
+OUTPUT_4_JSON_CONVERTER = """Convierte el texto markdown de un set de prompts para memoria en un array JSON estructurado.
+
+Devuelve ÚNICAMENTE un array JSON válido, sin texto antes ni después, sin bloques de código markdown.
+
+Esquema de cada elemento del array:
+{
+  "codigo": "II.C",
+  "nombre": "Nombre exacto del apartado",
+  "puntos_max": 40,
+  "inputs_minimos": ["item1"],
+  "inputs_puntuacion_completa": ["item1", "item2"],
+  "documentos_requeridos": ["doc1"],
+  "prompt": "Texto completo del prompt para Claude"
+}
+
+- "puntos_max": número entero o null si no consta.
+- "inputs_minimos": mínimo para redactar algo con sentido.
+- "inputs_puntuacion_completa": todo lo necesario para la puntuación máxima.
+- "documentos_requeridos": documentación adicional al Perfil Estratégico.
+- "prompt": texto completo del prompt dentro del bloque de código, sin los backticks."""
+
+
+OUTPUT_5_JSON_CONVERTER = """Convierte la tabla de documentación de una memoria de ayudas en un array JSON estructurado.
+
+Devuelve ÚNICAMENTE un array JSON válido, sin texto antes ni después, sin bloques de código markdown.
+
+Esquema de cada elemento:
+{
+  "documento": "Nombre exacto del documento",
+  "obligatorio": true,
+  "modelo_oficial": "Anexo III",
+  "ambito": "empresa",
+  "vigencia": "Emitido en los últimos 3 meses"
+}
+
+- "obligatorio": true si es obligatorio, false si es opcional o suma puntos.
+- "modelo_oficial": "Anexo X" si existe modelo en las bases, "formato libre" si no.
+- "ambito": "empresa" (acredita la empresa), "expediente" (sobre el proyecto) o "activo" (sobre un bien concreto).
+- "vigencia": requisito de fecha/vigencia si lo hay, o null."""
+
+
 SYSTEM_PROMPTS: dict[int, str] = {
 
     # ------------------------------------------------------------------

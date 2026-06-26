@@ -19,8 +19,10 @@ function downloadFile(content, filename) {
   URL.revokeObjectURL(url);
 }
 
-function EntregableItem({ salida, texto, isOpen, onToggle, onRegenerate, regenerating }) {
+function EntregableItem({ salida, texto, hasJsonData, convocatoriaId, isOpen, onToggle, onRegenerate, regenerating }) {
+  const { API } = useApp();
   const [copied, setCopied] = useState(false);
+  const [downloadingJson, setDownloadingJson] = useState(false);
 
   function handleCopy(e) {
     e.stopPropagation();
@@ -34,10 +36,37 @@ function EntregableItem({ salida, texto, isOpen, onToggle, onRegenerate, regener
     downloadFile(texto, `salida_${salida.num}_${salida.label.replace(/\s+/g, "_")}.${salida.ext}`);
   }
 
+  async function handleDownloadJson(e) {
+    e.stopPropagation();
+    setDownloadingJson(true);
+    try {
+      const res = await fetch(`${API}/convocatorias/${convocatoriaId}/json/${salida.num}`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.detail ?? "Error al descargar el JSON.");
+        return;
+      }
+      const data = await res.json();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `salida_${salida.num}_${salida.label.replace(/\s+/g, "_")}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setDownloadingJson(false);
+    }
+  }
+
   function handleRegenerate(e) {
     e.stopPropagation();
     onRegenerate();
   }
+
+  const btnBase = "text-xs px-2.5 py-1 border transition-colors";
+  const btnLight = "border-gray-300 text-gray-600 hover:border-brand-blue hover:text-brand-blue";
+  const btnDark = "border-white/40 text-white hover:bg-white hover:text-brand-blue";
 
   return (
     <div className={`border-b border-gray-200 last:border-b-0 ${isOpen ? "bg-white" : ""}`}>
@@ -68,30 +97,25 @@ function EntregableItem({ salida, texto, isOpen, onToggle, onRegenerate, regener
 
         {/* Botones de acción — siempre accesibles */}
         <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-          <button
-            onClick={handleCopy}
-            className={`text-xs px-2.5 py-1 border transition-colors ${
-              isOpen
-                ? "border-white/40 text-white hover:bg-white hover:text-brand-blue"
-                : "border-gray-300 text-gray-600 hover:border-brand-blue hover:text-brand-blue"
-            }`}
-          >
+          <button onClick={handleCopy} className={`${btnBase} ${isOpen ? btnDark : btnLight}`}>
             {copied ? "¡Copiado!" : "Copiar"}
           </button>
-          <button
-            onClick={handleDownload}
-            className={`text-xs px-2.5 py-1 border transition-colors ${
-              isOpen
-                ? "border-white/40 text-white hover:bg-white hover:text-brand-blue"
-                : "border-gray-300 text-gray-600 hover:border-brand-blue hover:text-brand-blue"
-            }`}
-          >
+          <button onClick={handleDownload} className={`${btnBase} ${isOpen ? btnDark : btnLight}`}>
             .{salida.ext}
           </button>
+          {salida.hasJson && hasJsonData && (
+            <button
+              onClick={handleDownloadJson}
+              disabled={downloadingJson}
+              className={`${btnBase} disabled:opacity-40 ${isOpen ? btnDark : btnLight}`}
+            >
+              {downloadingJson ? "..." : ".json"}
+            </button>
+          )}
           <button
             onClick={handleRegenerate}
             disabled={regenerating}
-            className={`text-xs px-2.5 py-1 border transition-colors disabled:opacity-40 ${
+            className={`${btnBase} disabled:opacity-40 ${
               isOpen
                 ? "border-brand-red bg-brand-red text-white hover:opacity-80"
                 : "border-brand-red text-brand-red hover:bg-brand-red hover:text-white"
@@ -224,6 +248,8 @@ export default function EntregablePanel({ convocatoria, onUpdate }) {
                 key={s.num}
                 salida={s}
                 texto={entregables[String(s.num)]}
+                hasJsonData={!!entregables[`${s.num}_json`]}
+                convocatoriaId={convocatoria.id}
                 isOpen={openNum === s.num}
                 onToggle={() => toggleAccordion(s.num)}
                 regenerating={!!generating[s.num]}

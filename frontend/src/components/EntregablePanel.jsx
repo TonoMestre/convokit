@@ -19,58 +19,99 @@ function downloadFile(content, filename) {
   URL.revokeObjectURL(url);
 }
 
-function EntregableItem({ salida, texto, onRegenerate, regenerating }) {
-  const [open, setOpen] = useState(true);
+function EntregableItem({ salida, texto, isOpen, onToggle, onRegenerate, regenerating }) {
   const [copied, setCopied] = useState(false);
 
-  function handleCopy() {
+  function handleCopy(e) {
+    e.stopPropagation();
     navigator.clipboard.writeText(texto);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
 
-  function handleDownload() {
+  function handleDownload(e) {
+    e.stopPropagation();
     downloadFile(texto, `salida_${salida.num}_${salida.label.replace(/\s+/g, "_")}.${salida.ext}`);
   }
 
+  function handleRegenerate(e) {
+    e.stopPropagation();
+    onRegenerate();
+  }
+
   return (
-    <div className="border border-gray-200 mb-3">
-      {/* Cabecera del panel */}
-      <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
-        <button
-          onClick={() => setOpen((o) => !o)}
-          className="flex items-center gap-2 text-left flex-1"
+    <div className={`border-b border-gray-200 last:border-b-0 ${isOpen ? "bg-white" : ""}`}>
+      {/* Cabecera — siempre visible */}
+      <div
+        onClick={onToggle}
+        className={`flex items-center gap-3 px-4 py-3 cursor-pointer select-none transition-colors ${
+          isOpen ? "bg-brand-blue" : "bg-white hover:bg-gray-50"
+        }`}
+      >
+        {/* Número */}
+        <span
+          className={`font-slab font-bold text-sm w-5 shrink-0 ${
+            isOpen ? "text-white" : "text-brand-red"
+          }`}
         >
-          <span className="text-brand-red font-bold text-sm w-5">{salida.num}</span>
-          <span className="font-semibold text-brand-blue text-sm">{salida.label}</span>
-          <span className="ml-1 text-gray-400 text-xs">{open ? "▲" : "▼"}</span>
-        </button>
-        <div className="flex items-center gap-2 ml-4">
+          {salida.num}
+        </span>
+
+        {/* Título */}
+        <span
+          className={`font-slab font-semibold text-sm flex-1 ${
+            isOpen ? "text-white" : "text-brand-blue"
+          }`}
+        >
+          {salida.label}
+        </span>
+
+        {/* Botones de acción — siempre accesibles */}
+        <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={handleCopy}
-            className="text-xs px-3 py-1 border border-gray-300 hover:border-brand-blue hover:text-brand-blue transition-colors"
+            className={`text-xs px-2.5 py-1 border transition-colors ${
+              isOpen
+                ? "border-white/40 text-white hover:bg-white hover:text-brand-blue"
+                : "border-gray-300 text-gray-600 hover:border-brand-blue hover:text-brand-blue"
+            }`}
           >
             {copied ? "¡Copiado!" : "Copiar"}
           </button>
           <button
             onClick={handleDownload}
-            className="text-xs px-3 py-1 border border-gray-300 hover:border-brand-blue hover:text-brand-blue transition-colors"
+            className={`text-xs px-2.5 py-1 border transition-colors ${
+              isOpen
+                ? "border-white/40 text-white hover:bg-white hover:text-brand-blue"
+                : "border-gray-300 text-gray-600 hover:border-brand-blue hover:text-brand-blue"
+            }`}
           >
             .{salida.ext}
           </button>
           <button
-            onClick={onRegenerate}
+            onClick={handleRegenerate}
             disabled={regenerating}
-            className="text-xs px-3 py-1 border border-brand-red text-brand-red hover:bg-brand-red hover:text-white transition-colors disabled:opacity-40"
+            className={`text-xs px-2.5 py-1 border transition-colors disabled:opacity-40 ${
+              isOpen
+                ? "border-brand-red bg-brand-red text-white hover:opacity-80"
+                : "border-brand-red text-brand-red hover:bg-brand-red hover:text-white"
+            }`}
           >
             {regenerating ? "..." : "Regenerar"}
           </button>
         </div>
+
+        {/* Chevron */}
+        <span
+          className={`text-xs shrink-0 ml-1 ${isOpen ? "text-white" : "text-gray-400"}`}
+        >
+          {isOpen ? "▲" : "▼"}
+        </span>
       </div>
 
-      {/* Contenido */}
-      {open && (
-        <div className="px-4 py-4">
+      {/* Contenido plegable */}
+      {isOpen && (
+        <div className="px-5 py-5 border-t border-gray-100">
           <pre className="whitespace-pre-wrap text-sm text-gray-800 font-sans leading-relaxed">
             {texto}
           </pre>
@@ -84,9 +125,15 @@ export default function EntregablePanel({ convocatoria, onUpdate }) {
   const { API } = useApp();
   const entregables = convocatoria.entregables_json ?? {};
 
+  // Acordeón: solo un entregable abierto a la vez. null = todos cerrados.
+  const [openNum, setOpenNum] = useState(null);
   const [selected, setSelected] = useState([]);
-  const [generating, setGenerating] = useState({}); // { num: true/false }
+  const [generating, setGenerating] = useState({});
   const [error, setError] = useState(null);
+
+  function toggleAccordion(num) {
+    setOpenNum((prev) => (prev === num ? null : num));
+  }
 
   function toggleSalida(num) {
     setSelected((prev) =>
@@ -96,8 +143,7 @@ export default function EntregablePanel({ convocatoria, onUpdate }) {
 
   async function generate(types) {
     setError(null);
-    const loadingState = Object.fromEntries(types.map((n) => [n, true]));
-    setGenerating((prev) => ({ ...prev, ...loadingState }));
+    setGenerating((prev) => ({ ...prev, ...Object.fromEntries(types.map((n) => [n, true])) }));
 
     try {
       const res = await fetch(`${API}/convocatorias/${convocatoria.id}/generate`, {
@@ -109,6 +155,8 @@ export default function EntregablePanel({ convocatoria, onUpdate }) {
       if (!res.ok) throw new Error(data.detail ?? "Error al generar.");
       onUpdate(data.entregables);
       setSelected([]);
+      // Abrir automáticamente el primero que se acabe de generar.
+      if (types.length === 1) setOpenNum(types[0]);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -121,7 +169,7 @@ export default function EntregablePanel({ convocatoria, onUpdate }) {
   }
 
   const pendientes = SALIDAS.filter((s) => !entregables[String(s.num)]);
-  const generadas = SALIDAS.filter((s) => entregables[String(s.num)]);
+  const generadas  = SALIDAS.filter((s) =>  entregables[String(s.num)]);
 
   return (
     <div>
@@ -164,21 +212,25 @@ export default function EntregablePanel({ convocatoria, onUpdate }) {
         </section>
       )}
 
-      {/* Entregables ya generados */}
+      {/* Acordeón de entregables generados */}
       {generadas.length > 0 && (
         <section>
           <h3 className="text-sm font-semibold text-brand-blue uppercase tracking-wide mb-3">
             Entregables generados
           </h3>
-          {generadas.map((s) => (
-            <EntregableItem
-              key={s.num}
-              salida={s}
-              texto={entregables[String(s.num)]}
-              regenerating={!!generating[s.num]}
-              onRegenerate={() => generate([s.num])}
-            />
-          ))}
+          <div className="border border-gray-200">
+            {generadas.map((s) => (
+              <EntregableItem
+                key={s.num}
+                salida={s}
+                texto={entregables[String(s.num)]}
+                isOpen={openNum === s.num}
+                onToggle={() => toggleAccordion(s.num)}
+                regenerating={!!generating[s.num]}
+                onRegenerate={() => generate([s.num])}
+              />
+            ))}
+          </div>
         </section>
       )}
 

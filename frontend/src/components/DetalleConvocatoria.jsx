@@ -1,36 +1,47 @@
 import { useApp } from "../context/AppContext";
-
-// Placeholder para el Paso 7 (visualización de entregables).
-// Por ahora muestra el nombre, los documentos procesados y un botón de generación básico.
-
-const SALIDAS = [
-  { num: 1, label: "Guía interna del consultor" },
-  { num: 2, label: "Ficha comercial para el cliente" },
-  { num: 3, label: "Post de LinkedIn" },
-  { num: 4, label: "Post WordPress con SEO" },
-  { num: 5, label: "Landing page" },
-  { num: 6, label: "Set de prompts para la memoria" },
-  { num: 7, label: "Lista de documentación + correo al cliente" },
-];
+import EntregablePanel from "./EntregablePanel";
 
 export default function DetalleConvocatoria() {
-  const { activeConvocatoria } = useApp();
+  const { activeConvocatoria, setActiveConvocatoria, deleteConvocatoria } = useApp();
 
   if (!activeConvocatoria) return null;
 
   const docs = activeConvocatoria.documentos_json ?? [];
-  const entregables = activeConvocatoria.entregables_json ?? {};
+
+  function handleEntregablesUpdate(nuevos) {
+    setActiveConvocatoria((prev) => ({
+      ...prev,
+      entregables_json: { ...prev.entregables_json, ...nuevos },
+    }));
+  }
+
+  function handleDelete() {
+    if (confirm(`¿Eliminar la convocatoria "${activeConvocatoria.nombre}"? Esta acción no se puede deshacer.`)) {
+      deleteConvocatoria(activeConvocatoria.id);
+    }
+  }
 
   return (
     <div className="max-w-3xl mx-auto py-10 px-6 font-sans">
-      <h2 className="font-slab text-2xl font-bold text-brand-blue mb-1">
-        {activeConvocatoria.nombre}
-      </h2>
-      <p className="text-xs text-gray-400 mb-8">
-        {new Date(activeConvocatoria.fecha_creacion).toLocaleDateString("es-ES", {
-          day: "2-digit", month: "long", year: "numeric",
-        })}
-      </p>
+      {/* Cabecera */}
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h2 className="font-slab text-2xl font-bold text-brand-blue">
+            {activeConvocatoria.nombre}
+          </h2>
+          <p className="text-xs text-gray-400 mt-1">
+            {new Date(activeConvocatoria.fecha_creacion).toLocaleDateString("es-ES", {
+              day: "2-digit", month: "long", year: "numeric",
+            })}
+          </p>
+        </div>
+        <button
+          onClick={handleDelete}
+          className="text-xs text-gray-400 hover:text-brand-red transition-colors mt-1"
+        >
+          Eliminar
+        </button>
+      </div>
 
       {/* Documentos procesados */}
       <section className="mb-8">
@@ -51,26 +62,11 @@ export default function DetalleConvocatoria() {
         )}
       </section>
 
-      {/* Entregables — placeholder Paso 7 */}
-      <section>
-        <h3 className="text-sm font-semibold text-brand-blue uppercase tracking-wide mb-3">
-          Entregables
-        </h3>
-        <p className="text-sm text-gray-400 italic">
-          La visualización y generación de entregables se implementa en el Paso 7.
-        </p>
-        {Object.keys(entregables).length > 0 && (
-          <ul className="mt-3 space-y-1">
-            {SALIDAS.filter((s) => entregables[String(s.num)]).map((s) => (
-              <li key={s.num} className="flex items-center gap-2 text-sm">
-                <span className="w-2 h-2 bg-brand-red inline-block" />
-                <span className="text-gray-700">{s.label}</span>
-                <span className="text-xs text-green-600 ml-auto">Generado</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      {/* Entregables */}
+      <EntregablePanel
+        convocatoria={activeConvocatoria}
+        onUpdate={handleEntregablesUpdate}
+      />
     </div>
   );
 }

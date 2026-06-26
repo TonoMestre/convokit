@@ -17,7 +17,7 @@ from pathlib import Path
 
 # Ruta del fichero SQLite. En Railway apunta al volumen montado para persistencia
 # real entre reinicios. En desarrollo local se crea en /backend por defecto.
-_DB_PATH = os.getenv("DB_PATH", str(Path(__file__).parent / "convokit.db"))
+_DB_PATH = os.getenv("DB_PATH") or str(Path(__file__).parent / "convokit.db")
 
 
 def _get_connection() -> sqlite3.Connection:

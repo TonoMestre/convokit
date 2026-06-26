@@ -114,7 +114,7 @@ def delete_convocatoria(convocatoria_id: int):
 @app.post("/convocatorias/{convocatoria_id}/upload")
 async def upload_documents(
     convocatoria_id: int,
-    files: Annotated[list[UploadFile], File(description="Archivos a subir (PDF, TXT en este paso)")],
+    files: Annotated[list[UploadFile], File(description="Archivos a subir (PDF, DOCX, XLSX, TXT)")],
     etiquetas: Annotated[list[str], Form(description="Etiqueta por cada archivo en el mismo orden")],
 ):
     """
@@ -220,11 +220,11 @@ def generate_outputs(convocatoria_id: int, body: GenerateRequest):
 
     valid_types = set(p.SYSTEM_PROMPTS.keys())
     requested = set(body.output_types)
-    unknown = requested - set(range(1, 8))
+    unknown = requested - set(range(1, 6))
     if unknown:
         raise HTTPException(
             status_code=422,
-            detail=f"Tipos de salida no válidos: {sorted(unknown)}. Usa números del 1 al 7.",
+            detail=f"Tipos de salida no válidos: {sorted(unknown)}. Usa números del 1 al 5.",
         )
     not_implemented = requested - valid_types
     if not_implemented:

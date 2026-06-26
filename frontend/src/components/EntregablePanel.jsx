@@ -4,11 +4,9 @@ import { useApp } from "../context/AppContext";
 const SALIDAS = [
   { num: 1, label: "Guía interna del consultor", ext: "md" },
   { num: 2, label: "Ficha comercial para el cliente", ext: "md" },
-  { num: 3, label: "Post de LinkedIn", ext: "txt" },
-  { num: 4, label: "Post WordPress con SEO", ext: "md" },
-  { num: 5, label: "Landing page", ext: "md" },
-  { num: 6, label: "Set de prompts para la memoria", ext: "md", hasJson: true },
-  { num: 7, label: "Lista de documentación + correo al cliente", ext: "md", hasJson: true },
+  { num: 3, label: "Landing page", ext: "md" },
+  { num: 4, label: "Set de prompts para la memoria", ext: "md", hasJson: true },
+  { num: 5, label: "Lista de documentación + correo al cliente", ext: "md", hasJson: true },
 ];
 
 function downloadFile(content, filename) {

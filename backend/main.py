@@ -10,6 +10,11 @@ from typing import Annotated
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+
+
+class ConvocatoriaCreate(BaseModel):
+    nombre: str
 
 import database as db
 import extractors
@@ -48,15 +53,15 @@ def health():
 # ---------------------------------------------------------------------------
 
 @app.post("/convocatorias", status_code=201)
-def create_convocatoria(nombre: Annotated[str, Form()]):
+def create_convocatoria(body: ConvocatoriaCreate):
     """
-    Crea una nueva convocatoria con el nombre indicado.
-    Devuelve el id asignado.
+    Crea una nueva convocatoria. Recibe {"nombre": "..."} y devuelve el id
+    asignado automáticamente por SQLite.
     """
-    if not nombre.strip():
+    if not body.nombre.strip():
         raise HTTPException(status_code=422, detail="El nombre de la convocatoria no puede estar vacío.")
-    convocatoria_id = db.create_convocatoria(nombre.strip())
-    return {"id": convocatoria_id, "nombre": nombre.strip()}
+    convocatoria_id = db.create_convocatoria(body.nombre.strip())
+    return {"id": convocatoria_id, "nombre": body.nombre.strip()}
 
 
 @app.get("/convocatorias")

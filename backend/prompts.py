@@ -7,7 +7,7 @@ Los prompts nunca se incrustan en los endpoints: todo vive aquí.
 
 # Tokens máximos por tipo de salida según PRD sección 10.3.
 MAX_TOKENS: dict[int, int] = {
-    1: 4096,
+    1: 8192,
     2: 4096,
     3: 4096,
     4: 4096,

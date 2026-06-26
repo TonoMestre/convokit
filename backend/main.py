@@ -252,7 +252,7 @@ def generate_outputs(convocatoria_id: int, body: GenerateRequest):
                         ),
                     }
                 ],
-                timeout=120,
+                timeout=180,
             )
             generated[str(output_type)] = response.content[0].text
         except anthropic.APITimeoutError:

@@ -391,7 +391,7 @@ def _generate_output_4(
 
     for i, seccion in enumerate(secciones):
         if i > 0:
-            time.sleep(2)  # Pausa entre secciones para reducir carga en la API
+            time.sleep(5)  # Pausa entre secciones para evitar rate limits
 
         user_msg = (
             f"Convocatoria: {conv_name}\n"
@@ -402,15 +402,25 @@ def _generate_output_4(
         )
         user_msg += _instr_block(instrucciones)
 
-        raw_section = _claude(
-            client,
-            system=p.SECTION_PROMPT_SYSTEM,
-            user=user_msg,
-            max_tokens=4096,
-            model=model,
-            _track=_track,
-        )
-        markdown_parts.append(raw_section)
+        # Retry con backoff para tolerar rate limits transitorios
+        raw_section = None
+        for attempt in range(3):
+            try:
+                raw_section = _claude(
+                    client,
+                    system=p.SECTION_PROMPT_SYSTEM,
+                    user=user_msg,
+                    max_tokens=8192,
+                    model=model,
+                    _track=_track,
+                )
+                break
+            except Exception as exc:
+                if attempt < 2:
+                    time.sleep(15 * (attempt + 1))
+                else:
+                    raw_section = f"<!-- Error generando sección {seccion['codigo']}: {exc} -->"
+        markdown_parts.append(raw_section or "")
 
         # Extraer JSON de esta sección individualmente (evita truncar con el markdown completo)
         try:

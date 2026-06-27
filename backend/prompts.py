@@ -475,7 +475,8 @@ Los nombres entre corchetes ([HERO], [BENEFICIOS], etc.) identifican el contenid
 ### [HERO]
 
 - GANCHO: línea corta y potente con el beneficio principal — importe máximo o porcentaje de financiación, y que es a fondo perdido. Es el primer reclamo visual. Ej: "Hasta el 40% a fondo perdido".
-- H1: el NOMBRE BASE de la convocatoria SIN AÑO. Es el encabezado principal y debe tener el mayor peso visual. Ej: "INPYME — Ayudas a la pyme industrial". Nunca metas el año ni el porcentaje en el H1.
+- H1: el NOMBRE BASE de la convocatoria SIN AÑO y sin descriptor. Solo el nombre propio. Ej: "INPYME", "Digitaliza CV". Nunca metas el año, el porcentaje ni una descripción de qué es la ayuda dentro del H1.
+- Descriptor (hero-sub): una frase que explica qué tipo de ayuda es. Va en un elemento separado debajo del H1. Ej: "Ayudas a la digitalización de pymes industriales". NUNCA junto al H1 con un guión.
 - Subtítulo: identifica a quién va dirigida en una frase.
 - Cuerpo (opcional): una frase con el presupuesto total o el plazo si están confirmados. Si mencionas el año o datos de la edición vigente, recuerda que su sitio natural es la sección "Convocatoria [año]", no el hero.
 - CTA: frase en primera persona. Ejemplos válidos: "Quiero saber si puedo solicitarla", "Analiza si mi empresa encaja", "Quiero que revisen mi caso".

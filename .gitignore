@@ -16,3 +16,8 @@ __pycache__/
 
 # Frontend build output
 frontend/dist/
+
+# Dev server logs
+uvicorn_out.txt
+uvicorn_err.txt
+vite_out.txt

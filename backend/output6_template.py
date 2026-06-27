@@ -19,7 +19,7 @@ _TEMPLATE = """<!DOCTYPE html>
 <title>{{TITULO_EVALUADOR}}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,700;0,9..144,900&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
 <style>
   :root {
     --navy: #1D254C;
@@ -33,7 +33,7 @@ _TEMPLATE = """<!DOCTYPE html>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { font-size: 16px; scroll-behavior: smooth; }
   body {
-    font-family: 'IBM Plex Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     background: var(--cream);
     color: var(--navy);
     min-height: 100vh;
@@ -47,16 +47,17 @@ _TEMPLATE = """<!DOCTYPE html>
     padding: 14px 24px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    justify-content: space-between;
+    border-bottom: 2px solid var(--red);
   }
-  .site-header .logo-text {
-    font-family: 'Fraunces', serif;
-    font-weight: 900;
-    font-size: 1.15rem;
-    color: var(--white);
-    letter-spacing: -0.01em;
+  .site-header img { display: block; }
+  .site-header .header-tag {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
   }
-  .site-header .logo-text span { color: var(--red); }
 
   /* ── Progress bar ── */
   .progress-bar-wrap {
@@ -68,6 +69,7 @@ _TEMPLATE = """<!DOCTYPE html>
     height: 100%;
     background: var(--red);
     transition: width 0.4s ease;
+    width: 0%;
   }
 
   /* ── Layout ── */
@@ -79,14 +81,10 @@ _TEMPLATE = """<!DOCTYPE html>
     flex: 1;
   }
 
-  /* ── Steps ── */
-  .step { display: none; }
-  .step.active { display: block; }
-
   /* ── Intro ── */
   .intro-titulo {
-    font-family: 'Fraunces', serif;
-    font-weight: 900;
+    font-family: 'Roboto Slab', serif;
+    font-weight: 700;
     font-size: 2rem;
     line-height: 1.15;
     color: var(--navy);
@@ -100,215 +98,87 @@ _TEMPLATE = """<!DOCTYPE html>
   }
 
   /* ── Strip ── */
-  .strip {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-bottom: 36px;
-  }
-  .strip-item {
-    background: var(--navy);
-    color: var(--white);
-    padding: 10px 16px;
-    flex: 1 1 auto;
-  }
+  .strip { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 36px; }
+  .strip-item { background: var(--navy); color: var(--white); padding: 10px 16px; flex: 1 1 auto; }
   .strip-item .strip-label {
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    opacity: 0.7;
-    margin-bottom: 4px;
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.7; margin-bottom: 4px;
   }
-  .strip-item .strip-valor {
-    font-family: 'Fraunces', serif;
-    font-weight: 700;
-    font-size: 1rem;
-  }
+  .strip-item .strip-valor { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1rem; }
 
   /* ── Form fields ── */
   .field { margin-bottom: 20px; }
   .field label {
-    display: block;
-    font-size: 0.82rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--navy);
-    margin-bottom: 6px;
+    display: block; font-size: 0.82rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--navy); margin-bottom: 6px;
   }
   .field input[type="text"],
   .field input[type="email"],
   .field input[type="tel"],
   .field input[type="number"] {
-    width: 100%;
-    padding: 11px 14px;
-    border: 1.5px solid var(--navy-20);
-    background: var(--white);
-    font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 0.95rem;
-    color: var(--navy);
-    outline: none;
-    border-radius: 0;
-    transition: border-color 0.2s;
+    width: 100%; padding: 11px 14px; border: 1.5px solid var(--navy-20);
+    background: var(--white); font-family: 'Inter', sans-serif; font-size: 0.95rem;
+    color: var(--navy); outline: none; border-radius: 0; transition: border-color 0.2s;
   }
   .field input:focus { border-color: var(--navy); }
   .field input.error { border-color: var(--red); }
 
   /* ── RGPD ── */
   .rgpd-block {
-    background: var(--white);
-    border: 1px solid var(--navy-10);
-    padding: 16px;
-    margin-bottom: 24px;
-    font-size: 0.8rem;
-    color: var(--navy);
-    line-height: 1.55;
+    background: var(--white); border: 1px solid var(--navy-10); padding: 16px;
+    margin-bottom: 24px; font-size: 0.8rem; color: var(--navy); line-height: 1.55;
   }
   .rgpd-block a { color: var(--red); }
   .rgpd-check {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    margin-top: 12px;
-    font-size: 0.82rem;
-    font-weight: 500;
-    cursor: pointer;
+    display: flex; align-items: flex-start; gap: 10px; margin-top: 12px;
+    font-size: 0.82rem; font-weight: 500; cursor: pointer;
   }
   .rgpd-check input[type="checkbox"] {
-    margin-top: 2px;
-    accent-color: var(--navy);
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-    border-radius: 0;
+    margin-top: 2px; accent-color: var(--navy); width: 16px; height: 16px;
+    flex-shrink: 0; border-radius: 0;
   }
 
   /* ── Opciones de pregunta ── */
   .pregunta-block {
-    background: var(--white);
-    border: 1px solid var(--navy-10);
-    padding: 22px;
-    margin-bottom: 20px;
+    background: var(--white); border: 1px solid var(--navy-10); padding: 22px; margin-bottom: 20px;
   }
   .pregunta-titulo {
-    font-family: 'Fraunces', serif;
-    font-weight: 700;
-    font-size: 1rem;
-    color: var(--navy);
-    margin-bottom: 8px;
+    font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1rem;
+    color: var(--navy); margin-bottom: 8px;
   }
   .pregunta-ayuda {
-    font-size: 0.82rem;
-    color: rgba(29,37,76,0.65);
-    margin-bottom: 14px;
-    line-height: 1.5;
+    font-size: 0.82rem; color: rgba(29,37,76,0.65); margin-bottom: 14px; line-height: 1.5;
   }
   .opciones-lista { display: flex; flex-direction: column; gap: 8px; }
   .opcion {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 10px 14px;
-    border: 1.5px solid var(--navy-20);
-    background: var(--white);
-    cursor: pointer;
-    transition: border-color 0.15s, background 0.15s;
-    text-align: left;
-    font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 0.9rem;
-    color: var(--navy);
-    border-radius: 0;
-    width: 100%;
+    display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px;
+    border: 1.5px solid var(--navy-20); background: var(--white); cursor: pointer;
+    transition: border-color 0.15s, background 0.15s; text-align: left;
+    font-family: 'Inter', sans-serif; font-size: 0.9rem; color: var(--navy);
+    border-radius: 0; width: 100%;
   }
   .opcion:hover { border-color: var(--navy); background: var(--cream); }
   .opcion.selected { border-color: var(--navy); background: var(--navy); color: var(--white); }
   .opcion .opcion-radio {
-    width: 16px;
-    height: 16px;
-    border: 2px solid currentColor;
-    border-radius: 0;
-    flex-shrink: 0;
-    margin-top: 2px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 16px; height: 16px; border: 2px solid currentColor; border-radius: 0;
+    flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center;
   }
-  .opcion.selected .opcion-radio::after {
-    content: '';
-    width: 8px;
-    height: 8px;
-    background: var(--white);
-    display: block;
-  }
-  .puntos-badge {
-    margin-left: auto;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--red);
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
+  .opcion.selected .opcion-radio::after { content: ''; width: 8px; height: 8px; background: var(--white); display: block; }
+  .puntos-badge { margin-left: auto; font-size: 0.75rem; font-weight: 600; color: var(--red); white-space: nowrap; flex-shrink: 0; }
   .opcion.selected .puntos-badge { color: rgba(255,255,255,0.8); }
 
-  /* ── Bloqueo panel ── */
-  #bloqueo-panel {
-    display: none;
-    background: var(--navy);
-    color: var(--white);
-    padding: 28px;
-    margin-top: 24px;
-  }
-  #bloqueo-panel.visible { display: block; }
-  #bloqueo-panel h2 {
-    font-family: 'Fraunces', serif;
-    font-weight: 900;
-    font-size: 1.4rem;
-    margin-bottom: 10px;
-  }
-  #bloqueo-panel p {
-    font-size: 0.9rem;
-    line-height: 1.6;
-    opacity: 0.88;
-    margin-bottom: 20px;
-  }
-  #bloqueo-panel .field label { color: rgba(255,255,255,0.8); }
-  #bloqueo-panel .field input {
-    background: rgba(255,255,255,0.08);
-    border-color: rgba(255,255,255,0.25);
-    color: var(--white);
-  }
-  #bloqueo-panel .field input::placeholder { color: rgba(255,255,255,0.4); }
-  #bloqueo-panel .field input:focus { border-color: var(--white); }
-
-  /* ── Sección header ── */
+  /* ── Section header ── */
   .section-header {
-    font-family: 'Fraunces', serif;
-    font-weight: 700;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--red);
-    border-bottom: 2px solid var(--red);
-    padding-bottom: 6px;
-    margin-bottom: 20px;
-    margin-top: 36px;
+    font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 0.75rem;
+    text-transform: uppercase; letter-spacing: 0.1em; color: var(--red);
+    border-bottom: 2px solid var(--red); padding-bottom: 6px; margin-bottom: 20px; margin-top: 36px;
   }
   .section-header:first-child { margin-top: 0; }
 
   /* ── Botones ── */
   .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 13px 28px;
-    font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    border-radius: 0;
-    transition: background 0.2s, color 0.2s;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 13px 28px; font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 600;
+    cursor: pointer; border: none; border-radius: 0; transition: background 0.2s, color 0.2s; text-decoration: none;
   }
   .btn-primary { background: var(--navy); color: var(--white); }
   .btn-primary:hover { background: #111828; }
@@ -319,163 +189,62 @@ _TEMPLATE = """<!DOCTYPE html>
   .btn-red:hover { background: #a00230; }
 
   /* ── Step nav ── */
-  .step-nav {
-    display: flex;
-    gap: 12px;
-    margin-top: 28px;
-    align-items: center;
+  .step-nav { display: flex; gap: 12px; margin-top: 28px; align-items: center; flex-wrap: wrap; }
+
+  /* ── Bloqueo panel ── */
+  .bloqueo-panel { background: var(--navy); color: var(--white); padding: 28px; margin-top: 8px; }
+  .bloqueo-panel h2 { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.4rem; margin-bottom: 10px; }
+  .bloqueo-panel > p { font-size: 0.9rem; line-height: 1.6; opacity: 0.88; margin-bottom: 20px; }
+  .bloqueo-panel .field label { color: rgba(255,255,255,0.8); }
+  .bloqueo-panel .field input {
+    background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.25); color: var(--white);
   }
+  .bloqueo-panel .field input::placeholder { color: rgba(255,255,255,0.4); }
+  .bloqueo-panel .field input:focus { border-color: var(--white); }
+  .bloqueo-confirm-msg { font-size: 0.9rem; color: rgba(255,255,255,0.88); margin-top: 12px; }
+  .bloqueo-volver {
+    display: inline-block; margin-top: 16px; font-size: 0.82rem; color: rgba(255,255,255,0.55);
+    cursor: pointer; border: none; background: none; font-family: 'Inter', sans-serif; text-decoration: underline;
+  }
+  .bloqueo-volver:hover { color: var(--white); }
 
   /* ── Resultado ── */
-  .resultado-card {
-    background: var(--white);
-    border: 1px solid var(--navy-10);
-    padding: 28px;
-    margin-bottom: 20px;
-  }
-  .resultado-empresa {
-    font-size: 0.78rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--red);
-    margin-bottom: 8px;
-  }
-  .veredicto-texto {
-    font-size: 0.95rem;
-    line-height: 1.65;
-    color: var(--navy);
-  }
+  .resultado-card { background: var(--white); border: 1px solid var(--navy-10); padding: 28px; margin-bottom: 20px; }
+  .resultado-empresa { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--red); margin-bottom: 8px; }
+  .veredicto-texto { font-size: 0.95rem; line-height: 1.65; color: var(--navy); }
 
-  .score-display {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-    margin: 20px 0;
-  }
-  .score-box {
-    flex: 1 1 auto;
-    background: var(--cream);
-    padding: 16px 20px;
-    text-align: center;
-  }
-  .score-box .score-num {
-    font-family: 'Fraunces', serif;
-    font-weight: 900;
-    font-size: 2.5rem;
-    color: var(--navy);
-    line-height: 1;
-  }
-  .score-box .score-label {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    color: rgba(29,37,76,0.6);
-    margin-top: 6px;
-  }
+  .score-display { display: flex; gap: 20px; flex-wrap: wrap; margin: 20px 0; }
+  .score-box { flex: 1 1 auto; background: var(--cream); padding: 16px 20px; text-align: center; }
+  .score-box .score-num { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 2.5rem; color: var(--navy); line-height: 1; }
+  .score-box .score-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(29,37,76,0.6); margin-top: 6px; }
   .score-box.potencial .score-num { color: var(--red); }
 
-  .score-bar-wrap {
-    height: 8px;
-    background: var(--navy-10);
-    margin-bottom: 6px;
-  }
-  .score-bar-inner {
-    height: 100%;
-    background: var(--navy);
-    transition: width 0.6s ease;
-  }
+  .score-bar-wrap { height: 8px; background: var(--navy-10); margin-bottom: 6px; }
+  .score-bar-inner { height: 100%; background: var(--navy); transition: width 0.6s ease; width: 0%; }
   .score-bar-inner.potencial { background: var(--red); opacity: 0.5; }
 
-  /* ── Mejoras ── */
   .mejoras-lista { list-style: none; }
-  .mejoras-lista li {
-    padding: 10px 14px;
-    border-left: 3px solid var(--red);
-    background: var(--white);
-    margin-bottom: 8px;
-    font-size: 0.88rem;
-    line-height: 1.5;
-    color: var(--navy);
-  }
+  .mejoras-lista li { padding: 10px 14px; border-left: 3px solid var(--red); background: var(--white); margin-bottom: 8px; font-size: 0.88rem; line-height: 1.5; color: var(--navy); }
 
-  /* ── Calculadora ── */
-  .calc-block {
-    background: var(--white);
-    border: 1px solid var(--navy-10);
-    padding: 24px;
-    margin-bottom: 20px;
-  }
-  .calc-block h3 {
-    font-family: 'Fraunces', serif;
-    font-weight: 700;
-    font-size: 1rem;
-    color: var(--navy);
-    margin-bottom: 8px;
-  }
-  .calc-formula {
-    font-size: 0.8rem;
-    color: rgba(29,37,76,0.65);
-    margin-bottom: 16px;
-    line-height: 1.5;
-  }
-  .calc-result {
-    font-family: 'Fraunces', serif;
-    font-weight: 900;
-    font-size: 1.6rem;
-    color: var(--red);
-    margin-top: 12px;
-  }
+  .calc-block { background: var(--white); border: 1px solid var(--navy-10); padding: 24px; margin-bottom: 20px; }
+  .calc-block h3 { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1rem; color: var(--navy); margin-bottom: 8px; }
+  .calc-formula { font-size: 0.8rem; color: rgba(29,37,76,0.65); margin-bottom: 16px; line-height: 1.5; }
+  .calc-result { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.6rem; color: var(--red); margin-top: 12px; }
 
-  /* ── CTA ── */
-  .cta-block {
-    background: var(--navy);
-    color: var(--white);
-    padding: 28px;
-    margin-bottom: 20px;
-  }
-  .cta-block h2 {
-    font-family: 'Fraunces', serif;
-    font-weight: 900;
-    font-size: 1.3rem;
-    margin-bottom: 10px;
-  }
-  .cta-block p {
-    font-size: 0.9rem;
-    opacity: 0.88;
-    line-height: 1.6;
-    margin-bottom: 20px;
-  }
+  .cta-block { background: var(--navy); color: var(--white); padding: 28px; margin-bottom: 20px; }
+  .cta-block h2 { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.3rem; margin-bottom: 10px; }
+  .cta-block .cta-desc { font-size: 0.9rem; opacity: 0.88; line-height: 1.6; margin-bottom: 14px; }
+  .cta-block .cta-contacto { font-size: 0.95rem; font-weight: 500; line-height: 1.5; }
+  .cta-block a { color: var(--white); }
 
-  /* ── Nota fuente ── */
-  .nota-fuente {
-    font-size: 0.72rem;
-    color: rgba(29,37,76,0.5);
-    margin-top: 24px;
-    line-height: 1.5;
-  }
-
-  /* ── Confirmación bloqueo ── */
-  #bloqueo-confirm { display: none; }
-  #bloqueo-confirm.visible { display: block; }
-  #bloqueo-confirm p {
-    font-size: 0.9rem;
-    color: rgba(255,255,255,0.88);
-    margin-top: 12px;
-  }
+  .nota-fuente { font-size: 0.72rem; color: rgba(29,37,76,0.5); margin-top: 24px; line-height: 1.5; }
+  .form-error { color: var(--red); font-size: 0.82rem; margin-top: 10px; display: none; }
 
   /* ── Footer ── */
-  .site-footer {
-    background: var(--navy);
-    color: rgba(255,255,255,0.55);
-    text-align: center;
-    padding: 18px 24px;
-    font-size: 0.75rem;
-  }
+  .site-footer { background: var(--navy); color: rgba(255,255,255,0.55); text-align: center; padding: 18px 24px; font-size: 0.75rem; line-height: 1.8; }
   .site-footer a { color: rgba(255,255,255,0.55); }
   .site-footer a:hover { color: var(--white); }
 
-  /* ── Responsive ── */
   @media (max-width: 480px) {
     .intro-titulo { font-size: 1.5rem; }
     .strip { gap: 8px; }
@@ -487,387 +256,328 @@ _TEMPLATE = """<!DOCTYPE html>
 <body>
 
 <header class="site-header">
-  <div class="logo-text">Innóvate<span>4.0</span></div>
+  <img src="/logo-negativo.png" height="28" style="object-fit:contain;" alt="Innóvate 4.0" />
+  <span class="header-tag">Evaluador de encaje</span>
 </header>
 
 <div class="progress-bar-wrap" id="progress-bar-wrap" style="display:none">
-  <div class="progress-bar-inner" id="progress-bar-inner" style="width:0%"></div>
+  <div class="progress-bar-inner" id="progress-bar-inner"></div>
 </div>
 
 <main class="container">
-
-  <!-- ═══════════════════════════════════════════════
-       PASO 1 — Datos de la empresa
-  ══════════════════════════════════════════════════ -->
-  <div class="step active" id="step1">
-    <p class="intro-titulo" id="intro-titulo-el"></p>
-    <p class="intro-lead" id="intro-lead-el"></p>
-
-    <div class="strip" id="strip-el"></div>
-
-    <div class="field">
-      <label for="campo-nombre">Tu nombre *</label>
-      <input type="text" id="campo-nombre" placeholder="Nombre y apellidos" autocomplete="name" />
-    </div>
-    <div class="field">
-      <label for="campo-empresa">Empresa *</label>
-      <input type="text" id="campo-empresa" placeholder="Nombre de la empresa" autocomplete="organization" />
-    </div>
-    <div class="field">
-      <label for="campo-municipio">Municipio</label>
-      <input type="text" id="campo-municipio" placeholder="Municipio donde opera la empresa" autocomplete="address-level2" />
-    </div>
-
-    <div class="rgpd-block">
-      <strong>Información sobre protección de datos</strong><br /><br />
-      <strong>Responsable:</strong> INNÓVATE CONSULTORÍA AYUDAS PÚBLICAS S.L. — NIF B-01.734.813<br />
-      <strong>Dirección:</strong> C/ Almirante Cadarso 13-8ª, 46005 València<br />
-      <strong>Email:</strong> <a href="mailto:GDPR@INNOVATE40.ES">GDPR@INNOVATE40.ES</a><br /><br />
-      Tus datos se utilizarán exclusivamente para atender tu consulta sobre ayudas públicas y no se cederán a terceros sin tu consentimiento. Puedes ejercer tus derechos de acceso, rectificación, supresión y portabilidad en la dirección anterior.
-      <a href="https://innovate40.es/contacto/" target="_blank" rel="noopener"> Política de privacidad</a><br /><br />
-      <label class="rgpd-check">
-        <input type="checkbox" id="rgpd-check" />
-        <span>He leído y acepto el tratamiento de mis datos para recibir información sobre esta convocatoria de ayudas públicas. *</span>
-      </label>
-    </div>
-
-    <div class="step-nav">
-      <button class="btn btn-primary" onclick="irPaso2()">Comenzar el evaluador →</button>
-    </div>
-    <div id="step1-error" style="color:var(--red);font-size:0.82rem;margin-top:10px;display:none;">
-      Por favor, completa los campos obligatorios y acepta la política de privacidad.
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════
-       PASO 2 — Preguntas (elegibilidad + baremo)
-  ══════════════════════════════════════════════════ -->
-  <div class="step" id="step2">
-    <div id="preguntas-container"></div>
-
-    <div id="bloqueo-panel">
-      <h2 id="bloqueo-titulo-el"></h2>
-      <p id="bloqueo-texto-el"></p>
-      <div id="bloqueo-form">
-        <div class="field">
-          <label for="bloqueo-email">Tu email *</label>
-          <input type="email" id="bloqueo-email" placeholder="email@empresa.com" />
-        </div>
-        <div class="field">
-          <label for="bloqueo-tel">Teléfono</label>
-          <input type="tel" id="bloqueo-tel" placeholder="Número de contacto" />
-        </div>
-        <button class="btn btn-red" onclick="enviarLeadBloqueo()">Recibir información de otras ayudas</button>
-      </div>
-      <div id="bloqueo-confirm">
-        <p>✓ Gracias. Nos pondremos en contacto contigo para orientarte hacia las ayudas que mejor se adapten a tu empresa.</p>
-      </div>
-    </div>
-
-    <div class="step-nav" id="step2-nav" style="display:none">
-      <button class="btn btn-primary" onclick="irPaso3()">Continuar →</button>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════
-       PASO 3 — Datos de contacto
-  ══════════════════════════════════════════════════ -->
-  <div class="step" id="step3">
-    <p class="section-header">Último paso</p>
-    <p class="intro-lead" style="margin-bottom:24px;">Introduce tus datos de contacto para ver tu resultado personalizado.</p>
-
-    <div class="field">
-      <label for="campo-email">Email *</label>
-      <input type="email" id="campo-email" placeholder="email@empresa.com" autocomplete="email" />
-    </div>
-    <div class="field">
-      <label for="campo-tel">Teléfono *</label>
-      <input type="tel" id="campo-tel" placeholder="Número de contacto" autocomplete="tel" />
-    </div>
-
-    <div class="step-nav">
-      <button class="btn btn-primary" onclick="irPaso4()">Ver mi resultado →</button>
-    </div>
-    <div id="step3-error" style="color:var(--red);font-size:0.82rem;margin-top:10px;display:none;">
-      Por favor, completa tu email y teléfono para ver el resultado.
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════
-       PASO 4 — Resultado
-  ══════════════════════════════════════════════════ -->
-  <div class="step" id="step4">
-    <div id="resultado-container"></div>
-  </div>
-
+  <div id="screen-content"></div>
 </main>
 
 <footer class="site-footer">
   © Innóvate Consultoría Ayudas Públicas, S.L. &nbsp;|&nbsp;
-  <a href="https://innovate40.es/aviso-legal/" target="_blank" rel="noopener">Aviso legal</a> &nbsp;|&nbsp;
-  <a href="https://innovate40.es/contacto/" target="_blank" rel="noopener">Política de privacidad</a>
+  <a href="https://innovate40.es/aviso-legal/" target="_blank" rel="noopener">Aviso legal</a>
+  &nbsp;|&nbsp;
+  <a href="mailto:proyectos2@innovate40.es">proyectos2@innovate40.es</a>
+  &nbsp;|&nbsp; 960 66 66 10
 </footer>
 
 <script>
-// ═══════════════════════════════════════════════════
-// Configuración extraída por Claude de la convocatoria
-// ═══════════════════════════════════════════════════
-window.CONVOCATORIA = {{CONFIG_JSON}};
-
-const CFG = window.CONVOCATORIA;
+const CFG = {{CONFIG_JSON}};
 const WEB3FORMS_KEY = "9230bf98-4a35-437a-b326-eb6e24e88f2e";
 const BACKUP_EMAIL = "proyectos2@innovate40.es";
 
-// Estado de la sesión
 const STATE = {
-  nombre: "",
-  empresa: "",
-  municipio: "",
-  email: "",
-  tel: "",
-  respuestas: {},   // id -> { puntos, label, influenciable, esBloqueo, bloquea, motivo }
+  nombre: "", empresa: "", municipio: "",
+  email: "", tel: "",
+  respuestas: {},
   bloqueado: false,
   bloqueoMotivo: "",
 };
 
-// ── Inicialización ──────────────────────────────
-(function init() {
-  // Intro
-  document.getElementById("intro-titulo-el").textContent = CFG.textos.intro_titulo;
-  document.getElementById("intro-lead-el").textContent = CFG.textos.intro_lead;
+var SCREENS = [];
+var currentIdx = 0;
 
-  // Strip
-  const stripEl = document.getElementById("strip-el");
-  (CFG.strip || []).forEach(function(item) {
-    const div = document.createElement("div");
-    div.className = "strip-item";
-    div.innerHTML =
+// ── Build screen sequence ────────────────────────
+function buildScreens() {
+  SCREENS = [{ type: "inicio" }];
+  (CFG.elegibilidad || []).forEach(function(_, i) {
+    SCREENS.push({ type: "eleg", idx: i });
+  });
+  var grupos = CFG.grupos_baremo || [];
+  if (grupos.length > 0) {
+    grupos.forEach(function(_, i) { SCREENS.push({ type: "grupo", idx: i }); });
+  } else if ((CFG.baremo || []).length > 0) {
+    SCREENS.push({ type: "grupo", idx: -1 });
+  }
+  SCREENS.push({ type: "contacto" });
+}
+
+// ── Navigation ───────────────────────────────────
+function avanzar() {
+  if (currentIdx < SCREENS.length - 1) { currentIdx++; renderScreen(); }
+}
+
+function retroceder() {
+  if (STATE.bloqueado) { STATE.bloqueado = false; renderScreen(); return; }
+  if (currentIdx > 0) { currentIdx--; renderScreen(); }
+}
+
+function updateProgress() {
+  var wrap = document.getElementById("progress-bar-wrap");
+  var bar  = document.getElementById("progress-bar-inner");
+  if (currentIdx === 0 && !STATE.bloqueado) { wrap.style.display = "none"; return; }
+  wrap.style.display = "block";
+  var pct = Math.round(currentIdx / SCREENS.length * 100);
+  bar.style.width = pct + "%";
+}
+
+function renderScreen() {
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  if (STATE.bloqueado) { renderBloqueo(); return; }
+  var s = SCREENS[currentIdx];
+  if      (s.type === "inicio")   renderInicio();
+  else if (s.type === "eleg")     renderEleg(s.idx);
+  else if (s.type === "grupo")    renderGrupo(s.idx);
+  else if (s.type === "contacto") renderContacto();
+}
+
+// ── Helpers ──────────────────────────────────────
+function escHtml(str) {
+  return String(str || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+function formatEur(n) { return Math.round(n).toLocaleString("es-ES") + " €"; }
+function getBaremoById(id) {
+  return (CFG.baremo || []).find(function(p) { return p.id === id; });
+}
+function setContent(html) {
+  document.getElementById("screen-content").innerHTML = html;
+}
+
+// ── PASO 1 — Inicio ──────────────────────────────
+function renderInicio() {
+  var stripHtml = (CFG.strip || []).map(function(item) {
+    return '<div class="strip-item">' +
       '<div class="strip-label">' + escHtml(item.label) + '</div>' +
-      '<div class="strip-valor">' + escHtml(item.valor) + '</div>';
-    stripEl.appendChild(div);
-  });
+      '<div class="strip-valor">' + escHtml(item.valor) + '</div>' +
+      '</div>';
+  }).join('');
 
-  // Renderizar preguntas
-  renderPreguntas();
-})();
-
-// ── Render de preguntas ──────────────────────────
-function renderPreguntas() {
-  const container = document.getElementById("preguntas-container");
-  container.innerHTML = "";
-
-  const elegibilidad = CFG.elegibilidad || [];
-  const baremo = CFG.baremo || [];
-
-  if (elegibilidad.length > 0) {
-    const h = document.createElement("p");
-    h.className = "section-header";
-    h.textContent = "Requisitos de acceso";
-    container.appendChild(h);
-
-    elegibilidad.forEach(function(preg) {
-      container.appendChild(buildPreguntaEl(preg, true));
-    });
-  }
-
-  if (baremo.length > 0) {
-    const h = document.createElement("p");
-    h.className = "section-header";
-    h.textContent = "Criterios de valoración";
-    container.appendChild(h);
-
-    baremo.forEach(function(preg) {
-      container.appendChild(buildPreguntaEl(preg, false));
-    });
-  }
-
-  // Si no hay preguntas en ningún bloque, mostrar el nav directamente
-  if (elegibilidad.length === 0 && baremo.length === 0) {
-    document.getElementById("step2-nav").style.display = "flex";
-  }
-
-  actualizarNavPaso2();
+  setContent(
+    '<p class="intro-titulo">' + escHtml(CFG.textos.intro_titulo || "") + '</p>' +
+    '<p class="intro-lead">' + escHtml(CFG.textos.intro_lead || "") + '</p>' +
+    (stripHtml ? '<div class="strip">' + stripHtml + '</div>' : '') +
+    '<div class="field"><label for="f-nombre">Tu nombre *</label>' +
+    '<input type="text" id="f-nombre" placeholder="Nombre y apellidos" autocomplete="name" value="' + escHtml(STATE.nombre) + '" /></div>' +
+    '<div class="field"><label for="f-empresa">Empresa *</label>' +
+    '<input type="text" id="f-empresa" placeholder="Nombre de la empresa" autocomplete="organization" value="' + escHtml(STATE.empresa) + '" /></div>' +
+    '<div class="field"><label for="f-municipio">Municipio</label>' +
+    '<input type="text" id="f-municipio" placeholder="Municipio donde opera la empresa" autocomplete="address-level2" value="' + escHtml(STATE.municipio) + '" /></div>' +
+    '<div class="rgpd-block">' +
+    '<strong>Información sobre protección de datos</strong><br /><br />' +
+    '<strong>Responsable:</strong> INNÓVATE CONSULTORÍA AYUDAS PÚBLICAS S.L. — NIF B-01.734.813<br />' +
+    '<strong>Dirección:</strong> C/ Almirante Cadarso 13-8ª, 46005 València<br />' +
+    '<strong>Email:</strong> <a href="mailto:GDPR@INNOVATE40.ES">GDPR@INNOVATE40.ES</a><br /><br />' +
+    'Tus datos se utilizarán exclusivamente para atender tu consulta sobre ayudas públicas y no se cederán a terceros sin tu consentimiento. ' +
+    'Puedes ejercer tus derechos de acceso, rectificación, supresión y portabilidad en la dirección anterior.<br /><br />' +
+    '<label class="rgpd-check"><input type="checkbox" id="f-rgpd" />' +
+    '<span>He leído y acepto el tratamiento de mis datos para recibir información sobre esta convocatoria de ayudas públicas. *</span>' +
+    '</label></div>' +
+    '<div class="step-nav"><button class="btn btn-primary" onclick="onStep1Submit()">Comenzar el evaluador →</button></div>' +
+    '<div class="form-error" id="e-step1">Por favor, completa los campos obligatorios y acepta la política de privacidad.</div>'
+  );
 }
 
-function buildPreguntaEl(preg, esElegibilidad) {
-  const block = document.createElement("div");
-  block.className = "pregunta-block";
-  block.id = "preg-block-" + preg.id;
-
-  const titulo = document.createElement("p");
-  titulo.className = "pregunta-titulo";
-  titulo.textContent = preg.pregunta;
-  block.appendChild(titulo);
-
-  if (preg.ayuda) {
-    const ayuda = document.createElement("p");
-    ayuda.className = "pregunta-ayuda";
-    ayuda.textContent = preg.ayuda;
-    block.appendChild(ayuda);
-  }
-
-  const lista = document.createElement("div");
-  lista.className = "opciones-lista";
-
-  preg.opciones.forEach(function(opt, idx) {
-    const btn = document.createElement("button");
-    btn.className = "opcion";
-    btn.setAttribute("data-id", preg.id);
-    btn.setAttribute("data-idx", idx);
-    btn.type = "button";
-
-    const radio = document.createElement("span");
-    radio.className = "opcion-radio";
-    btn.appendChild(radio);
-
-    const labelSpan = document.createElement("span");
-    labelSpan.textContent = opt.label;
-    btn.appendChild(labelSpan);
-
-    if (!esElegibilidad && opt.puntos !== undefined) {
-      const badge = document.createElement("span");
-      badge.className = "puntos-badge";
-      badge.textContent = opt.puntos + " pt";
-      btn.appendChild(badge);
-    }
-
-    btn.addEventListener("click", function() {
-      seleccionarOpcion(preg, opt, esElegibilidad, idx);
-    });
-
-    lista.appendChild(btn);
-  });
-
-  block.appendChild(lista);
-  return block;
+function onStep1Submit() {
+  var nombre  = document.getElementById("f-nombre").value.trim();
+  var empresa = document.getElementById("f-empresa").value.trim();
+  var rgpd    = document.getElementById("f-rgpd").checked;
+  var errEl   = document.getElementById("e-step1");
+  if (!nombre || !empresa || !rgpd) { errEl.style.display = "block"; return; }
+  errEl.style.display = "none";
+  STATE.nombre    = nombre;
+  STATE.empresa   = empresa;
+  STATE.municipio = document.getElementById("f-municipio").value.trim();
+  avanzar();
 }
 
-function seleccionarOpcion(preg, opt, esElegibilidad, idx) {
-  // Actualizar UI
-  const bloques = document.querySelectorAll('[data-id="' + preg.id + '"]');
-  bloques.forEach(function(b) { b.classList.remove("selected"); });
-  document.querySelectorAll('[data-id="' + preg.id + '"][data-idx="' + idx + '"]')
-    .forEach(function(b) { b.classList.add("selected"); });
+// ── PASO 2a — Elegibilidad (una pregunta por pantalla) ──
+function renderEleg(idx) {
+  var preg  = CFG.elegibilidad[idx];
+  var total = CFG.elegibilidad.length;
+  var saved = STATE.respuestas[preg.id];
 
-  // Guardar respuesta
+  var optsHtml = preg.opciones.map(function(opt, opIdx) {
+    var sel = (saved && saved.opIdx === opIdx) ? " selected" : "";
+    return '<button class="opcion' + sel + '" id="eleg-opt-' + idx + '-' + opIdx + '" ' +
+      'onclick="onElegOpt(' + idx + ',' + opIdx + ')" type="button">' +
+      '<span class="opcion-radio"></span><span>' + escHtml(opt.label) + '</span>' +
+      '</button>';
+  }).join('');
+
+  var backBtn     = idx > 0 ? '<button class="btn btn-secondary" onclick="retroceder()">← Atrás</button>' : '';
+  var continueBtn = saved   ? '<button class="btn btn-primary" onclick="avanzar()">Continuar →</button>' : '';
+
+  setContent(
+    '<p class="section-header">Requisito de acceso — ' + (idx + 1) + ' de ' + total + '</p>' +
+    '<div class="pregunta-block">' +
+    '<p class="pregunta-titulo">' + escHtml(preg.pregunta) + '</p>' +
+    (preg.ayuda ? '<p class="pregunta-ayuda">' + escHtml(preg.ayuda) + '</p>' : '') +
+    '<div class="opciones-lista">' + optsHtml + '</div>' +
+    '</div>' +
+    '<div class="step-nav">' + backBtn + continueBtn + '</div>'
+  );
+}
+
+function onElegOpt(pregIdx, opIdx) {
+  var preg = CFG.elegibilidad[pregIdx];
+  var opt  = preg.opciones[opIdx];
+
+  // update UI selection
+  preg.opciones.forEach(function(_, i) {
+    var btn = document.getElementById("eleg-opt-" + pregIdx + "-" + i);
+    if (btn) btn.classList.toggle("selected", i === opIdx);
+  });
+
   STATE.respuestas[preg.id] = {
-    puntos: opt.puntos || 0,
+    opIdx: opIdx,
+    puntos: 0,
     label: opt.label,
-    influenciable: preg.influenciable || false,
-    esBloqueo: esElegibilidad,
-    bloquea: esElegibilidad && !!opt.bloquea,
+    esBloqueo: true,
+    bloquea: !!opt.bloquea,
     motivo: opt.motivo || "",
     preguntaLabel: preg.pregunta,
-    puntosMax: preg.puntos_max || 0,
+    puntosMax: 0,
+    influenciable: false,
   };
 
-  // Si es pregunta de elegibilidad y bloquea
-  if (esElegibilidad && opt.bloquea) {
-    STATE.bloqueado = true;
-    STATE.bloqueoMotivo = opt.motivo || CFG.textos.no_elegible_texto;
-    mostrarBloqueo();
-  } else if (esElegibilidad && !opt.bloquea && STATE.bloqueado) {
-    // Si desbloquea (cambió respuesta)
+  if (opt.bloquea) {
+    STATE.bloqueado     = true;
+    STATE.bloqueoMotivo = opt.motivo || (CFG.textos.no_elegible_texto || "");
+    setTimeout(function() { renderScreen(); }, 350);
+  } else {
     STATE.bloqueado = false;
-    ocultarBloqueo();
+    setTimeout(function() { avanzar(); }, 400);
+  }
+}
+
+// ── PASO 2b–2e — Baremo por grupo ────────────────
+function renderGrupo(groupIdx) {
+  var grupos = CFG.grupos_baremo || [];
+  var nombre, preguntas, grupoNum, totalGrupos;
+
+  if (groupIdx === -1) {
+    nombre      = "Criterios de valoración";
+    preguntas   = CFG.baremo || [];
+    grupoNum    = null;
+    totalGrupos = null;
+  } else {
+    var g = grupos[groupIdx];
+    nombre      = g.nombre || ("Bloque " + (groupIdx + 1));
+    preguntas   = (CFG.baremo || []).filter(function(p) {
+      return (g.ids || []).indexOf(p.id) !== -1;
+    });
+    grupoNum    = groupIdx + 1;
+    totalGrupos = grupos.length;
   }
 
-  actualizarNavPaso2();
+  var headerLabel = grupoNum
+    ? "Criterio " + grupoNum + " de " + totalGrupos + " — " + nombre
+    : nombre;
+
+  var pregsHtml = preguntas.map(function(preg) {
+    var saved = STATE.respuestas[preg.id];
+    var optsHtml = preg.opciones.map(function(opt, opIdx) {
+      var sel = (saved && saved.opIdx === opIdx) ? " selected" : "";
+      return '<button class="opcion' + sel + '" id="bo-' + escHtml(preg.id) + '-' + opIdx + '" ' +
+        'onclick="onBaremoOpt(\'' + escHtml(preg.id) + '\',' + opIdx + ')" type="button">' +
+        '<span class="opcion-radio"></span>' +
+        '<span>' + escHtml(opt.label) + '</span>' +
+        (opt.puntos !== undefined ? '<span class="puntos-badge">' + opt.puntos + ' pt</span>' : '') +
+        '</button>';
+    }).join('');
+    return '<div class="pregunta-block">' +
+      '<p class="pregunta-titulo">' + escHtml(preg.pregunta) + '</p>' +
+      (preg.ayuda ? '<p class="pregunta-ayuda">' + escHtml(preg.ayuda) + '</p>' : '') +
+      '<div class="opciones-lista">' + optsHtml + '</div>' +
+      '</div>';
+  }).join('');
+
+  var pregIds = preguntas.map(function(p) { return p.id; }).join(',');
+  var backBtn = currentIdx > 0
+    ? '<button class="btn btn-secondary" onclick="retroceder()">← Atrás</button>'
+    : '';
+
+  setContent(
+    '<p class="section-header">' + escHtml(headerLabel) + '</p>' +
+    pregsHtml +
+    '<div class="form-error" id="e-grupo">Por favor, responde todas las preguntas de este bloque para continuar.</div>' +
+    '<div class="step-nav">' + backBtn +
+    '<button class="btn btn-primary" onclick="onGrupoNext(\'' + escHtml(pregIds) + '\')">Continuar →</button>' +
+    '</div>'
+  );
 }
 
-function actualizarNavPaso2() {
-  if (STATE.bloqueado) {
-    document.getElementById("step2-nav").style.display = "none";
-    return;
-  }
+function onBaremoOpt(pregId, opIdx) {
+  var preg = getBaremoById(pregId);
+  if (!preg) return;
+  var opt = preg.opciones[opIdx];
 
-  const elegibilidad = CFG.elegibilidad || [];
-  const baremo = CFG.baremo || [];
-  const total = elegibilidad.length + baremo.length;
-
-  const respondidas = Object.keys(STATE.respuestas).filter(function(id) {
-    return !STATE.respuestas[id].bloquea;
-  }).length;
-
-  // Mostrar nav cuando todas respondidas (o no hay preguntas)
-  const allAnswered = respondidas >= total;
-  document.getElementById("step2-nav").style.display = allAnswered ? "flex" : "none";
-}
-
-function mostrarBloqueo() {
-  const panel = document.getElementById("bloqueo-panel");
-  panel.classList.add("visible");
-  document.getElementById("step2-nav").style.display = "none";
-  document.getElementById("bloqueo-titulo-el").textContent = CFG.textos.no_elegible_titulo;
-  document.getElementById("bloqueo-texto-el").textContent = STATE.bloqueoMotivo || CFG.textos.no_elegible_texto;
-  panel.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-function ocultarBloqueo() {
-  document.getElementById("bloqueo-panel").classList.remove("visible");
-  document.getElementById("bloqueo-confirm").classList.remove("visible");
-  document.getElementById("bloqueo-form").style.display = "";
-}
-
-async function enviarLeadBloqueo() {
-  const email = document.getElementById("bloqueo-email").value.trim();
-  if (!email) {
-    document.getElementById("bloqueo-email").classList.add("error");
-    return;
-  }
-  await enviarWeb3Forms({
-    tipo: "bloqueo",
-    nombre: STATE.nombre,
-    empresa: STATE.empresa,
-    municipio: STATE.municipio,
-    email: email,
-    tel: document.getElementById("bloqueo-tel").value.trim(),
-    motivo_bloqueo: STATE.bloqueoMotivo,
-    convocatoria: CFG.titulo_corto,
+  preg.opciones.forEach(function(_, i) {
+    var btn = document.getElementById("bo-" + pregId + "-" + i);
+    if (btn) btn.classList.toggle("selected", i === opIdx);
   });
-  document.getElementById("bloqueo-form").style.display = "none";
-  document.getElementById("bloqueo-confirm").classList.add("visible");
+
+  STATE.respuestas[pregId] = {
+    opIdx: opIdx,
+    puntos: opt.puntos || 0,
+    label: opt.label,
+    esBloqueo: false,
+    bloquea: false,
+    preguntaLabel: preg.pregunta,
+    puntosMax: preg.puntos_max || 0,
+    influenciable: preg.influenciable || false,
+  };
 }
 
-// ── Navegación ───────────────────────────────────
-function irPaso2() {
-  const nombre = document.getElementById("campo-nombre").value.trim();
-  const empresa = document.getElementById("campo-empresa").value.trim();
-  const rgpd = document.getElementById("rgpd-check").checked;
-
-  if (!nombre || !empresa || !rgpd) {
-    document.getElementById("step1-error").style.display = "block";
-    return;
-  }
-  document.getElementById("step1-error").style.display = "none";
-  STATE.nombre = nombre;
-  STATE.empresa = empresa;
-  STATE.municipio = document.getElementById("campo-municipio").value.trim();
-
-  mostrarStep("step2");
-  setProgress(33);
+function onGrupoNext(idsStr) {
+  var ids       = idsStr ? idsStr.split(',') : [];
+  var pending   = ids.filter(function(id) { return id && !STATE.respuestas[id]; });
+  var errEl     = document.getElementById("e-grupo");
+  if (pending.length > 0) { if (errEl) errEl.style.display = "block"; return; }
+  if (errEl) errEl.style.display = "none";
+  avanzar();
 }
 
-function irPaso3() {
-  mostrarStep("step3");
-  setProgress(66);
+// ── PASO 3 — Contacto ────────────────────────────
+function renderContacto() {
+  var backBtn = currentIdx > 0
+    ? '<button class="btn btn-secondary" onclick="retroceder()">← Atrás</button>'
+    : '';
+  setContent(
+    '<p class="section-header">Último paso</p>' +
+    '<p class="intro-lead" style="margin-bottom:24px;">Introduce tus datos de contacto para ver tu resultado personalizado.</p>' +
+    '<div class="field"><label for="f-email">Email *</label>' +
+    '<input type="email" id="f-email" placeholder="email@empresa.com" autocomplete="email" value="' + escHtml(STATE.email) + '" /></div>' +
+    '<div class="field"><label for="f-tel">Teléfono *</label>' +
+    '<input type="tel" id="f-tel" placeholder="Número de contacto" autocomplete="tel" value="' + escHtml(STATE.tel) + '" /></div>' +
+    '<div class="step-nav">' + backBtn +
+    '<button class="btn btn-primary" onclick="onContactoSubmit()">Ver mi resultado →</button>' +
+    '</div>' +
+    '<div class="form-error" id="e-contacto">Por favor, completa tu email y teléfono para ver el resultado.</div>'
+  );
 }
 
-async function irPaso4() {
-  const email = document.getElementById("campo-email").value.trim();
-  const tel = document.getElementById("campo-tel").value.trim();
-  if (!email || !tel) {
-    document.getElementById("step3-error").style.display = "block";
-    return;
-  }
-  document.getElementById("step3-error").style.display = "none";
+function onContactoSubmit() {
+  var email = document.getElementById("f-email").value.trim();
+  var tel   = document.getElementById("f-tel").value.trim();
+  var errEl = document.getElementById("e-contacto");
+  if (!email || !tel) { errEl.style.display = "block"; return; }
+  errEl.style.display = "none";
   STATE.email = email;
-  STATE.tel = tel;
+  STATE.tel   = tel;
 
-  // Calcular score
-  const score = calcularScore();
+  var score = calcularScore();
 
-  // Enviar lead (silently)
   enviarWeb3Forms({
     tipo: "resultado",
     nombre: STATE.nombre,
@@ -875,295 +585,245 @@ async function irPaso4() {
     municipio: STATE.municipio,
     email: STATE.email,
     tel: STATE.tel,
-    convocatoria: CFG.titulo_corto,
+    convocatoria: CFG.titulo_corto || "",
     puntuacion_actual: score.actual,
     puntuacion_potencial: score.potencial,
     puntuacion_max: score.max,
+    mensaje: buildMensaje(score),
   }).catch(function() {});
 
-  mostrarStep("step4");
-  setProgress(100);
   renderResultado(score);
+}
+
+// ── Bloqueo ──────────────────────────────────────
+function renderBloqueo() {
+  var titulo = CFG.textos.no_elegible_titulo || "Esta convocatoria no está disponible para tu empresa";
+  var texto  = STATE.bloqueoMotivo || (CFG.textos.no_elegible_texto || "Desde Innóvate 4.0 podemos orientarte hacia otras convocatorias adaptadas a tu perfil.");
+
+  setContent(
+    '<div class="bloqueo-panel">' +
+    '<h2>' + escHtml(titulo) + '</h2>' +
+    '<p>' + escHtml(texto) + '</p>' +
+    '<div id="bloqueo-form">' +
+    '<div class="field"><label for="b-email">Tu email *</label>' +
+    '<input type="email" id="b-email" placeholder="email@empresa.com" /></div>' +
+    '<div class="field"><label for="b-tel">Teléfono</label>' +
+    '<input type="tel" id="b-tel" placeholder="Número de contacto" /></div>' +
+    '<button class="btn btn-red" onclick="enviarLeadBloqueo()">Recibir información de otras ayudas</button>' +
+    '</div>' +
+    '<div id="bloqueo-confirm" style="display:none">' +
+    '<p class="bloqueo-confirm-msg">✓ Gracias. Nos pondremos en contacto contigo para orientarte hacia las ayudas que mejor se adapten a tu empresa.</p>' +
+    '</div>' +
+    '<button class="bloqueo-volver" onclick="retroceder()">← Volver al cuestionario para cambiar mi respuesta</button>' +
+    '</div>'
+  );
+}
+
+function enviarLeadBloqueo() {
+  var emailEl = document.getElementById("b-email");
+  if (!emailEl || !emailEl.value.trim()) {
+    if (emailEl) emailEl.classList.add("error");
+    return;
+  }
+  var telEl = document.getElementById("b-tel");
+  enviarWeb3Forms({
+    tipo: "bloqueo",
+    nombre: STATE.nombre,
+    empresa: STATE.empresa,
+    municipio: STATE.municipio,
+    email: emailEl.value.trim(),
+    tel: telEl ? telEl.value.trim() : "",
+    convocatoria: CFG.titulo_corto || "",
+    motivo_bloqueo: STATE.bloqueoMotivo,
+  }).catch(function() {});
+  document.getElementById("bloqueo-form").style.display = "none";
+  document.getElementById("bloqueo-confirm").style.display = "block";
 }
 
 // ── Score ────────────────────────────────────────
 function calcularScore() {
-  let actual = 0;
-  let potencial = 0;
-  let max = CFG.puntos_max_total || 0;
-  const mejoras = [];
+  var actual = 0, ganancia = 0;
+  var max    = CFG.puntos_max_total || 0;
+  var mejoras = [];
 
-  Object.values(STATE.respuestas).forEach(function(r) {
-    if (r.esBloqueo) return;  // no suma al baremo
+  Object.keys(STATE.respuestas).forEach(function(id) {
+    var r = STATE.respuestas[id];
+    if (r.esBloqueo) return;
     actual += r.puntos || 0;
     if (r.influenciable && r.puntosMax > (r.puntos || 0)) {
-      const ganancia = r.puntosMax - (r.puntos || 0);
-      potencial += ganancia;
-      mejoras.push({
-        pregunta: r.preguntaLabel,
-        puntos_ganables: ganancia,
-      });
+      var g = r.puntosMax - (r.puntos || 0);
+      ganancia += g;
+      mejoras.push({ pregunta: r.preguntaLabel, puntos_ganables: g });
     }
   });
 
-  return {
-    actual: actual,
-    potencial: actual + potencial,
-    max: max,
-    mejoras: mejoras,
-  };
+  return { actual: actual, potencial: actual + ganancia, max: max, mejoras: mejoras };
+}
+
+// ── Web3Forms mensaje estructurado ───────────────
+function buildMensaje(score) {
+  var lines = [];
+
+  if ((CFG.elegibilidad || []).length > 0) {
+    lines.push("--- ELEGIBILIDAD ---");
+    CFG.elegibilidad.forEach(function(p) {
+      var r = STATE.respuestas[p.id];
+      lines.push(p.pregunta);
+      lines.push("→ " + (r ? r.label : "(sin responder)"));
+      lines.push("");
+    });
+  }
+
+  if ((CFG.baremo || []).length > 0) {
+    lines.push("--- BAREMO ---");
+    CFG.baremo.forEach(function(p) {
+      var r   = STATE.respuestas[p.id];
+      var pts = r ? (r.puntos || 0) : 0;
+      var mx  = p.puntos_max || 0;
+      lines.push(p.pregunta);
+      lines.push("→ " + (r ? r.label : "(sin responder)") + " [" + pts + "/" + mx + " pts]");
+      lines.push("");
+    });
+  }
+
+  if (score.mejoras && score.mejoras.length > 0) {
+    lines.push("--- MEJORAS SUGERIDAS ---");
+    score.mejoras.forEach(function(m) {
+      lines.push("+" + m.puntos_ganables + " pts: " + m.pregunta);
+    });
+    lines.push("");
+  }
+
+  lines.push("--- RESULTADO ---");
+  lines.push("Puntuación actual: " + score.actual + " / " + (CFG.puntos_max_total || 0));
+  lines.push("Puntuación potencial con Innóvate: " + score.potencial + " / " + (CFG.puntos_max_total || 0));
+
+  return lines.join("\\n");
 }
 
 // ── Render resultado ─────────────────────────────
 function renderResultado(score) {
-  const container = document.getElementById("resultado-container");
-  container.innerHTML = "";
+  document.getElementById("progress-bar-wrap").style.display = "block";
+  document.getElementById("progress-bar-inner").style.width = "100%";
 
-  const empresa = STATE.empresa;
+  var empresa  = STATE.empresa;
+  var pct      = score.max > 0 ? score.actual / score.max : 0;
+  var veredicto = pct >= 0.65
+    ? (CFG.textos.veredicto_alto  || "")
+    : pct >= 0.35
+      ? (CFG.textos.veredicto_medio || "")
+      : (CFG.textos.veredicto_bajo  || "");
+  veredicto = veredicto.replace(/\\{empresa\\}/g, empresa);
 
-  // Veredicto
-  let veredictoTexto;
-  const pct = score.max > 0 ? score.actual / score.max : 0;
-  if (pct >= 0.65) {
-    veredictoTexto = CFG.textos.veredicto_alto;
-  } else if (pct >= 0.35) {
-    veredictoTexto = CFG.textos.veredicto_medio;
-  } else {
-    veredictoTexto = CFG.textos.veredicto_bajo;
-  }
-  veredictoTexto = veredictoTexto.replace(/\{empresa\}/g, empresa);
+  var html = "";
 
-  // Card de resultado
   if (score.max > 0) {
-    const card = document.createElement("div");
-    card.className = "resultado-card";
-
-    const empLabel = document.createElement("p");
-    empLabel.className = "resultado-empresa";
-    empLabel.textContent = empresa;
-    card.appendChild(empLabel);
-
-    const vText = document.createElement("p");
-    vText.className = "veredicto-texto";
-    vText.textContent = veredictoTexto;
-    card.appendChild(vText);
-
-    // Score display
-    const scoreDisplay = document.createElement("div");
-    scoreDisplay.className = "score-display";
-
-    const boxActual = document.createElement("div");
-    boxActual.className = "score-box";
-    boxActual.innerHTML =
-      '<div class="score-num">' + score.actual + '</div>' +
-      '<div class="score-label">Puntuación estimada</div>';
-    scoreDisplay.appendChild(boxActual);
-
-    if (score.potencial > score.actual) {
-      const boxPot = document.createElement("div");
-      boxPot.className = "score-box potencial";
-      boxPot.innerHTML =
+    var potBox = score.potencial > score.actual
+      ? '<div class="score-box potencial">' +
         '<div class="score-num">' + score.potencial + '</div>' +
-        '<div class="score-label">Potencial con Innóvate</div>';
-      scoreDisplay.appendChild(boxPot);
-    }
+        '<div class="score-label">Potencial con Innóvate</div>' +
+        '</div>'
+      : '';
+    var potBar = score.potencial > score.actual
+      ? '<div class="score-bar-wrap" style="margin-top:4px">' +
+        '<div class="score-bar-inner potencial" id="bar-pot"></div></div>'
+      : '';
+    var legend = score.potencial > score.actual
+      ? '<p style="font-size:0.75rem;color:rgba(29,37,76,0.55);margin-top:6px;">Puntuación sobre ' + score.max + ' puntos totales</p>'
+      : '';
 
-    card.appendChild(scoreDisplay);
-
-    // Barra de progreso del score
-    const barWrap = document.createElement("div");
-    barWrap.className = "score-bar-wrap";
-    const barInner = document.createElement("div");
-    barInner.className = "score-bar-inner";
-    const pctActual = score.max > 0 ? Math.round((score.actual / score.max) * 100) : 0;
-    setTimeout(function() { barInner.style.width = pctActual + "%"; }, 100);
-    barWrap.appendChild(barInner);
-    card.appendChild(barWrap);
-
-    if (score.potencial > score.actual) {
-      const barWrap2 = document.createElement("div");
-      barWrap2.className = "score-bar-wrap";
-      barWrap2.style.marginTop = "4px";
-      const barInner2 = document.createElement("div");
-      barInner2.className = "score-bar-inner potencial";
-      const pctPot = Math.round((score.potencial / score.max) * 100);
-      setTimeout(function() { barInner2.style.width = Math.min(pctPot, 100) + "%"; }, 200);
-      barWrap2.appendChild(barInner2);
-      card.appendChild(barWrap2);
-
-      const barLegend = document.createElement("p");
-      barLegend.style.cssText = "font-size:0.75rem;color:rgba(29,37,76,0.55);margin-top:6px;";
-      barLegend.textContent = "Puntuación sobre " + score.max + " puntos totales";
-      card.appendChild(barLegend);
-    }
-
-    container.appendChild(card);
+    html +=
+      '<div class="resultado-card">' +
+      '<p class="resultado-empresa">' + escHtml(empresa) + '</p>' +
+      '<p class="veredicto-texto">' + escHtml(veredicto) + '</p>' +
+      '<div class="score-display">' +
+      '<div class="score-box"><div class="score-num">' + score.actual + '</div>' +
+      '<div class="score-label">Puntuación estimada</div></div>' +
+      potBox + '</div>' +
+      '<div class="score-bar-wrap"><div class="score-bar-inner" id="bar-act"></div></div>' +
+      potBar + legend +
+      '</div>';
   } else {
-    // Sin baremo — mostrar veredicto simple
-    const card = document.createElement("div");
-    card.className = "resultado-card";
-    const empLabel = document.createElement("p");
-    empLabel.className = "resultado-empresa";
-    empLabel.textContent = empresa;
-    card.appendChild(empLabel);
-    const vText = document.createElement("p");
-    vText.className = "veredicto-texto";
-    vText.textContent = veredictoTexto;
-    card.appendChild(vText);
-    container.appendChild(card);
+    html +=
+      '<div class="resultado-card">' +
+      '<p class="resultado-empresa">' + escHtml(empresa) + '</p>' +
+      '<p class="veredicto-texto">' + escHtml(veredicto) + '</p>' +
+      '</div>';
   }
 
-  // Acciones de mejora
   if (score.mejoras && score.mejoras.length > 0) {
-    const h = document.createElement("p");
-    h.className = "section-header";
-    h.textContent = "Criterios mejorables antes de solicitar";
-    container.appendChild(h);
-
-    const lista = document.createElement("ul");
-    lista.className = "mejoras-lista";
+    html += '<p class="section-header">Criterios mejorables antes de solicitar</p><ul class="mejoras-lista">';
     score.mejoras.forEach(function(m) {
-      const li = document.createElement("li");
-      li.innerHTML =
-        '<strong>' + escHtml(m.pregunta) + '</strong>' +
-        ' — hasta <strong>' + m.puntos_ganables + ' pt</strong> adicionales';
-      lista.appendChild(li);
+      html += '<li><strong>' + escHtml(m.pregunta) + '</strong> — hasta <strong>' + m.puntos_ganables + ' pt</strong> adicionales</li>';
     });
-    container.appendChild(lista);
+    html += '</ul>';
   }
 
-  // Calculadora de inversión
-  const inv = CFG.inversion;
+  var inv = CFG.inversion;
   if (inv) {
-    const h = document.createElement("p");
-    h.className = "section-header";
-    h.textContent = "Estimación de la ayuda";
-    container.appendChild(h);
-
-    const calcBlock = document.createElement("div");
-    calcBlock.className = "calc-block";
-
-    const calcTitle = document.createElement("h3");
-    calcTitle.textContent = "Calculadora de ayuda estimada";
-    calcBlock.appendChild(calcTitle);
-
-    const formula = document.createElement("p");
-    formula.className = "calc-formula";
-    formula.textContent = inv.formula_texto || "";
-    calcBlock.appendChild(formula);
-
+    html += '<p class="section-header">Estimación de la ayuda</p>' +
+      '<div class="calc-block"><h3>Calculadora de ayuda estimada</h3>' +
+      '<p class="calc-formula">' + escHtml(inv.formula_texto || "") + '</p>';
     if (inv.tiene_campo) {
-      const field = document.createElement("div");
-      field.className = "field";
-      const lbl = document.createElement("label");
-      lbl.setAttribute("for", "calc-inversion");
-      lbl.textContent = inv.etiqueta_campo || "Inversión elegible prevista (€)";
-      field.appendChild(lbl);
-      const inp = document.createElement("input");
-      inp.type = "number";
-      inp.id = "calc-inversion";
-      inp.placeholder = "Ej: 150000";
-      inp.min = "0";
-      inp.step = "1000";
-      field.appendChild(inp);
-      calcBlock.appendChild(field);
-
-      const resultEl = document.createElement("div");
-      resultEl.className = "calc-result";
-      resultEl.id = "calc-result";
-      resultEl.textContent = "";
-      calcBlock.appendChild(resultEl);
-
-      inp.addEventListener("input", function() {
-        const val = parseFloat(inp.value) || 0;
-        if (val <= 0) { resultEl.textContent = ""; return; }
-        const pctMin = inv.pct_min || 0;
-        const pctMax = inv.pct_max || 0;
-        const tope = inv.tope_euros || Infinity;
-        const ayudaMax = Math.min(val * pctMax / 100, tope);
-        const ayudaMin = Math.min(val * pctMin / 100, tope);
-        if (pctMin !== pctMax) {
-          resultEl.textContent = "Ayuda estimada: " + formatEur(ayudaMin) + " – " + formatEur(ayudaMax);
-        } else {
-          resultEl.textContent = "Ayuda estimada: " + formatEur(ayudaMax);
-        }
-      });
+      html += '<div class="field"><label for="calc-inv">' + escHtml(inv.etiqueta_campo || "Inversión elegible prevista (€)") + '</label>' +
+        '<input type="number" id="calc-inv" placeholder="Ej: 150000" min="0" step="1000" /></div>' +
+        '<div class="calc-result" id="calc-result"></div>';
     } else if (inv.importe_fijo) {
-      const fixedEl = document.createElement("div");
-      fixedEl.className = "calc-result";
-      fixedEl.textContent = "Importe fijo: " + formatEur(inv.importe_fijo);
-      calcBlock.appendChild(fixedEl);
+      html += '<div class="calc-result">' + formatEur(inv.importe_fijo) + '</div>';
     }
-
-    container.appendChild(calcBlock);
+    html += '</div>';
   }
 
-  // CTA
-  const ctaBlock = document.createElement("div");
-  ctaBlock.className = "cta-block";
+  html +=
+    '<div class="cta-block">' +
+    '<h2>' + escHtml(CFG.textos.cta_titulo || "") + '</h2>' +
+    '<p class="cta-desc">' + escHtml(CFG.textos.cta_texto || "") + '</p>' +
+    '<p class="cta-contacto">¿Hablamos? Escríbenos a ' +
+    '<a href="mailto:proyectos2@innovate40.es">proyectos2@innovate40.es</a>' +
+    ' o llámanos al <a href="tel:+34960666610">960 66 66 10</a>.</p>' +
+    '</div>';
 
-  const ctaTitulo = document.createElement("h2");
-  ctaTitulo.textContent = CFG.textos.cta_titulo;
-  ctaBlock.appendChild(ctaTitulo);
-
-  const ctaTexto = document.createElement("p");
-  ctaTexto.textContent = CFG.textos.cta_texto;
-  ctaBlock.appendChild(ctaTexto);
-
-  const ctaBtn = document.createElement("a");
-  ctaBtn.href = "https://innovate40.es/contacto/";
-  ctaBtn.target = "_blank";
-  ctaBtn.rel = "noopener noreferrer";
-  ctaBtn.className = "btn btn-red";
-  ctaBtn.textContent = "Hablar con un consultor";
-  ctaBlock.appendChild(ctaBtn);
-
-  container.appendChild(ctaBlock);
-
-  // Nota fuente
   if (CFG.textos.nota_fuente) {
-    const nota = document.createElement("p");
-    nota.className = "nota-fuente";
-    nota.textContent = CFG.textos.nota_fuente;
-    container.appendChild(nota);
+    html += '<p class="nota-fuente">' + escHtml(CFG.textos.nota_fuente) + '</p>';
+  }
+
+  setContent(html);
+
+  // Animate bars
+  if (score.max > 0) {
+    var pctA = Math.round((score.actual / score.max) * 100);
+    setTimeout(function() { var b = document.getElementById("bar-act"); if (b) b.style.width = pctA + "%"; }, 100);
+    if (score.potencial > score.actual) {
+      var pctP = Math.min(Math.round((score.potencial / score.max) * 100), 100);
+      setTimeout(function() { var b = document.getElementById("bar-pot"); if (b) b.style.width = pctP + "%"; }, 200);
+    }
+  }
+
+  // Bind investment calculator
+  if (inv && inv.tiene_campo) {
+    var inp = document.getElementById("calc-inv");
+    var res = document.getElementById("calc-result");
+    if (inp && res) {
+      inp.addEventListener("input", function() {
+        var val  = parseFloat(inp.value) || 0;
+        if (val <= 0) { res.textContent = ""; return; }
+        var pMin = inv.pct_min || 0, pMax = inv.pct_max || 0, tope = inv.tope_euros || Infinity;
+        var aMin = Math.min(val * pMin / 100, tope);
+        var aMax = Math.min(val * pMax / 100, tope);
+        res.textContent = pMin !== pMax
+          ? "Ayuda estimada: " + formatEur(aMin) + " – " + formatEur(aMax)
+          : "Ayuda estimada: " + formatEur(aMax);
+      });
+    }
   }
 }
 
-// ── Helpers ──────────────────────────────────────
-function mostrarStep(id) {
-  document.querySelectorAll(".step").forEach(function(s) {
-    s.classList.remove("active");
-  });
-  document.getElementById(id).classList.add("active");
-
-  // Progress bar visible desde paso 2
-  const pbWrap = document.getElementById("progress-bar-wrap");
-  pbWrap.style.display = id === "step1" ? "none" : "block";
-
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}
-
-function setProgress(pct) {
-  document.getElementById("progress-bar-inner").style.width = pct + "%";
-}
-
-function escHtml(str) {
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-function formatEur(n) {
-  return Math.round(n).toLocaleString("es-ES") + " €";
-}
-
+// ── Web3Forms ────────────────────────────────────
 async function enviarWeb3Forms(datos) {
   try {
-    const payload = Object.assign({}, datos, {
+    var payload = Object.assign({}, datos, {
       access_key: WEB3FORMS_KEY,
-      subject: "[ConvoKit] " + CFG.titulo_corto + " — " + (datos.tipo || "lead"),
+      subject: "[ConvoKit] " + (CFG.titulo_corto || "") + " — " + (datos.tipo || "lead"),
       from_name: "Evaluador Innóvate 4.0",
       email: datos.email || BACKUP_EMAIL,
     });
@@ -1172,25 +832,22 @@ async function enviarWeb3Forms(datos) {
       headers: { "Content-Type": "application/json", "Accept": "application/json" },
       body: JSON.stringify(payload),
     });
-  } catch (e) {
-    // Fail silently
-  }
+  } catch (e) { /* fail silently */ }
 }
+
+// ── Init ─────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", function() {
+  buildScreens();
+  renderScreen();
+});
 </script>
 </body>
 </html>"""
 
 
 def build_output_6_html(config: dict) -> str:
-    """
-    Construye el HTML del evaluador sustituyendo los placeholders en la plantilla.
-
-    - {{CONFIG_JSON}}: objeto JSON de configuración generado por Claude.
-    - {{TITULO_EVALUADOR}}: título para la etiqueta <title>.
-    """
     titulo = config.get("textos", {}).get("titulo_evaluador", "Evaluador de encaje")
     config_json = json.dumps(config, ensure_ascii=False, indent=2)
-
     html = _TEMPLATE.replace("{{CONFIG_JSON}}", config_json)
     html = html.replace("{{TITULO_EVALUADOR}}", titulo)
     return html

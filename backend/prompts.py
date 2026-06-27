@@ -75,6 +75,10 @@ ESQUEMA EXACTO (respeta todos los campos y tipos):
       ]
     }
   ],
+  "grupos_baremo": [
+    {"nombre": "Nombre del bloque o criterio agrupador", "ids": ["b1", "b2"]},
+    {"nombre": "Otro bloque", "ids": ["b3", "b4"]}
+  ],
   "puntos_max_total": 100,
   "inversion": {
     "tiene_campo": true,
@@ -124,10 +128,16 @@ inversion:
 - Si la convocatoria tiene un importe fijo por empresa (sin depender de la inversión del solicitante): "tiene_campo": false, añadir campo "importe_fijo": número en euros.
 - "tope_euros": importe máximo de ayuda por empresa/proyecto según las bases.
 
+grupos_baremo:
+- Agrupa los criterios del baremo en bloques según la estructura del documento. Si el baremo tiene secciones o bloques (ej. "Calidad del proyecto", "Viabilidad técnica"), crear un grupo por bloque con los IDs correspondientes de la lista "baremo".
+- Si el baremo no tiene agrupación natural, devolver "grupos_baremo": [] y todos los criterios se mostrarán en una sola pantalla.
+- Los "ids" deben corresponderse exactamente con los "id" del array "baremo".
+
 textos:
 - Personalizar con el nombre real de la convocatoria y el organismo.
 - Los veredictos usan "{empresa}" como placeholder (se sustituye en runtime con el nombre que el usuario introduzca).
 - "nota_fuente": citar el nombre oficial de la convocatoria y el organismo tal como aparecen en los documentos.
+- REGLA DE TÍTULO: si las instrucciones adicionales del consultor especifican un nombre concreto para el evaluador (ej: "DIGITALIZA-CV 2027 basado en datos de la convocatoria 2025"), usar ese nombre exacto en "titulo_evaluador" y en "titulo_corto". Si no se especifica ningún nombre, usar el nombre oficial de la convocatoria extraído de los documentos.
 
 IMPORTANTE: Devuelve ÚNICAMENTE el objeto JSON. Sin texto antes ni después. Sin bloques de código markdown."""
 

@@ -585,7 +585,16 @@ Reglas de estilo:
 
 ## Parte 2 — Correo al cliente
 
-Escribe un correo listo para enviar. Tono: cercano, directo, didáctico. Usa un emoji al inicio de cada bloque temático.
+OBJETIVO DEL CORREO: pedir al cliente lo que Innóvate 4.0 necesita de él para poder trabajar. Nada más. Innóvate gestiona toda la tramitación; el cliente solo tiene que reunir su información y documentación y enviársela al consultor. El tono debe transmitir exactamente eso.
+
+PROHIBIDO incluir en el correo:
+- Instrucciones sobre cómo usar plataformas del organismo (Solicit@, sede electrónica, portales de convocatoria, etc.)
+- Pasos del proceso de tramitación electrónica ni cómo presentar la solicitud
+- Cómo adjuntar documentos, límites de tamaño de archivos
+- Instrucciones sobre qué firmar ni cómo firmarlo digitalmente
+- Explicaciones del proceso de evaluación o de cómo funciona la convocatoria por dentro
+
+Escribe un correo listo para enviar. Tono: cercano, directo. Usa un emoji al inicio de cada bloque temático.
 
 ESTRUCTURA (en este orden):
 
@@ -593,16 +602,16 @@ ESTRUCTURA (en este orden):
 Una o dos frases: nombre de la convocatoria, organismo, qué financia. Solo datos de las bases.
 
 **Por qué pedimos la documentación ahora**
-Adapta el argumento al tipo de instrumento identificado. No uses siempre el mismo argumento:
-- Si es concurrencia competitiva: la calidad del expediente decide entre aprobados y denegados, y no se pueden mejorar errores ni añadir documentos una vez cerrado el plazo.
-- Si es préstamo o ayuda directa sin concurrencia: cuanto antes se completa el expediente, antes entra en resolución y antes llega el dinero.
-- Si tiene plazo próximo según las bases: mencionar la urgencia real usando la fecha de las bases.
-- En cualquier caso, lee el argumento de los propios documentos (organismo, tipo de resolución, plazos). No inventes el razonamiento.
+Adapta el argumento al tipo de instrumento identificado:
+- Si es concurrencia competitiva: la calidad del expediente decide entre aprobados y denegados, y necesitamos tiempo para preparar una memoria sólida.
+- Si es préstamo o ayuda directa sin concurrencia: cuanto antes tengamos la documentación completa, antes podemos tramitar y antes llega la resolución.
+- Si hay plazo próximo según las bases: mencionar la urgencia real con la fecha de las bases.
+- Nunca explicar cómo funciona el proceso de evaluación ni los pasos de tramitación.
 
 **Lista de documentos**
-Agrupa los documentos en bloques lógicos según el contenido real de esta convocatoria. Los bloques los decides tú en función de lo extraído; no están predefinidos. Para cada documento: una o dos frases que expliquen qué es y qué tiene que hacer el cliente para conseguirlo, sin tecnicismos. Si el cliente tiene que solicitar algo a un tercero (administración, banco, notaría), indicarlo.
+Agrupa los documentos en bloques lógicos según el contenido de esta convocatoria. Los bloques los decides tú; no están predefinidos. Para cada documento: una frase que explique qué es y, si el cliente tiene que pedirlo a un tercero (banco, administración, notaría, registro), indicar a quién tiene que solicitarlo. No explicar para qué lo usa Innóvate ni cómo se adjunta a ningún sistema.
 
-Solo incluir documentos obligatorios y los que aporten puntuación significativa en el baremo, si existe.
+Incluir solo documentos obligatorios y los que aporten puntuación significativa en el baremo, si existe.
 
 **Plazo**
 "Te agradecería recibirlo antes del [FECHA]" — dejar el campo [FECHA] para que el consultor lo complete.

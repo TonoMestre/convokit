@@ -129,23 +129,16 @@ def _generate_output_4(client: anthropic.Anthropic, conv_name: str, context: str
         if instrucciones.strip():
             user_msg += f"\n\nINSTRUCCIONES ADICIONALES DEL CONSULTOR: {instrucciones.strip()}"
         raw_section = _claude(client, system=p.SECTION_PROMPT_SYSTEM, user=user_msg, max_tokens=2000)
-
-        try:
-            section_data = _parse_json(raw_section)
-            md_block = section_data.get("markdown") or f"### Sección {seccion['codigo']}: {seccion['nombre']}\n\n{raw_section}"
-        except Exception:
-            md_block = f"### Sección {seccion['codigo']}: {seccion['nombre']}\n\n{raw_section}"
-        markdown_parts.append(md_block)
+        markdown_parts.append(raw_section)
 
     markdown = "\n\n---\n\n".join(markdown_parts)
 
     # Paso 3: extraer JSON estructurado del markdown completo en una sola llamada.
-    # Más fiable que parsear el JSON embebido en cada sección individualmente.
     raw_json = _claude(
         client,
         system=p.OUTPUT_4_JSON_EXTRACTOR,
-        user=f"Extrae los datos estructurados del siguiente set de prompts para la memoria:\n\n{markdown}",
-        max_tokens=4000,
+        user=markdown,
+        max_tokens=8192,
     )
     try:
         json_sections = _parse_json(raw_json)
@@ -497,13 +490,7 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
                         if instrucciones.strip():
                             user_msg += f"\n\nINSTRUCCIONES ADICIONALES DEL CONSULTOR: {instrucciones.strip()}"
                         raw_section = _claude(client, system=p.SECTION_PROMPT_SYSTEM, user=user_msg, max_tokens=2000)
-
-                        try:
-                            section_data = _parse_json(raw_section)
-                            md_block = section_data.get("markdown") or f"### Sección {seccion['codigo']}: {seccion['nombre']}\n\n{raw_section}"
-                        except Exception:
-                            md_block = f"### Sección {seccion['codigo']}: {seccion['nombre']}\n\n{raw_section}"
-                        markdown_parts.append(md_block)
+                        markdown_parts.append(raw_section)
 
                         yield _evt({"tipo": "progreso_4", "actual": i + 1, "total": n})
 
@@ -513,8 +500,8 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
                     raw_json_4 = _claude(
                         client,
                         system=p.OUTPUT_4_JSON_EXTRACTOR,
-                        user=f"Extrae los datos estructurados del siguiente set de prompts para la memoria:\n\n{markdown_4}",
-                        max_tokens=4000,
+                        user=markdown_4,
+                        max_tokens=8192,
                     )
                     try:
                         json_sections = _parse_json(raw_json_4)

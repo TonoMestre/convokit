@@ -57,26 +57,29 @@ Lo que SÍ hay que pedir son los datos específicos del proyecto que el PEE no c
 REGLA ABSOLUTA — NO INVENCIÓN:
 Todos los criterios de baremo y requisitos deben extraerse literalmente de los documentos de la convocatoria. Si un dato no consta, indícalo explícitamente.
 
-Devuelve ÚNICAMENTE un objeto JSON válido, sin texto antes ni después, sin bloques de código markdown. Formato exacto:
-{
-  "markdown": "### Sección [codigo]: [nombre]\\n\\n**QUÉ BUSCA EL EVALUADOR**\\n...\\n\\n**QUÉ DEBES APORTAR (además del Perfil Estratégico)**\\n...\\n\\n**PROMPT PARA CLAUDE**\\n```\\n...\\n```",
-  "inputs_minimos": ["item1", "item2"],
-  "inputs_puntuacion_completa": ["item1", "item2"],
-  "documentos_requeridos": ["doc1", "doc2"],
-  "prompt_texto": "Texto literal del prompt que va dentro del bloque de código"
-}
+Devuelve ÚNICAMENTE el texto markdown de este bloque, sin texto antes ni después, sin ningún bloque de código externo que envuelva todo el contenido. No devuelvas JSON.
 
-Reglas del campo "markdown":
-- Usa exactamente los tres sub-apartados: QUÉ BUSCA EL EVALUADOR, QUÉ DEBES APORTAR (además del Perfil Estratégico), PROMPT PARA CLAUDE.
-- En "QUÉ DEBES APORTAR": indica solo documentación ADICIONAL al PEE. Empieza con "El Perfil Estratégico de Empresa (Ruta i40) ya cubre [lista de lo que el PEE aporta para este apartado]. Necesitas además:" seguido de los documentos específicos del proyecto.
-- El bloque de código del prompt debe estar listo para pegar en Claude: en segunda persona, pidiendo al consultor que adjunte los documentos adicionales y el PEE, con instrucciones precisas para maximizar la puntuación del baremo.
-- Escapa los saltos de línea como \\n dentro del valor JSON.
+Usa exactamente esta estructura con estos cinco sub-apartados en este orden:
 
-Reglas de los campos de array:
-- "inputs_minimos": lo mínimo para redactar algo con sentido (puede ser solo el PEE para algunos apartados).
-- "inputs_puntuacion_completa": todo lo necesario para la puntuación máxima.
-- "documentos_requeridos": documentación ADICIONAL al PEE que el consultor debe conseguir del cliente.
-- "prompt_texto": el texto exacto del prompt (sin los backticks del bloque de código markdown)."""
+### Sección [codigo]: [nombre] — [X puntos / Criterio excluyente]
+
+**QUÉ BUSCA EL EVALUADOR**
+[Criterios de baremo que se puntúan en este apartado, con el peso exacto si figura en las bases. Si es criterio excluyente: condición que debe cumplirse para que la solicitud sea admitida. Si no hay baremo especificado: "Baremo no especificado en las bases; redactar con máximo detalle y evidencias documentales."]
+
+**QUÉ DEBES APORTAR (además del Perfil Estratégico)**
+El Perfil Estratégico de Empresa (Ruta i40) ya cubre: [lista de lo que el PEE aporta para este apartado]. Necesitas además:
+- [documentación adicional específica del proyecto, concreta y accionable]
+
+**INPUTS MÍNIMOS**
+- [Lo mínimo para redactar algo con sentido. Si solo hace falta el PEE: "Perfil Estratégico de Empresa (Ruta i40)".]
+
+**INPUTS PARA PUNTUACIÓN COMPLETA**
+- [Todo lo necesario para la puntuación máxima: PEE + cada documento adicional.]
+
+**PROMPT PARA CLAUDE**
+```
+[Texto completo del prompt que el consultor copiará en Claude. Escrito en segunda persona. Debe: (1) indicar el nombre exacto del apartado y su peso en el baremo; (2) pedir que adjunte el PEE y los documentos adicionales indicados; (3) dar instrucciones precisas de qué redactar, con qué extensión y qué argumentos maximizan la puntuación según el baremo; (4) indicar que si falta información Claude debe señalarlo en lugar de inventar datos.]
+```"""
 
 
 OUTPUT_4_JSON_CONVERTER = """Convierte el texto markdown de un set de prompts para memoria en un array JSON estructurado.
@@ -120,36 +123,19 @@ Esquema de cada elemento:
 - "vigencia": requisito de fecha/vigencia si lo hay, o null."""
 
 
-OUTPUT_4_JSON_EXTRACTOR = """Eres un extractor de datos estructurados. Recibes el texto markdown completo de un «Set de prompts para la memoria» generado por ConvoKit y debes devolver ÚNICAMENTE un array JSON válido, sin texto antes ni después, sin bloques de código markdown.
+OUTPUT_4_JSON_EXTRACTOR = """Eres un extractor de datos JSON. Recibirás un documento markdown con un set de prompts para redactar memorias de ayudas públicas. Por cada sección del documento, extrae estos campos y devuelve ÚNICAMENTE un array JSON válido, sin texto adicional, sin bloques de código markdown, sin explicaciones:
 
-Cada elemento del array corresponde a un apartado de la memoria identificado por su encabezado (### Sección [codigo]: [nombre]).
-
-Esquema de cada elemento:
-{
-  "codigo": "II.C",
-  "nombre": "Nombre exacto del apartado",
-  "puntos_max": 40,
-  "inputs_minimos": ["item1", "item2"],
-  "inputs_puntuacion_completa": ["item1", "item2"],
-  "documentos_requeridos": [
-    {"nombre": "Proforma de proveedor", "fuente": "proyecto"},
-    {"nombre": "Perfil estratégico de empresa", "fuente": "perfil_estrategico"}
-  ],
-  "prompt": "Texto completo del prompt que aparece dentro del bloque de código ```"
-}
-
-Reglas de extracción:
-- "codigo" y "nombre": extraídos del encabezado "### Sección [codigo]: [nombre]".
-- "puntos_max": si el encabezado o el texto menciona puntuación máxima, extráela como número entero; si no consta, usa null.
-- "inputs_minimos": lista de ítems bajo el sub-apartado "QUÉ DEBES APORTAR" marcados como mínimo, o bien el conjunto mínimo razonable que se deduzca del texto. Si solo se necesita el Perfil Estratégico, incluye "Perfil Estratégico de Empresa (Ruta i40)".
-- "inputs_puntuacion_completa": todos los documentos necesarios para la puntuación máxima, incluyendo los del PEE y los adicionales.
-- "documentos_requeridos": array de objetos con "nombre" y "fuente". El campo "fuente" puede ser:
-    - "perfil_estrategico": el documento lo aporta automáticamente el Perfil Estratégico de Empresa (Ruta i40); no hay que pedírselo al cliente.
-    - "proyecto": el consultor debe obtenerlo del cliente (es específico del proyecto).
-  Cualquier documento mencionado en el texto "El Perfil Estratégico de Empresa (Ruta i40) ya cubre [...]" tiene fuente "perfil_estrategico". El resto, fuente "proyecto".
-- "prompt": texto literal dentro del bloque de código ``` del sub-apartado "PROMPT PARA CLAUDE", sin los backticks.
-- Si un campo no puede extraerse con certeza, usa null para escalares y [] para arrays.
-- Extrae TODOS los apartados del markdown, en el mismo orden en que aparecen."""
+- codigo: string con el código de la sección (ej: 'II.C')
+- nombre: string con el nombre exacto del apartado
+- puntos_max: número entero o null si es excluyente sin puntuación
+- inputs_minimos: array de strings con los inputs mínimos para redactar
+- inputs_puntuacion_completa: array de strings con los inputs para puntuación máxima
+- documentos_requeridos: array de objetos con esta estructura exacta:
+  {
+    "nombre": string con el nombre del documento,
+    "fuente": "perfil_estrategico" si viene del Perfil Estratégico de Empresa de Ruta i40, o "proyecto" si es documentación adicional específica del proyecto
+  }
+- prompt: string con el texto completo del prompt para Claude que aparece en el bloque de código de esa sección (el texto entre las comillas triples o bloques de código). Si no hay prompt explícito, string vacío."""
 
 
 SYSTEM_PROMPTS: dict[int, str] = {

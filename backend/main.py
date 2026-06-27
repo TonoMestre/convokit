@@ -213,10 +213,11 @@ def _generate_output_6(
 ) -> str:
     """
     Generación de la salida 6 (evaluador HTML interactivo).
-    Paso 1: Claude extrae JSON de config de los documentos.
-    Paso 2: Python construye el HTML desde la plantilla estática.
+    Claude recibe el template completo en el system prompt y devuelve el HTML
+    con los placeholders {{CONFIG_JSON}} y {{TITULO_EVALUADOR}} rellenados.
+    No hay paso intermedio de extracción JSON.
     """
-    model = model or pricing.MODEL_PER_OUTPUT.get(6, pricing.MODELS["haiku"])
+    model = model or pricing.MODEL_PER_OUTPUT.get(6, pricing.MODELS["sonnet"])
 
     instr_block = (
         f"\n\nINSTRUCCIÓN ADICIONAL DEL USUARIO:\n{instrucciones.strip()}"
@@ -225,10 +226,10 @@ def _generate_output_6(
     user_msg = (
         f"Documentos de la convocatoria '{conv_name}':\n\n{context}"
         + instr_block
-        + "\n\nGenera el objeto JSON de configuración del evaluador siguiendo exactamente el esquema del system prompt."
+        + "\n\nGenera el evaluador HTML completo siguiendo las instrucciones del system prompt."
     )
 
-    raw_config = _claude(
+    raw = _claude(
         client,
         system=p.OUTPUT_6_CONFIG_PROMPT,
         user=user_msg,
@@ -237,15 +238,13 @@ def _generate_output_6(
         _track=_track,
     )
 
-    try:
-        config = _parse_json(raw_config)
-    except Exception:
+    html = _strip_fences(raw)
+    if not html.strip().lower().startswith("<!doctype html"):
         raise HTTPException(
             status_code=502,
-            detail="No se pudo generar la configuración del evaluador. Comprueba que los documentos contienen los criterios de la convocatoria.",
+            detail="El evaluador no se generó correctamente. Por favor, regenera la salida.",
         )
-
-    return output6_template.build_output_6_html(config)
+    return html
 
 
 # ---------------------------------------------------------------------------

@@ -17,6 +17,8 @@ sector o afirmación debe salir literalmente de los documentos de la convocatori
 Si un dato no está en el documento, se omite o se indica explícitamente que no consta.
 """
 
+from output6_template import _TEMPLATE as _HTML_TEMPLATE  # noqa: E402
+
 # Tokens máximos por tipo de salida (CLAUDE.md, sección max_tokens).
 MAX_TOKENS: dict[int, int] = {
     1: 8192,
@@ -24,7 +26,7 @@ MAX_TOKENS: dict[int, int] = {
     3: 4096,
     4: 8192,
     5: 4096,
-    6: 6000,
+    6: 7000,
 }
 
 # ---------------------------------------------------------------------------
@@ -32,7 +34,12 @@ MAX_TOKENS: dict[int, int] = {
 # No son salidas finales: los usa internamente el endpoint /generate.
 # ---------------------------------------------------------------------------
 
-OUTPUT_6_CONFIG_PROMPT = """Analiza los documentos oficiales de una convocatoria de ayudas públicas y genera el objeto JSON de configuración para el evaluador interactivo de encaje.
+OUTPUT_6_CONFIG_PROMPT = """Responde ÚNICAMENTE con código HTML completo. No escribas texto antes ni después del HTML. El output debe empezar con <!DOCTYPE html> y terminar con </html>. Cualquier otra cosa es un error.
+
+Tu tarea: analiza los documentos de la convocatoria de ayudas públicas, extrae los datos del evaluador según el esquema JSON que se describe más abajo, y rellena los dos placeholders del template HTML que aparece al final de este prompt:
+- {{CONFIG_JSON}} → sustitúyelo por el objeto JSON de configuración extraído de los documentos.
+- {{TITULO_EVALUADOR}} → sustitúyelo por el título del evaluador (ej: "Evaluador INPYME 2026").
+Copia el resto del template EXACTAMENTE como aparece. No modifiques el CSS, el JavaScript ni ningún otro elemento HTML fuera de los dos placeholders. No cambies ni simpliques los handlers onclick ni ninguna otra función JavaScript.
 
 REGLA ABSOLUTA — NO INVENCIÓN:
 Solo puedes incluir datos que figuren literalmente en los documentos aportados: importes, porcentajes, criterios de baremo, requisitos de elegibilidad, sectores, tamaños de empresa. Si un dato no consta en los documentos, omítelo. Prohibido estimar, inferir o completar con conocimiento general.
@@ -40,9 +47,7 @@ Solo puedes incluir datos que figuren literalmente en los documentos aportados: 
 JERARQUÍA DE FUENTES:
 La convocatoria del ejercicio prevalece sobre las bases reguladoras. Si un dato aparece en ambas y son distintos, usa el de la convocatoria.
 
-Devuelve ÚNICAMENTE el objeto JSON, sin bloques de código markdown, sin texto antes ni después.
-
-ESQUEMA EXACTO (respeta todos los campos y tipos):
+ESQUEMA EXACTO DEL OBJETO JSON para {{CONFIG_JSON}} (respeta todos los campos y tipos):
 
 {
   "titulo_corto": "Nombre corto de la convocatoria, ej: INPYME 2026",
@@ -139,7 +144,11 @@ textos:
 - "nota_fuente": citar el nombre oficial de la convocatoria y el organismo tal como aparecen en los documentos.
 - REGLA DE TÍTULO: si las instrucciones adicionales del consultor especifican un nombre concreto para el evaluador (ej: "DIGITALIZA-CV 2027 basado en datos de la convocatoria 2025"), usar ese nombre exacto en "titulo_evaluador" y en "titulo_corto". Si no se especifica ningún nombre, usar el nombre oficial de la convocatoria extraído de los documentos.
 
-IMPORTANTE: Devuelve ÚNICAMENTE el objeto JSON. Sin texto antes ni después. Sin bloques de código markdown."""
+RECUERDA: el objeto JSON que extraigas va en el placeholder {{CONFIG_JSON}} del template HTML que aparece a continuación. Devuelve el HTML COMPLETO, no solo el JSON.
+
+--- TEMPLATE HTML (copia y rellena los dos placeholders, no modifiques nada más) ---
+
+""" + _HTML_TEMPLATE  # noqa: E501 — template injected at module load
 
 
 SECTION_EXTRACTOR_PROMPT = """Analiza la plantilla de memoria y las bases reguladoras de la convocatoria.

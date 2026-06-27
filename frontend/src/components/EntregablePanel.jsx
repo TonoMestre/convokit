@@ -330,9 +330,12 @@ function EntregableItem({
         <div className="px-5 py-5" style={{ borderTop: "1px solid var(--color-navy-20)" }}>
           {salida.isHtml ? (
             <div className="space-y-3">
-              <p className="text-sm text-gray-600">
-                Archivo HTML listo. Usa los botones para descargarlo o abrirlo en el navegador.
-              </p>
+              <iframe
+                srcDoc={texto}
+                title="Evaluador de encaje"
+                style={{ width: "100%", height: "680px", border: "1px solid #e5e7eb" }}
+                sandbox="allow-scripts allow-forms allow-same-origin"
+              />
               <div className="flex gap-2 flex-wrap">
                 <button
                   onClick={handleDownload}

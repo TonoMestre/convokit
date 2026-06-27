@@ -107,6 +107,24 @@ def _parse_json(text: str) -> object:
     return json.loads(_strip_fences(text))
 
 
+def _instr_block(instrucciones: str) -> str:
+    """
+    Devuelve el bloque de instrucción del usuario, con rango de prioridad explícita.
+    Debe colocarse SIEMPRE al final del prompt (máxima recencia): si va antes del
+    volcado de documentos, el contexto lo entierra y el modelo lo ignora.
+    """
+    text = (instrucciones or "").strip()
+    if not text:
+        return ""
+    return (
+        "\n\n=== INSTRUCCIÓN PRIORITARIA DEL USUARIO ===\n"
+        f"{text}\n"
+        "Esta instrucción es OBLIGATORIA y tiene PRIORIDAD sobre cualquier indicación "
+        "anterior del system prompt y sobre los datos de los documentos si hay conflicto. "
+        "Aplícala literalmente en el resultado."
+    )
+
+
 # ---------------------------------------------------------------------------
 # Context slicing para salida 4 (reduce tokens por sección)
 # ---------------------------------------------------------------------------
@@ -172,10 +190,7 @@ def _generate_output_1(
         _track=_track,
     )
 
-    instr_block = (
-        f"\n\nINSTRUCCIÓN ADICIONAL DEL USUARIO:\n{instrucciones.strip()}"
-        if instrucciones.strip() else ""
-    )
+    instr_block = _instr_block(instrucciones)
     user_2 = (
         f"Documentos de la convocatoria '{conv_name}':\n\n{context}\n\n"
         f"---\n\n"
@@ -251,14 +266,10 @@ def _generate_output_6(
     """
     model = model or pricing.MODEL_PER_OUTPUT.get(6, pricing.MODELS["sonnet"])
 
-    instr_block = (
-        f"\n\nINSTRUCCIÓN ADICIONAL DEL USUARIO:\n{instrucciones.strip()}"
-        if instrucciones.strip() else ""
-    )
     user_msg = (
         f"Documentos de la convocatoria '{conv_name}':\n\n{context}"
-        + instr_block
         + "\n\nExtrae el objeto JSON de configuración del evaluador siguiendo las instrucciones del system prompt."
+        + _instr_block(instrucciones)
     )
 
     raw = _claude(
@@ -365,8 +376,7 @@ def _generate_output_4(
             f"habilitante: {seccion.get('es_habilitante', False)})\n\n"
             f"Documentos de la convocatoria:\n{section_context}"
         )
-        if instrucciones.strip():
-            user_msg += f"\n\nINSTRUCCIÓN ADICIONAL DEL USUARIO:\n{instrucciones.strip()}"
+        user_msg += _instr_block(instrucciones)
 
         raw_section = _claude(
             client,
@@ -439,10 +449,10 @@ def _build_user_prompt(
     instrucciones: str = "",
     modo: str = "ABIERTA",
 ) -> str:
-    instr_block = (
-        f"\nINSTRUCCIÓN ADICIONAL DEL USUARIO:\n{instrucciones.strip()}"
-        if instrucciones.strip() else ""
-    )
+    # La instrucción del usuario se coloca SIEMPRE al final del prompt (máxima
+    # recencia). Si se coloca antes del bloque de documentos, el volcado de
+    # contexto la entierra y el modelo la ignora.
+    instr_block = _instr_block(instrucciones)
     if output_type == 3:
         modo_label = (modo or "ABIERTA").upper()
         if modo_label == "ANTICIPADA":
@@ -460,16 +470,16 @@ def _build_user_prompt(
                 "Usa los datos confirmados de los documentos aportados: importes, porcentajes, plazos, presupuesto total."
             )
         return (
-            f"{modo_block}"
-            f"{instr_block}\n\n"
+            f"{modo_block}\n\n"
             f"Documentos de la convocatoria '{conv_name}':\n\n{context}\n\n"
             f"Genera la landing page siguiendo las instrucciones del system prompt."
+            f"{instr_block}"
         )
     else:
         return (
-            f"A continuación tienes los documentos de la convocatoria procesados:\n\n{context}"
-            f"{instr_block}\n\n"
+            f"A continuación tienes los documentos de la convocatoria procesados:\n\n{context}\n\n"
             f"Genera el entregable siguiendo las instrucciones del system prompt."
+            f"{instr_block}"
         )
 
 
@@ -994,8 +1004,7 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
                             f"habilitante: {seccion.get('es_habilitante', False)})\n\n"
                             f"Documentos de la convocatoria:\n{section_context}"
                         )
-                        if instrucciones.strip():
-                            user_msg += f"\n\nINSTRUCCIÓN ADICIONAL DEL USUARIO:\n{instrucciones.strip()}"
+                        user_msg += _instr_block(instrucciones)
                         raw_section = _claude(
                             client, system=p.SECTION_PROMPT_SYSTEM, user=user_msg,
                             max_tokens=4096, model=model, _track=track,

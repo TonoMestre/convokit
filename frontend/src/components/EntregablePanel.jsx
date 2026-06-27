@@ -174,9 +174,8 @@ function parseSeo(seoRaw) {
 }
 
 const VARIANT_OPTIONS = [
-  { value: "A", label: "Variante A", hint: "Alterna crema y blanco; hero navy" },
-  { value: "B", label: "Variante B", hint: "Hero en crema; importe en navy" },
-  { value: "C", label: "Variante C", hint: "Hero a un lado; más bloques navy" },
+  { value: "A", label: "Variante A", hint: "Hero navy, secciones alternas crema y blanco" },
+  { value: "B", label: "Variante B", hint: "Hero crema, importe en navy" },
 ];
 
 function VariantSelector({ seoRaw, convocatoriaId }) {

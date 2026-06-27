@@ -58,14 +58,48 @@
   .seccion { padding: 60px 0; }
   .wrap { max-width: 920px; margin: 0 auto; padding: 0 24px; }
 
-  /* ── Roles de fondo (los inyecta el backend por variante) ── */
-  .bg-white { background: var(--white); color: var(--navy); }
-  .bg-cream { background: var(--cream); color: var(--navy); }
-  .bg-navy  { background: var(--navy);  color: var(--white); }
-  .bg-navy h1, .bg-navy h2, .bg-navy h3 { color: var(--white); }
-  .bg-navy p, .bg-navy li { color: rgba(255,255,255,0.9); }
-  .bg-navy .bloque-titulo::after { background: var(--red); }
-  .bg-navy .lista li::before { background: var(--red); }
+  /* ── Variantes (solo background-color por sección; layout/spacing intactos) ── */
+
+  /* Variante A: 1=navy, 2=blanco, 3=crema, 4=blanco, 5=crema, 6=blanco, 7=navy, 8=crema */
+  .variante-a .seccion-3,
+  .variante-a .seccion-5,
+  .variante-a .seccion-8 { background: var(--cream); }
+
+  .variante-a .seccion-1,
+  .variante-a .seccion-7 { background: var(--navy); }
+
+  /* Variante B: 1=crema, 2=blanco, 3=blanco, 4=crema, 5=navy, 6=blanco, 7=navy, 8=crema */
+  .variante-b .seccion-1,
+  .variante-b .seccion-4,
+  .variante-b .seccion-8 { background: var(--cream); }
+
+  .variante-b .seccion-5,
+  .variante-b .seccion-7 { background: var(--navy); }
+
+  /* Texto en secciones navy */
+  .variante-a .seccion-1,
+  .variante-a .seccion-7,
+  .variante-b .seccion-5,
+  .variante-b .seccion-7 { color: var(--white); }
+
+  .variante-a .seccion-1 h1, .variante-a .seccion-1 h2, .variante-a .seccion-1 h3,
+  .variante-a .seccion-7 h1, .variante-a .seccion-7 h2, .variante-a .seccion-7 h3,
+  .variante-b .seccion-5 h1, .variante-b .seccion-5 h2, .variante-b .seccion-5 h3,
+  .variante-b .seccion-7 h1, .variante-b .seccion-7 h2, .variante-b .seccion-7 h3 { color: var(--white); }
+
+  .variante-a .seccion-1 p, .variante-a .seccion-1 li,
+  .variante-a .seccion-7 p, .variante-a .seccion-7 li,
+  .variante-b .seccion-5 p, .variante-b .seccion-5 li,
+  .variante-b .seccion-7 p, .variante-b .seccion-7 li { color: rgba(255,255,255,0.9); }
+
+  .variante-a .seccion-1 .btn-outline, .variante-a .seccion-7 .btn-outline,
+  .variante-b .seccion-5 .btn-outline, .variante-b .seccion-7 .btn-outline { color: var(--white); border-color: rgba(255,255,255,0.6); }
+
+  .variante-a .seccion-1 .btn-outline:hover, .variante-a .seccion-7 .btn-outline:hover,
+  .variante-b .seccion-5 .btn-outline:hover, .variante-b .seccion-7 .btn-outline:hover { background: var(--white); color: var(--navy); }
+
+  /* Destacado dentro de sección navy (B-seccion-5): aclara para mantener contraste */
+  .variante-b .seccion-5 .destacado { background: rgba(255,255,255,0.10); }
 
   /* ── Tipografía ── */
   h1, h2, h3 { font-family: 'Roboto Slab', serif; font-weight: 700; color: var(--navy); line-height: 1.15; }
@@ -97,12 +131,6 @@
   .hero h1 { font-size: 3.2rem; margin-bottom: 16px; max-width: 840px; margin-left: auto; margin-right: auto; }
   .hero .hero-sub { font-size: 1.2rem; font-weight: 500; margin-bottom: 18px; max-width: 720px; margin-left: auto; margin-right: auto; }
   .hero .hero-body { font-size: 1rem; opacity: 0.85; margin-bottom: 32px; max-width: 640px; margin-left: auto; margin-right: auto; }
-  /* Variante C: hero alineado a un lado, no centrado */
-  .variante-c .hero { text-align: left; }
-  .variante-c .hero h1,
-  .variante-c .hero .hero-sub,
-  .variante-c .hero .hero-body { margin-left: 0; }
-
   /* ── Listas ── */
   .lista { list-style: none; max-width: 760px; }
   .lista li {
@@ -149,8 +177,6 @@
     margin-bottom: 6px;
   }
   .destacado .destacado-detalle { font-size: 0.95rem; color: rgba(255,255,255,0.85); }
-  /* Si el bloque del importe es navy (B5), la caja se aclara para no fundirse */
-  .bg-navy .destacado { background: rgba(255,255,255,0.10); }
 
   /* ── Botones ── */
   .btn {
@@ -241,14 +267,14 @@
   }
 </style>
 </head>
-<body>
+<body class="{{VARIANT_CLASS}}">
 
 <header class="site-header">
   <img src="{{LOGO_SRC}}" alt="Innóvate 4.0" />
   <a class="header-cta" href="#contacto">Quiero que revisen mi caso</a>
 </header>
 
-<div class="landing {{VARIANT_CLASS}}">
+<div class="landing">
 {{LANDING_BODY}}
 </div>
 

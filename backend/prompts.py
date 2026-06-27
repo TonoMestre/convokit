@@ -647,11 +647,14 @@ REGLAS ESTRUCTURALES IMPORTANTES:
 
 Estructura HTML obligatoria (los 8 bloques, en este orden):
 
-1. HERO. El H1 es el NOMBRE BASE sin año; el gancho es el porcentaje/importe:
+1. HERO. El H1 es el NOMBRE BASE sin año; el gancho es el porcentaje/importe.
+   REGLA ESTRUCTURAL: el H1 (nombre) y el subtítulo (descriptor) son siempre dos elementos
+   HTML independientes. Nunca los unas en el mismo elemento ni los separes con guión u otro
+   separador tipográfico. El subtítulo va en su propio <p class="hero-sub"> debajo del H1:
 <section class="seccion seccion-1 hero">
   <p class="hero-gancho">Hasta el 40% a fondo perdido</p>
   <h1>Nombre base de la convocatoria, sin año</h1>
-  <p class="hero-sub">Subtítulo: a quién va dirigida en una frase</p>
+  <p class="hero-sub">Una frase que describe a quién va dirigida la ayuda</p>
   <a class="btn btn-cta" href="#contacto">Quiero saber si puedo solicitarla</a>
 </section>
 

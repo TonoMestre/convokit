@@ -246,8 +246,20 @@ def _generate_output_6(
             detail="El evaluador no se generó correctamente. Por favor, regenera la salida.",
         )
 
-    # Escape </ inside <script> blocks: JSON values can contain </script> or
-    # other </ sequences that would prematurely close the inline script tag.
+    # Claude may modify the JavaScript onclick handlers (e.g. changing this.dataset
+    # to string concatenation with wrong quoting), causing a SyntaxError that leaves
+    # the page blank. Fix: extract the CFG JSON Claude filled in, then rebuild the
+    # HTML using the known-good Python template which has correct onclick handlers.
+    cfg_match = re.search(r'const\s+CFG\s*=\s*(\{.*?\})\s*;', html, re.DOTALL)
+    if cfg_match:
+        try:
+            config = json.loads(cfg_match.group(1))
+            return output6_template.build_output_6_html(config)
+        except Exception:
+            pass  # fall through to the raw HTML path below
+
+    # Fallback: return Claude's HTML but escape </ inside script blocks to prevent
+    # premature </script> tag closure from JSON values.
     def _escape_script_content(m: re.Match) -> str:
         return m.group(1) + m.group(2).replace("</", "<\\/") + m.group(3)
     html = re.sub(

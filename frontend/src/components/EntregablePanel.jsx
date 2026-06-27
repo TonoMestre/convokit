@@ -513,7 +513,7 @@ export default function EntregablePanel({ convocatoria, onUpdate: _onUpdate }) {
               const salStatus = outputStatuses[String(s.num)];
               return (
                 <EntregableItem
-                  key={s.num}
+                  key={`${convocatoria.id}-${s.num}`}
                   salida={s}
                   texto={entregables[String(s.num)]}
                   instruccionPrevia={entregables[`${s.num}_instruccion`] || ""}

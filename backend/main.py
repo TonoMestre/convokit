@@ -4,6 +4,7 @@ ConvoKit backend — FastAPI application entry point.
 
 import json
 import os
+import re
 import threading
 import time
 from contextlib import asynccontextmanager
@@ -244,6 +245,17 @@ def _generate_output_6(
             status_code=502,
             detail="El evaluador no se generó correctamente. Por favor, regenera la salida.",
         )
+
+    # Escape </ inside <script> blocks: JSON values can contain </script> or
+    # other </ sequences that would prematurely close the inline script tag.
+    def _escape_script_content(m: re.Match) -> str:
+        return m.group(1) + m.group(2).replace("</", "<\\/") + m.group(3)
+    html = re.sub(
+        r'(<script[^>]*>)(.*?)(</script>)',
+        _escape_script_content,
+        html,
+        flags=re.DOTALL | re.IGNORECASE,
+    )
     return html
 
 

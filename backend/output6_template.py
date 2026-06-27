@@ -852,9 +852,27 @@ document.addEventListener("DOMContentLoaded", function() {
 </html>"""
 
 
+def _load_logo_b64() -> str:
+    """Returns the logo-negativo.png as a base64 data URI, or empty string if not found."""
+    import base64
+    import pathlib
+    candidates = [
+        pathlib.Path(__file__).parent.parent / "frontend" / "public" / "logo-negativo.png",
+        pathlib.Path(__file__).parent / "logo-negativo.png",
+    ]
+    for p in candidates:
+        if p.exists():
+            return "data:image/png;base64," + base64.b64encode(p.read_bytes()).decode()
+    return ""
+
+
 def build_output_6_html(config: dict) -> str:
     titulo = config.get("textos", {}).get("titulo_evaluador", "Evaluador de encaje")
     config_json = json.dumps(config, ensure_ascii=False, indent=2)
+    # Prevent </script> inside JSON from closing the inline script tag prematurely.
+    config_json = config_json.replace("</", "<\\/")
+    logo_src = _load_logo_b64() or "/logo-negativo.png"
     html = _TEMPLATE.replace("{{CONFIG_JSON}}", config_json)
     html = html.replace("{{TITULO_EVALUADOR}}", titulo)
+    html = html.replace('src="/logo-negativo.png"', f'src="{logo_src}"')
     return html

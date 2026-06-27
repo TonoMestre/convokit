@@ -33,28 +33,26 @@ MAX_TOKENS: dict[int, int] = {
 
 SECTION_EXTRACTOR_PROMPT = """Analiza la plantilla de memoria y las bases reguladoras de la convocatoria.
 
-Tu tarea es identificar qué apartados de la memoria requieren una llamada de generación de prompt, siguiendo este criterio:
+Tu tarea es listar todos los apartados de la memoria que requieren que el solicitante redacte o cumplimente contenido.
 
-INCLUIR un apartado si y solo si los documentos (bases reguladoras, convocatoria del ejercicio, plantilla de memoria) contienen para ese apartado:
-- Criterios de baremo específicos: puntos asignados, umbrales, subcriterios evaluables, O
-- Instrucciones de redacción concretas que orienten el contenido a redactar.
+CRITERIO DE INCLUSIÓN: incluir un apartado si la plantilla oficial de memoria lo presenta como un campo o sección a cumplimentar por el solicitante. No importa si tiene baremo propio o no — si la plantilla lo pide, se incluye.
 
-NO INCLUIR un apartado si:
-- Es un agrupador o contenedor de otros sub-apartados sin criterios evaluables propios.
-- Es portada, índice, declaraciones responsables, firmas o datos de identificación formal.
-- Es una acreditación de cumplimiento (sí/no) sin redacción valorada.
+NO INCLUIR únicamente:
+- Portada, índice y elementos puramente formales o de identificación sin redacción.
+- Apartados de firma, declaraciones responsables tipo checkbox o casilla de verificación.
+- Secciones de instrucciones al solicitante sin campo de respuesta.
 
-Este criterio es genérico: funciona para cualquier convocatoria. No hardcodees nombres ni tipos de sección.
+Este criterio es genérico y funciona para cualquier convocatoria. No hardcodees nombres ni tipos de sección.
 
-JERARQUÍA DE FUENTES: solo incluye apartados con criterios que aparezcan en la convocatoria del ejercicio o que la convocatoria valide expresamente desde las bases. Las bases son marco; la convocatoria es la fuente de verdad para ese ejercicio.
+JERARQUÍA DE FUENTES: la convocatoria del ejercicio prevalece sobre las bases para puntuaciones, pesos y criterios. Si un apartado aparece en la plantilla pero la convocatoria no especifica su baremo, inclúyelo igualmente (puntos_max: null).
 
 Devuelve ÚNICAMENTE un objeto JSON válido, sin texto antes ni después, sin bloques de código markdown. Formato exacto:
 {"secciones": [{"codigo": "I", "nombre": "Nombre del apartado", "puntos_max": 30, "es_habilitante": false}]}
 
 Reglas de campo:
-- "codigo": identificador según las bases (ej. "I", "II.A", "III.B"). Si no hay código explícito, usa "1", "2", etc.
-- "nombre": nombre exacto según las bases o la plantilla.
-- "puntos_max": puntuación máxima como número entero, o null si no consta o es criterio excluyente.
+- "codigo": identificador según la plantilla o las bases (ej. "I", "II.A", "III.B"). Si no hay código explícito, usa "1", "2", etc.
+- "nombre": nombre exacto según la plantilla o las bases.
+- "puntos_max": puntuación máxima como número entero extraída de las bases, o null si no consta.
 - "es_habilitante": true si es requisito de admisión que excluye sin puntuar."""
 
 
@@ -75,6 +73,9 @@ CONTEXTO — EL PERFIL ESTRATÉGICO DE EMPRESA (PEE):
 En la App de Memorias, el Perfil Estratégico de Empresa (documento de Ruta i40) está siempre disponible como fuente principal. Cubre automáticamente: historia y trayectoria, actividad y productos/servicios, datos económicos (facturación, plantilla, CNAE), estructura accionarial, mercados y experiencia en proyectos anteriores. El consultor NO necesita aportar esta información.
 
 Lo que SÍ requiere aportación adicional del consultor son los datos específicos del proyecto que el PEE no cubre: presupuesto de la inversión, fichas técnicas de activos, proformas de proveedores, planos, certificados, datos técnicos del proyecto, contratos, etc.
+
+REGLA DE GENERICIDAD DEL PROMPT:
+El texto de la INSTRUCCIÓN A CLAUDE (el bloque de código) debe funcionar para cualquier convocatoria que tenga ese tipo de apartado. No menciones el nombre ni el año de la convocatoria concreta dentro del bloque de código. Los criterios de baremo y pesos sí se incluyen (extraídos de los documentos), pero sin atribuirlos a una convocatoria específica: escríbelos como "el baremo asigna X puntos a..." en lugar de "según INPYME 2026...". El consultor ya sabe qué convocatoria está tramitando.
 
 FORMATO DE SALIDA:
 Devuelve ÚNICAMENTE el bloque markdown de esta sección. Sin texto antes ni después. Sin bloque de código externo que envuelva todo el contenido. No devuelvas JSON.

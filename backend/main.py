@@ -216,7 +216,7 @@ def _generate_output_4(
             client,
             system=p.SECTION_PROMPT_SYSTEM,
             user=user_msg,
-            max_tokens=2000,
+            max_tokens=4096,
             model=model,
             _track=_track,
         )
@@ -741,7 +741,7 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
                             user_msg += f"\n\nINSTRUCCIONES ADICIONALES DEL CONSULTOR: {instrucciones.strip()}"
                         raw_section = _claude(
                             client, system=p.SECTION_PROMPT_SYSTEM, user=user_msg,
-                            max_tokens=2000, model=model, _track=track,
+                            max_tokens=4096, model=model, _track=track,
                         )
                         markdown_parts.append(raw_section)
                         yield _evt({"tipo": "progreso_4", "actual": i + 1, "total": n})

@@ -489,7 +489,8 @@ function renderGrupo(groupIdx) {
     var optsHtml = preg.opciones.map(function(opt, opIdx) {
       var sel = (saved && saved.opIdx === opIdx) ? " selected" : "";
       return '<button class="opcion' + sel + '" id="bo-' + escHtml(preg.id) + '-' + opIdx + '" ' +
-        'onclick="onBaremoOpt(\'' + escHtml(preg.id) + '\',' + opIdx + ')" type="button">' +
+        'data-pregid="' + escHtml(preg.id) + '" data-opidx="' + opIdx + '" ' +
+        'onclick="onBaremoOpt(this.dataset.pregid,+this.dataset.opidx)" type="button">' +
         '<span class="opcion-radio"></span>' +
         '<span>' + escHtml(opt.label) + '</span>' +
         (opt.puntos !== undefined ? '<span class="puntos-badge">' + opt.puntos + ' pt</span>' : '') +
@@ -512,7 +513,7 @@ function renderGrupo(groupIdx) {
     pregsHtml +
     '<div class="form-error" id="e-grupo">Por favor, responde todas las preguntas de este bloque para continuar.</div>' +
     '<div class="step-nav">' + backBtn +
-    '<button class="btn btn-primary" onclick="onGrupoNext(\'' + escHtml(pregIds) + '\')">Continuar →</button>' +
+    '<button class="btn btn-primary" data-ids="' + escHtml(pregIds) + '" onclick="onGrupoNext(this.dataset.ids)">Continuar →</button>' +
     '</div>'
   );
 }

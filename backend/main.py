@@ -239,20 +239,23 @@ def _generate_output_6(
     )
     # Try strict parse first, then fall back to extracting the outermost { ... }
     config = None
+    parse_err = ""
     try:
         config = _parse_json(raw)
-    except Exception:
+    except Exception as e1:
+        parse_err = str(e1)
         match = re.search(r'\{.*\}', raw.strip(), re.DOTALL)
         if match:
             try:
                 config = json.loads(match.group(0))
-            except Exception:
-                pass
+            except Exception as e2:
+                parse_err = str(e2)
 
     if config is None:
+        tail = repr(raw[-150:]) if raw else "(vacío)"
         raise HTTPException(
             status_code=502,
-            detail="El evaluador no se generó correctamente (JSON inválido). Por favor, regenera la salida.",
+            detail=f"JSON inválido: {parse_err[:120]} | fin_respuesta: {tail}",
         )
 
     return output6_template.build_output_6_html(config)

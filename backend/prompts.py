@@ -171,15 +171,22 @@ REGLA DE USO:
 Esta regla aplica a todas las salidas sin excepción y tiene prioridad sobre cualquier otra instrucción del prompt."""
 
 _RULE_REFS_TEMPORALES = """REGLA DE REFERENCIAS TEMPORALES:
-En los entregables de cara al cliente, prohibido usar referencias temporales absolutas para hablar del servicio de Innóvate 4.0 o del horizonte de inversión del cliente. El modelo no sabe en qué fecha se ejecuta la generación, por lo que un año concreto puede ser incorrecto o engañoso.
+Esta regla aplica ÚNICAMENTE a las menciones del servicio de Innóvate 4.0 y del horizonte de inversión del cliente. NO aplica a las condiciones, plazos y beneficios de la propia convocatoria: esos se citan tal cual figuran en los documentos.
 
-Reglas concretas:
+Prohibido usar años concretos para referirse al servicio de Innóvate 4.0 o a la planificación de inversiones del cliente (el modelo no sabe en qué fecha se ejecuta la generación).
+
+Conversiones que aplican solo al servicio e inversión del cliente:
 - "este año" → "los próximos meses" o "en los próximos 12 meses"
 - "durante todo el año" → "a lo largo del año"
 - "inversiones previstas en 2026" → "inversiones previstas en los próximos meses"
 - "programa anual para 2026" → "programa de acompañamiento anual"
 
-Excepción: el nombre oficial de la convocatoria (ej. INPYME 2026, CDTI 2025) sí puede y debe citarse con el año porque es el nombre oficial extraído de las bases, no una referencia temporal creada por el modelo. Lo mismo para fechas de plazo de solicitud que vengan literalmente de las bases."""
+Lo que NO se convierte — citar tal cual de los documentos:
+- Plazos de solicitud, ejecución o justificación que consten en las bases.
+- Fechas de resolución o publicación que consten en las bases.
+- Condiciones de pago, anticipos o cobro de la ayuda. Si las bases describen cuándo está disponible el anticipo, se cita literalmente. Importante: el anticipo solo es posible tras la concesión de la ayuda, que tarda varios meses desde la presentación. Nunca describir el anticipo como disponible "en los próximos meses" desde la solicitud; eso es factualmente incorrecto.
+
+Excepción permanente: el nombre oficial de la convocatoria (ej. INPYME 2026, CDTI 2025) sí puede y debe citarse con el año porque es el nombre oficial extraído de los documentos."""
 
 
 OUTPUT_4_JSON_EXTRACTOR = """Eres un extractor de datos JSON. Recibirás un documento markdown con un set de prompts para redactar memorias de ayudas públicas. Cada sección tiene esta estructura:
@@ -274,6 +281,7 @@ REGLAS DE ESTILO (obligatorias):
 - Lenguaje accesible para un gerente de pyme no especializado en subvenciones. Sin tecnicismos.
 - Tono consultivo y cercano, nunca de marketing o de anuncio publicitario.
 - Sin anglicismos, sin adjetivos vacíos, sin urgencia. Frases cortas. Párrafos de máximo 3 líneas.
+- Prohibido incluir frases que describan límites del servicio o lo que Innóvate 4.0 no hace. Solo describir lo que sí hace. La ficha comercial describe el servicio en positivo y en términos de beneficio para el cliente. Nunca en negativo, nunca como disclaimer, nunca acotando el alcance. Frases como "no tramitamos por ti", "no sustituimos tu responsabilidad" o similares generan desconfianza y no deben aparecer.
 
 FORMATO (markdown limpio, sin frontmatter ni CSS):
 - H1: nombre de la convocatoria en lenguaje claro.
@@ -305,7 +313,7 @@ Incluye estas ideas, en este orden:
 - Qué diferencia una memoria que puntúa alto de una que no llega (sin revelar metodología).
 - Qué cubre el acompañamiento: desde el análisis hasta la presentación y, si procede, la justificación.
 
-No usar "gestionamos" ni "tramitamos". Usar "acompañamos", "preparamos", "analizamos".
+Usar "acompañamos", "preparamos", "analizamos". Evitar "gestionamos" y "tramitamos".
 
 ---
 

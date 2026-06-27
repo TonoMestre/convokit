@@ -3,10 +3,6 @@ ConvoKit — capa de persistencia SQLite.
 
 Toda la lógica de base de datos vive aquí. Los endpoints de FastAPI importan
 las funciones de este módulo; nunca escriben SQL directamente.
-
-El esquema está diseñado para migrar a Supabase en el futuro sin cambios en la
-lógica de negocio: mismos nombres de tabla y columna, mismo modelo relacional.
-La única diferencia será sustituir sqlite3 por el cliente de Supabase/PostgreSQL.
 """
 
 import json
@@ -15,23 +11,17 @@ import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 
-# Ruta del fichero SQLite. En Railway apunta al volumen montado para persistencia
-# real entre reinicios. En desarrollo local se crea en /backend por defecto.
 _DB_PATH = os.getenv("DB_PATH") or str(Path(__file__).parent / "convokit.db")
 
 
 def _get_connection() -> sqlite3.Connection:
-    """Abre y devuelve una conexión a SQLite con row_factory activada."""
     conn = sqlite3.connect(_DB_PATH)
-    conn.row_factory = sqlite3.Row  # permite acceder a columnas por nombre
+    conn.row_factory = sqlite3.Row
     return conn
 
 
 def init_db() -> None:
-    """
-    Crea la tabla 'convocatorias' si no existe.
-    Se llama al arrancar la aplicación (desde main.py).
-    """
+    """Crea todas las tablas si no existen. Se llama al arrancar la aplicación."""
     with _get_connection() as conn:
         conn.execute(
             """
@@ -44,18 +34,41 @@ def init_db() -> None:
             )
             """
         )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS api_calls (
+                id               INTEGER PRIMARY KEY AUTOINCREMENT,
+                convocatoria_id  INTEGER NOT NULL,
+                salida           TEXT    NOT NULL,
+                modelo           TEXT    NOT NULL,
+                input_tokens     INTEGER NOT NULL,
+                output_tokens    INTEGER NOT NULL,
+                coste_eur        REAL    NOT NULL,
+                timestamp        TEXT    NOT NULL DEFAULT (datetime('now'))
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS generation_jobs (
+                id               INTEGER PRIMARY KEY AUTOINCREMENT,
+                convocatoria_id  INTEGER NOT NULL,
+                salidas_json     TEXT    NOT NULL,
+                status           TEXT    NOT NULL DEFAULT 'queued',
+                progress_json    TEXT    NOT NULL DEFAULT '{}',
+                created_at       TEXT    NOT NULL DEFAULT (datetime('now')),
+                updated_at       TEXT    NOT NULL DEFAULT (datetime('now'))
+            )
+            """
+        )
         conn.commit()
 
 
 # ---------------------------------------------------------------------------
-# CRUD
+# Convocatorias
 # ---------------------------------------------------------------------------
 
 def create_convocatoria(nombre: str) -> int:
-    """
-    Crea una nueva convocatoria con el nombre dado.
-    Devuelve el id asignado por SQLite.
-    """
     fecha = datetime.now(timezone.utc).isoformat()
     with _get_connection() as conn:
         cursor = conn.execute(
@@ -67,32 +80,34 @@ def create_convocatoria(nombre: str) -> int:
 
 
 def get_convocatoria(convocatoria_id: int) -> dict | None:
-    """
-    Devuelve la convocatoria completa como dict, o None si no existe.
-    Los campos documentos_json y entregables_json se deserializan a Python.
-    """
     with _get_connection() as conn:
         row = conn.execute(
-            "SELECT * FROM convocatorias WHERE id = ?",
+            "SELECT * FROM convocatorias WHERE id = ?", (convocatoria_id,)
+        ).fetchone()
+        cost_row = conn.execute(
+            "SELECT COALESCE(SUM(coste_eur), 0) as total FROM api_calls WHERE convocatoria_id = ?",
             (convocatoria_id,),
         ).fetchone()
 
     if row is None:
         return None
 
-    return _row_to_dict(row)
+    data = _row_to_dict(row)
+    data["total_cost_eur"] = round(cost_row["total"], 6) if cost_row else 0.0
+    return data
 
 
 def list_convocatorias() -> list[dict]:
-    """
-    Lista todas las convocatorias ordenadas por fecha de creación descendente.
-    Devuelve id, nombre, fecha_creacion y la lista de claves de entregables
-    generados (para que el frontend sepa qué salidas tiene cada convocatoria
-    sin cargar todo el texto).
-    """
     with _get_connection() as conn:
         rows = conn.execute(
-            "SELECT id, nombre, fecha_creacion, entregables_json FROM convocatorias ORDER BY fecha_creacion DESC"
+            """
+            SELECT c.id, c.nombre, c.fecha_creacion, c.entregables_json,
+                   COALESCE(SUM(a.coste_eur), 0) AS total_cost_eur
+            FROM convocatorias c
+            LEFT JOIN api_calls a ON a.convocatoria_id = c.id
+            GROUP BY c.id
+            ORDER BY c.fecha_creacion DESC
+            """
         ).fetchall()
 
     result = []
@@ -104,17 +119,13 @@ def list_convocatorias() -> list[dict]:
                 "nombre": row["nombre"],
                 "fecha_creacion": row["fecha_creacion"],
                 "entregables_disponibles": list(entregables.keys()),
+                "total_cost_eur": round(row["total_cost_eur"], 6),
             }
         )
     return result
 
 
 def update_documentos(convocatoria_id: int, documentos: list[dict]) -> None:
-    """
-    Guarda el texto extraído de los documentos subidos.
-    'documentos' es una lista de dicts con al menos 'etiqueta' y 'texto'.
-    Reemplaza el valor previo por completo.
-    """
     with _get_connection() as conn:
         conn.execute(
             "UPDATE convocatorias SET documentos_json = ? WHERE id = ?",
@@ -124,23 +135,15 @@ def update_documentos(convocatoria_id: int, documentos: list[dict]) -> None:
 
 
 def update_entregables(convocatoria_id: int, entregables: dict) -> None:
-    """
-    Fusiona los entregables generados con los ya existentes.
-    'entregables' es un dict {numero_salida: texto_generado}, p.ej. {"1": "..."}
-    Se fusiona (no reemplaza) para no borrar salidas previas al regenerar una sola.
-    """
     with _get_connection() as conn:
         row = conn.execute(
             "SELECT entregables_json FROM convocatorias WHERE id = ?",
             (convocatoria_id,),
         ).fetchone()
-
         if row is None:
             return
-
         existing = json.loads(row["entregables_json"])
         existing.update(entregables)
-
         conn.execute(
             "UPDATE convocatorias SET entregables_json = ? WHERE id = ?",
             (json.dumps(existing, ensure_ascii=False), convocatoria_id),
@@ -149,17 +152,145 @@ def update_entregables(convocatoria_id: int, entregables: dict) -> None:
 
 
 def delete_convocatoria(convocatoria_id: int) -> bool:
-    """
-    Elimina una convocatoria y todos sus datos.
-    Devuelve True si se borró algo, False si el id no existía.
-    """
     with _get_connection() as conn:
         cursor = conn.execute(
-            "DELETE FROM convocatorias WHERE id = ?",
-            (convocatoria_id,),
+            "DELETE FROM convocatorias WHERE id = ?", (convocatoria_id,)
         )
         conn.commit()
         return cursor.rowcount > 0
+
+
+# ---------------------------------------------------------------------------
+# API calls — registro de uso y costes
+# ---------------------------------------------------------------------------
+
+def record_api_call(
+    convocatoria_id: int,
+    salida: str,
+    modelo: str,
+    input_tokens: int,
+    output_tokens: int,
+    coste_eur: float,
+) -> None:
+    ts = datetime.now(timezone.utc).isoformat()
+    with _get_connection() as conn:
+        conn.execute(
+            """
+            INSERT INTO api_calls
+                (convocatoria_id, salida, modelo, input_tokens, output_tokens, coste_eur, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (convocatoria_id, salida, modelo, input_tokens, output_tokens, coste_eur, ts),
+        )
+        conn.commit()
+
+
+def get_api_stats() -> dict:
+    """Devuelve estadísticas globales de uso de la API."""
+    with _get_connection() as conn:
+        total = conn.execute(
+            "SELECT COALESCE(SUM(coste_eur), 0) as total, COUNT(*) as calls FROM api_calls"
+        ).fetchone()
+        by_output = conn.execute(
+            """
+            SELECT salida, COALESCE(SUM(coste_eur), 0) as total_cost,
+                   COUNT(*) as calls, AVG(coste_eur) as avg_cost
+            FROM api_calls
+            GROUP BY salida ORDER BY salida
+            """
+        ).fetchall()
+        by_model = conn.execute(
+            """
+            SELECT modelo, COALESCE(SUM(coste_eur), 0) as total_cost, COUNT(*) as calls,
+                   SUM(input_tokens) as total_input, SUM(output_tokens) as total_output
+            FROM api_calls
+            GROUP BY modelo
+            """
+        ).fetchall()
+        n_convs = conn.execute("SELECT COUNT(*) as n FROM convocatorias").fetchone()
+
+    return {
+        "total_cost_eur": round(total["total"], 4),
+        "total_calls": total["calls"],
+        "total_convocatorias": n_convs["n"],
+        "by_output": [
+            {
+                "salida": r["salida"],
+                "total_cost_eur": round(r["total_cost"], 4),
+                "calls": r["calls"],
+                "avg_cost_eur": round(r["avg_cost"], 6),
+            }
+            for r in by_output
+        ],
+        "by_model": [
+            {
+                "modelo": r["modelo"],
+                "total_cost_eur": round(r["total_cost"], 4),
+                "calls": r["calls"],
+                "total_input_tokens": r["total_input"],
+                "total_output_tokens": r["total_output"],
+            }
+            for r in by_model
+        ],
+    }
+
+
+# ---------------------------------------------------------------------------
+# Jobs — cola de generación
+# ---------------------------------------------------------------------------
+
+def create_job(convocatoria_id: int, salidas: list[dict]) -> int:
+    progress = {"outputs": {str(s["output_type"]): {"status": "queued"} for s in salidas}}
+    with _get_connection() as conn:
+        cursor = conn.execute(
+            """
+            INSERT INTO generation_jobs (convocatoria_id, salidas_json, status, progress_json)
+            VALUES (?, ?, 'queued', ?)
+            """,
+            (
+                convocatoria_id,
+                json.dumps(salidas, ensure_ascii=False),
+                json.dumps(progress, ensure_ascii=False),
+            ),
+        )
+        conn.commit()
+        return cursor.lastrowid
+
+
+def get_job(job_id: int) -> dict | None:
+    with _get_connection() as conn:
+        row = conn.execute(
+            "SELECT * FROM generation_jobs WHERE id = ?", (job_id,)
+        ).fetchone()
+    if row is None:
+        return None
+    return {
+        "id": row["id"],
+        "convocatoria_id": row["convocatoria_id"],
+        "status": row["status"],
+        "progress": json.loads(row["progress_json"]),
+        "created_at": row["created_at"],
+        "updated_at": row["updated_at"],
+    }
+
+
+def update_job(job_id: int, status: str, progress: dict) -> None:
+    ts = datetime.now(timezone.utc).isoformat()
+    with _get_connection() as conn:
+        conn.execute(
+            "UPDATE generation_jobs SET status = ?, progress_json = ?, updated_at = ? WHERE id = ?",
+            (status, json.dumps(progress, ensure_ascii=False), ts, job_id),
+        )
+        conn.commit()
+
+
+def reset_stuck_jobs() -> None:
+    """Marca como 'error' los jobs que quedaron en running/queued tras un reinicio."""
+    with _get_connection() as conn:
+        conn.execute(
+            "UPDATE generation_jobs SET status = 'error' WHERE status IN ('running', 'queued')"
+        )
+        conn.commit()
 
 
 # ---------------------------------------------------------------------------
@@ -167,55 +298,7 @@ def delete_convocatoria(convocatoria_id: int) -> bool:
 # ---------------------------------------------------------------------------
 
 def _row_to_dict(row: sqlite3.Row) -> dict:
-    """Convierte una fila SQLite a dict deserializando los campos JSON."""
     data = dict(row)
     data["documentos_json"] = json.loads(data["documentos_json"])
     data["entregables_json"] = json.loads(data["entregables_json"])
     return data
-
-
-# ---------------------------------------------------------------------------
-# Script de prueba (solo en ejecución directa)
-# ---------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    print("=== Test de database.py ===\n")
-
-    init_db()
-    print(f"Base de datos inicializada en: {_DB_PATH}\n")
-
-    # Crear
-    conv_id = create_convocatoria("INPYME 2026 — prueba")
-    print(f"[create] Convocatoria creada con id={conv_id}")
-
-    # Recuperar
-    conv = get_convocatoria(conv_id)
-    print(f"[get]    nombre={conv['nombre']}  fecha={conv['fecha_creacion']}")
-
-    # Actualizar documentos
-    docs = [
-        {"etiqueta": "bases_reguladoras", "nombre_archivo": "bases.pdf", "texto": "Texto extraído de prueba."}
-    ]
-    update_documentos(conv_id, docs)
-    conv = get_convocatoria(conv_id)
-    print(f"[update_documentos] documentos guardados: {len(conv['documentos_json'])}")
-
-    # Actualizar entregables (simula guardar la salida 1)
-    update_entregables(conv_id, {"1": "Guía del consultor generada de prueba."})
-    # Añadir otra salida sin borrar la primera
-    update_entregables(conv_id, {"2": "Ficha comercial generada de prueba."})
-    conv = get_convocatoria(conv_id)
-    print(f"[update_entregables] entregables guardados: {list(conv['entregables_json'].keys())}")
-
-    # Listar
-    lista = list_convocatorias()
-    print(f"[list]   total convocatorias: {len(lista)}")
-    for c in lista:
-        print(f"         id={c['id']}  nombre={c['nombre']}  entregables={c['entregables_disponibles']}")
-
-    # Borrar
-    borrado = delete_convocatoria(conv_id)
-    print(f"[delete] borrado={borrado}")
-    print(f"[list]   total tras borrar: {len(list_convocatorias())}")
-
-    print("\n=== Todos los tests pasaron correctamente ===")

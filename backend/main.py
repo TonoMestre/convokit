@@ -4,8 +4,10 @@ ConvoKit backend — FastAPI application entry point.
 
 import json
 import os
+import threading
+import time
 from contextlib import asynccontextmanager
-from typing import Annotated
+from typing import Annotated, Callable
 
 import anthropic
 from dotenv import load_dotenv
@@ -19,8 +21,13 @@ load_dotenv()
 import database as db
 import exporters
 import extractors
+import pricing
 import prompts as p
 
+
+# ---------------------------------------------------------------------------
+# Pydantic models
+# ---------------------------------------------------------------------------
 
 class ConvocatoriaCreate(BaseModel):
     nombre: str
@@ -36,6 +43,10 @@ class GenerateRequest(BaseModel):
     salidas: list[SalidaRequest]
 
 
+# ---------------------------------------------------------------------------
+# Helpers de Claude
+# ---------------------------------------------------------------------------
+
 def _get_anthropic_client() -> anthropic.Anthropic:
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
@@ -46,20 +57,40 @@ def _get_anthropic_client() -> anthropic.Anthropic:
     return anthropic.Anthropic(api_key=api_key)
 
 
-def _claude(client: anthropic.Anthropic, system: str, user: str, max_tokens: int = 2000) -> str:
-    """Wrapper de llamada síncrona a Claude con timeout uniforme."""
+def _claude(
+    client: anthropic.Anthropic,
+    system: str,
+    user: str,
+    max_tokens: int = 2000,
+    model: str = pricing.MODELS["sonnet"],
+    _track: Callable | None = None,
+) -> str:
+    """
+    Wrapper de llamada síncrona a Claude.
+    Si se pasa _track(model, input_tokens, output_tokens), registra el uso.
+    """
     response = client.messages.create(
-        model="claude-sonnet-4-6",
+        model=model,
         max_tokens=max_tokens,
         system=system,
         messages=[{"role": "user", "content": user}],
         timeout=180,
     )
-    return response.content[0].text
+    text = response.content[0].text
+    if _track is not None:
+        _track(model, response.usage.input_tokens, response.usage.output_tokens)
+    return text
+
+
+def _make_tracker(conv_id: int, salida: str) -> Callable:
+    """Devuelve un callback que registra el uso de la API en la BD."""
+    def track(model: str, input_tokens: int, output_tokens: int) -> None:
+        cost = pricing.calculate_cost_eur(model, input_tokens, output_tokens)
+        db.record_api_call(conv_id, salida, model, input_tokens, output_tokens, cost)
+    return track
 
 
 def _strip_fences(text: str) -> str:
-    """Elimina bloques de código markdown que Claude a veces añade alrededor del JSON."""
     text = text.strip()
     if text.startswith("```"):
         lines = text.splitlines()
@@ -70,35 +101,83 @@ def _strip_fences(text: str) -> str:
 
 
 def _parse_json(text: str) -> object:
-    """Parsea JSON de la respuesta de Claude, tolerando bloques de código."""
     return json.loads(_strip_fences(text))
 
 
-def _generate_output_4(client: anthropic.Anthropic, conv_name: str, context: str,
-                        instrucciones: str = "") -> tuple[str, list[dict]]:
+# ---------------------------------------------------------------------------
+# Context slicing para salida 4 (reduce tokens por sección)
+# ---------------------------------------------------------------------------
+
+_SECTION_DOC_PRIORITY = [
+    "plantilla_memoria", "convocatoria", "bases_reguladoras",
+    "resolucion_anterior", "anexo", "documento_complementario",
+]
+_MAX_CHARS_PER_DOC = 22_000   # ~5 500 tokens por documento
+_MAX_DOCS_PER_SECTION = 4
+
+
+def _slice_context_for_section(documents_json: list) -> str:
     """
-    Generación multi-llamada de la salida 4 (set de prompts para la memoria).
+    Selecciona los documentos más relevantes para la generación de una sección.
+    Reduce los tokens de entrada por llamada enviando solo los 4 documentos
+    más prioritarios, truncados a 22 000 caracteres cada uno.
+    """
+    sorted_docs = sorted(
+        documents_json,
+        key=lambda d: _SECTION_DOC_PRIORITY.index(d.get("etiqueta", ""))
+        if d.get("etiqueta") in _SECTION_DOC_PRIORITY else 99,
+    )
+    parts = []
+    for doc in sorted_docs[:_MAX_DOCS_PER_SECTION]:
+        label = extractors.LABEL_HEADERS.get(doc.get("etiqueta", ""), "DOCUMENTO")
+        text = doc.get("texto", "")
+        if len(text) > _MAX_CHARS_PER_DOC:
+            text = text[:_MAX_CHARS_PER_DOC] + "\n[... truncado ...]"
+        parts.append(f"=== {label} ===\n{text}")
+    return "\n\n".join(parts)
+
+
+# ---------------------------------------------------------------------------
+# Generación de salida 4
+# ---------------------------------------------------------------------------
+
+def _generate_output_4(
+    client: anthropic.Anthropic,
+    conv_name: str,
+    documents_json: list,
+    instrucciones: str = "",
+    model: str | None = None,
+    _track: Callable | None = None,
+    _progress_cb: Callable | None = None,
+) -> tuple[str, list[dict]]:
+    """
+    Generación multi-llamada de la salida 4.
 
     Flujo:
-    1. Una llamada para extraer la lista de secciones de la memoria.
-    2. Una llamada por sección para generar su prompt individual.
-    3. Concatenación de todos los bloques en un único markdown.
-
-    Retorna (markdown_completo, array_json_secciones).
+    1. Extraer lista de secciones (contexto completo, un solo documento relevante basta).
+    2. Generar cada sección con contexto reducido (slicing por prioridad de documento).
+       Pausa de 2 s entre secciones para reducir carga en la API.
+    3. Extracción JSON del markdown completo con una sola llamada adicional.
     """
+    model = model or pricing.MODEL_PER_OUTPUT[4]
+    full_context = extractors.build_context(documents_json)
+
     # Paso 1: extraer secciones
     raw_sections = _claude(
         client,
         system=p.SECTION_EXTRACTOR_PROMPT,
-        user=f"Documentos de la convocatoria '{conv_name}':\n\n{context}",
+        user=f"Documentos de la convocatoria '{conv_name}':\n\n{full_context}",
         max_tokens=1500,
+        model=model,
+        _track=_track,
     )
     try:
         secciones = _parse_json(raw_sections).get("secciones", [])
     except Exception:
         raise HTTPException(
             status_code=502,
-            detail="No se pudieron identificar los apartados de la memoria. Comprueba que has subido la plantilla de memoria.",
+            detail="No se pudieron identificar los apartados de la memoria. "
+                   "Comprueba que has subido la plantilla de memoria.",
         )
 
     if not secciones:
@@ -107,7 +186,7 @@ def _generate_output_4(client: anthropic.Anthropic, conv_name: str, context: str
             detail="No se encontraron apartados en la plantilla de memoria.",
         )
 
-    # Paso 2: generar markdown por sección
+    # Paso 2: generar markdown por sección con contexto reducido
     header = (
         f"# Set de prompts para la memoria — {conv_name}\n\n"
         "> **Nota de uso:** El **Perfil Estratégico de Empresa** (documento de Ruta i40) "
@@ -117,28 +196,46 @@ def _generate_output_4(client: anthropic.Anthropic, conv_name: str, context: str
         "ADICIONAL específica del proyecto que el Perfil no cubre.\n\n---"
     )
     markdown_parts = [header]
+    section_context = _slice_context_for_section(documents_json)
 
-    for seccion in secciones:
+    for i, seccion in enumerate(secciones):
+        if i > 0:
+            time.sleep(2)  # Pausa entre secciones para reducir carga en la API
+
         user_msg = (
             f"Convocatoria: {conv_name}\n"
             f"Apartado: {seccion['codigo']} — {seccion['nombre']} "
             f"(puntos_max: {seccion.get('puntos_max') or 'no especificado'}, "
             f"habilitante: {seccion.get('es_habilitante', False)})\n\n"
-            f"Documentos de la convocatoria:\n{context}"
+            f"Documentos de la convocatoria:\n{section_context}"
         )
         if instrucciones.strip():
             user_msg += f"\n\nINSTRUCCIONES ADICIONALES DEL CONSULTOR: {instrucciones.strip()}"
-        raw_section = _claude(client, system=p.SECTION_PROMPT_SYSTEM, user=user_msg, max_tokens=2000)
+
+        raw_section = _claude(
+            client,
+            system=p.SECTION_PROMPT_SYSTEM,
+            user=user_msg,
+            max_tokens=2000,
+            model=model,
+            _track=_track,
+        )
         markdown_parts.append(raw_section)
+
+        if _progress_cb:
+            _progress_cb(i + 1, len(secciones))
 
     markdown = "\n\n---\n\n".join(markdown_parts)
 
-    # Paso 3: extraer JSON estructurado del markdown completo en una sola llamada.
+    # Paso 3: extracción JSON del markdown completo en una sola llamada
+    time.sleep(2)
     raw_json = _claude(
         client,
         system=p.OUTPUT_4_JSON_EXTRACTOR,
         user=markdown,
         max_tokens=8192,
+        model=model,
+        _track=_track,
     )
     try:
         json_sections = _parse_json(raw_json)
@@ -150,9 +247,42 @@ def _generate_output_4(client: anthropic.Anthropic, conv_name: str, context: str
     return markdown, json_sections
 
 
-def _build_user_prompt(conv_name: str, context: str, output_type: int,
-                        instrucciones: str = "", modo: str = "ABIERTA") -> str:
-    """Construye el user message para Claude según el tipo de salida."""
+# ---------------------------------------------------------------------------
+# Generación de JSON de salida 5
+# ---------------------------------------------------------------------------
+
+def _generate_output_5_json(
+    client: anthropic.Anthropic,
+    md_text: str,
+    model: str | None = None,
+    _track: Callable | None = None,
+) -> list[dict]:
+    model = model or pricing.MODEL_PER_OUTPUT[5]
+    raw = _claude(
+        client,
+        system=p.OUTPUT_5_JSON_CONVERTER,
+        user=f"Convierte la siguiente lista de documentación a JSON:\n\n{md_text}",
+        max_tokens=3000,
+        model=model,
+        _track=_track,
+    )
+    try:
+        return _parse_json(raw)
+    except Exception:
+        return []
+
+
+# ---------------------------------------------------------------------------
+# User prompt builder
+# ---------------------------------------------------------------------------
+
+def _build_user_prompt(
+    conv_name: str,
+    context: str,
+    output_type: int,
+    instrucciones: str = "",
+    modo: str = "ABIERTA",
+) -> str:
     instr_block = (
         f"\nINSTRUCCIONES ADICIONALES DEL CONSULTOR: {instrucciones.strip()}"
         if instrucciones.strip() else ""
@@ -187,23 +317,111 @@ def _build_user_prompt(conv_name: str, context: str, output_type: int,
         )
 
 
-def _generate_output_5_json(client: anthropic.Anthropic, md_text: str) -> list[dict]:
-    """Convierte el markdown de la salida 5 al array JSON del PRD sección 12.2."""
-    raw = _claude(
-        client,
-        system=p.OUTPUT_5_JSON_CONVERTER,
-        user=f"Convierte la siguiente lista de documentación a JSON:\n\n{md_text}",
-        max_tokens=3000,
-    )
-    try:
-        return _parse_json(raw)
-    except Exception:
-        return []
+# ---------------------------------------------------------------------------
+# Procesador de jobs en segundo plano
+# ---------------------------------------------------------------------------
 
+def _process_job(job_id: int, conv_id: int, salida_requests: list[dict]) -> None:
+    """
+    Background thread. Procesa cada salida secuencialmente, actualiza el progreso
+    en SQLite y persiste resultados parciales. No requiere que el navegador esté abierto.
+    """
+    try:
+        client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY", ""))
+        conv = db.get_convocatoria(conv_id)
+        if not conv:
+            db.update_job(job_id, "error", {"error": "Convocatoria no encontrada."})
+            return
+
+        conv_name = conv["nombre"]
+        documents_json = conv["documentos_json"]
+        context = extractors.build_context(documents_json)
+
+        progress = {"outputs": {str(s["output_type"]): {"status": "queued"} for s in salida_requests}}
+        db.update_job(job_id, "running", progress)
+
+        for salida_req in sorted(salida_requests, key=lambda s: s["output_type"]):
+            output_type = salida_req["output_type"]
+            instrucciones = salida_req.get("instrucciones_adicionales", "")
+            modo = salida_req.get("modo") or "ABIERTA"
+            key = str(output_type)
+
+            progress["outputs"][key] = {"status": "running"}
+            db.update_job(job_id, "running", progress)
+
+            salida_costs: list[float] = []
+            model = pricing.MODEL_PER_OUTPUT.get(output_type, pricing.MODELS["sonnet"])
+
+            def track(mdl: str, in_tok: int, out_tok: int) -> None:
+                cost = pricing.calculate_cost_eur(mdl, in_tok, out_tok)
+                db.record_api_call(conv_id, key, mdl, in_tok, out_tok, cost)
+                salida_costs.append(cost)
+
+            generated: dict[str, str] = {}
+
+            try:
+                if output_type == 4:
+                    def progress_cb(actual: int, total: int) -> None:
+                        progress["output4_progress"] = {"actual": actual, "total": total}
+                        db.update_job(job_id, "running", progress)
+
+                    md_text, json_secs = _generate_output_4(
+                        client, conv_name, documents_json, instrucciones,
+                        model=model, _track=track, _progress_cb=progress_cb,
+                    )
+                    generated["4"] = md_text
+                    generated["4_json"] = json.dumps(json_secs, ensure_ascii=False)
+
+                elif output_type == 5:
+                    user_prompt = _build_user_prompt(conv_name, context, 5, instrucciones)
+                    md_text = _claude(
+                        client, system=p.SYSTEM_PROMPTS[5], user=user_prompt,
+                        max_tokens=p.MAX_TOKENS[5], model=model, _track=track,
+                    )
+                    generated["5"] = md_text
+                    generated["5_json"] = json.dumps(
+                        _generate_output_5_json(client, md_text, model=model, _track=track),
+                        ensure_ascii=False,
+                    )
+
+                else:
+                    user_prompt = _build_user_prompt(conv_name, context, output_type, instrucciones, modo)
+                    generated[key] = _claude(
+                        client, system=p.SYSTEM_PROMPTS[output_type], user=user_prompt,
+                        max_tokens=p.MAX_TOKENS[output_type], model=model, _track=track,
+                    )
+
+                db.update_entregables(conv_id, generated)
+
+                total_cost = sum(salida_costs)
+                progress["outputs"][key] = {"status": "completed", "cost_eur": round(total_cost, 6)}
+                progress.pop("output4_progress", None)
+
+            except Exception as exc:
+                progress["outputs"][key] = {"status": "error", "error": str(exc)}
+
+            db.update_job(job_id, "running", progress)
+
+        has_errors = any(
+            v.get("status") == "error" for v in progress["outputs"].values()
+        )
+        db.update_job(job_id, "error" if has_errors else "completed", progress)
+
+    except Exception as exc:
+        try:
+            db.update_job(job_id, "error", {"error": str(exc)})
+        except Exception:
+            pass
+
+
+# ---------------------------------------------------------------------------
+# App lifecycle
+# ---------------------------------------------------------------------------
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     db.init_db()
+    db.reset_stuck_jobs()
     yield
 
 
@@ -228,7 +446,7 @@ def health():
 
 
 # ---------------------------------------------------------------------------
-# Convocatorias — CRUD básico
+# Convocatorias — CRUD
 # ---------------------------------------------------------------------------
 
 @app.post("/convocatorias", status_code=201)
@@ -254,8 +472,7 @@ def get_convocatoria(convocatoria_id: int):
 
 @app.delete("/convocatorias/{convocatoria_id}", status_code=204)
 def delete_convocatoria(convocatoria_id: int):
-    deleted = db.delete_convocatoria(convocatoria_id)
-    if not deleted:
+    if not db.delete_convocatoria(convocatoria_id):
         raise HTTPException(status_code=404, detail="Convocatoria no encontrada.")
 
 
@@ -271,7 +488,6 @@ async def upload_documents(
 ):
     if db.get_convocatoria(convocatoria_id) is None:
         raise HTTPException(status_code=404, detail="Convocatoria no encontrada.")
-
     if len(files) != len(etiquetas):
         raise HTTPException(status_code=422, detail="El número de archivos y etiquetas debe coincidir.")
 
@@ -308,34 +524,73 @@ async def upload_documents(
 
 
 # ---------------------------------------------------------------------------
-# Generación de entregables
+# Generación asíncrona con cola (endpoint principal)
 # ---------------------------------------------------------------------------
 
-@app.post("/convocatorias/{convocatoria_id}/generate")
-def generate_outputs(convocatoria_id: int, body: GenerateRequest):
+@app.post("/convocatorias/{convocatoria_id}/generate/async", status_code=202)
+def generate_async(convocatoria_id: int, body: GenerateRequest):
     """
-    Genera uno o varios entregables para una convocatoria.
-
-    La salida 4 usa generación multi-llamada (una llamada por sección de la memoria)
-    para evitar cortes. Las demás salidas usan una sola llamada.
-    Las salidas 4 y 5 generan también un JSON estructurado almacenado en SQLite.
+    Inicia la generación en un thread de fondo y devuelve el job_id inmediatamente.
+    El navegador puede cerrarse; los resultados se persisten en SQLite conforme se completan.
+    Consultar /jobs/{job_id} para seguir el progreso.
     """
     conv = db.get_convocatoria(convocatoria_id)
     if conv is None:
         raise HTTPException(status_code=404, detail="Convocatoria no encontrada.")
-
     if not conv["documentos_json"]:
         raise HTTPException(
             status_code=422,
             detail="Esta convocatoria no tiene documentos. Sube los archivos antes de generar entregables.",
         )
-
     requested_types = {s.output_type for s in body.salidas}
     unknown = requested_types - set(range(1, 6))
     if unknown:
         raise HTTPException(
             status_code=422,
             detail=f"Tipos de salida no válidos: {sorted(unknown)}. Usa números del 1 al 5.",
+        )
+
+    salidas_list = [s.model_dump() for s in body.salidas]
+    job_id = db.create_job(convocatoria_id, salidas_list)
+
+    thread = threading.Thread(
+        target=_process_job,
+        args=(job_id, convocatoria_id, salidas_list),
+        daemon=True,
+    )
+    thread.start()
+
+    return {"job_id": job_id}
+
+
+@app.get("/jobs/{job_id}")
+def get_job(job_id: int):
+    job = db.get_job(job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="Job no encontrado.")
+    return job
+
+
+# ---------------------------------------------------------------------------
+# Generación síncrona (sin streaming — compatibilidad)
+# ---------------------------------------------------------------------------
+
+@app.post("/convocatorias/{convocatoria_id}/generate")
+def generate_outputs(convocatoria_id: int, body: GenerateRequest):
+    conv = db.get_convocatoria(convocatoria_id)
+    if conv is None:
+        raise HTTPException(status_code=404, detail="Convocatoria no encontrada.")
+    if not conv["documentos_json"]:
+        raise HTTPException(
+            status_code=422,
+            detail="Esta convocatoria no tiene documentos. Sube los archivos antes de generar entregables.",
+        )
+    requested_types = {s.output_type for s in body.salidas}
+    unknown = requested_types - set(range(1, 6))
+    if unknown:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Tipos de salida no válidos: {sorted(unknown)}.",
         )
 
     context = extractors.build_context(conv["documentos_json"])
@@ -346,28 +601,35 @@ def generate_outputs(convocatoria_id: int, body: GenerateRequest):
         output_type = salida_req.output_type
         instrucciones = salida_req.instrucciones_adicionales
         modo = salida_req.modo or "ABIERTA"
+        model = pricing.MODEL_PER_OUTPUT.get(output_type, pricing.MODELS["sonnet"])
+        track = _make_tracker(convocatoria_id, str(output_type))
 
         try:
             if output_type == 4:
-                md_text, json_sections = _generate_output_4(client, conv["nombre"], context, instrucciones)
+                md_text, json_sections = _generate_output_4(
+                    client, conv["nombre"], conv["documentos_json"], instrucciones,
+                    model=model, _track=track,
+                )
                 generated["4"] = md_text
                 generated["4_json"] = json.dumps(json_sections, ensure_ascii=False)
 
             elif output_type == 5:
                 user_prompt = _build_user_prompt(conv["nombre"], context, 5, instrucciones)
-                md_text = _claude(client, system=p.SYSTEM_PROMPTS[5], user=user_prompt, max_tokens=p.MAX_TOKENS[5])
+                md_text = _claude(
+                    client, system=p.SYSTEM_PROMPTS[5], user=user_prompt,
+                    max_tokens=p.MAX_TOKENS[5], model=model, _track=track,
+                )
                 generated["5"] = md_text
                 generated["5_json"] = json.dumps(
-                    _generate_output_5_json(client, md_text), ensure_ascii=False
+                    _generate_output_5_json(client, md_text, model=model, _track=track),
+                    ensure_ascii=False,
                 )
 
             else:
                 user_prompt = _build_user_prompt(conv["nombre"], context, output_type, instrucciones, modo)
                 generated[str(output_type)] = _claude(
-                    client,
-                    system=p.SYSTEM_PROMPTS[output_type],
-                    user=user_prompt,
-                    max_tokens=p.MAX_TOKENS[output_type],
+                    client, system=p.SYSTEM_PROMPTS[output_type], user=user_prompt,
+                    max_tokens=p.MAX_TOKENS[output_type], model=model, _track=track,
                 )
 
         except HTTPException:
@@ -375,23 +637,16 @@ def generate_outputs(convocatoria_id: int, body: GenerateRequest):
         except anthropic.APITimeoutError:
             raise HTTPException(
                 status_code=504,
-                detail=f"La generación de la salida {output_type} superó el tiempo límite. Inténtalo de nuevo.",
+                detail=f"La generación de la salida {output_type} superó el tiempo límite.",
             )
         except anthropic.APIError:
             raise HTTPException(
                 status_code=502,
-                detail=f"Error al comunicarse con la API de Claude al generar la salida {output_type}. Inténtalo de nuevo.",
+                detail=f"Error al comunicarse con la API de Claude al generar la salida {output_type}.",
             )
 
     db.update_entregables(convocatoria_id, generated)
-
-    # Devolver texto + marcadores de JSON para que el frontend
-    # pueda mostrar el botón .json sin necesidad de un campo adicional.
-    result_entregables = {k: v for k, v in generated.items() if not k.endswith("_json")}
-    for k in list(generated):
-        if k.endswith("_json"):
-            result_entregables[k] = True  # señal booleana; el texto completo no se manda al frontend
-
+    result_entregables = {k: (True if k.endswith("_json") else v) for k, v in generated.items()}
     return {
         "convocatoria_id": convocatoria_id,
         "generados": [k for k in generated if not k.endswith("_json")],
@@ -400,22 +655,11 @@ def generate_outputs(convocatoria_id: int, body: GenerateRequest):
 
 
 # ---------------------------------------------------------------------------
-# Generación con streaming SSE (salida 4 emite progreso por sección)
+# Generación con streaming SSE (compatibilidad — usa los modelos correctos)
 # ---------------------------------------------------------------------------
 
 @app.post("/convocatorias/{convocatoria_id}/generate/stream")
 def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
-    """
-    Genera entregables con respuesta SSE (Server-Sent Events).
-
-    Eventos emitidos:
-      {"tipo": "inicio_4", "total": N}              — salida 4: N secciones detectadas
-      {"tipo": "progreso_4", "actual": i, "total": N} — salida 4: sección i completada
-      {"tipo": "salida_completada", "num": N}        — cada salida completada
-      {"tipo": "completado", "entregables": {...}}   — todo listo; incluye _json: true para señalar JSON disponible
-      {"tipo": "error", "mensaje": "..."}            — error irrecuperable
-    """
-    # Validaciones síncronas antes de abrir el stream.
     conv = db.get_convocatoria(convocatoria_id)
     if conv is None:
         raise HTTPException(status_code=404, detail="Convocatoria no encontrada.")
@@ -429,7 +673,7 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
     if unknown:
         raise HTTPException(
             status_code=422,
-            detail=f"Tipos de salida no válidos: {sorted(unknown)}. Usa números del 1 al 5.",
+            detail=f"Tipos de salida no válidos: {sorted(unknown)}.",
         )
 
     context = extractors.build_context(conv["documentos_json"])
@@ -445,20 +689,24 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
             output_type = salida_req.output_type
             instrucciones = salida_req.instrucciones_adicionales
             modo = salida_req.modo or "ABIERTA"
+            model = pricing.MODEL_PER_OUTPUT.get(output_type, pricing.MODELS["sonnet"])
+            track = _make_tracker(convocatoria_id, str(output_type))
 
             try:
                 if output_type == 4:
-                    # Paso 1: extraer secciones (sin instrucciones: solo necesita los docs)
+                    # Paso 1: extraer secciones
                     raw_sections = _claude(
                         client,
                         system=p.SECTION_EXTRACTOR_PROMPT,
                         user=f"Documentos de la convocatoria '{conv['nombre']}':\n\n{context}",
                         max_tokens=1500,
+                        model=model,
+                        _track=track,
                     )
                     try:
                         secciones = _parse_json(raw_sections).get("secciones", [])
                     except Exception:
-                        yield _evt({"tipo": "error", "mensaje": "No se pudieron identificar los apartados de la memoria. Comprueba que has subido la plantilla de memoria."})
+                        yield _evt({"tipo": "error", "mensaje": "No se pudieron identificar los apartados de la memoria."})
                         return
 
                     n = len(secciones)
@@ -468,7 +716,6 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
 
                     yield _evt({"tipo": "inicio_4", "total": n})
 
-                    # Paso 2: generar markdown por sección
                     header = (
                         f"# Set de prompts para la memoria — {conv['nombre']}\n\n"
                         "> **Nota de uso:** El **Perfil Estratégico de Empresa** (documento de Ruta i40) "
@@ -478,30 +725,32 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
                         "ADICIONAL específica del proyecto que el Perfil no cubre.\n\n---"
                     )
                     markdown_parts = [header]
+                    section_context = _slice_context_for_section(conv["documentos_json"])
 
                     for i, seccion in enumerate(secciones):
+                        if i > 0:
+                            time.sleep(2)
                         user_msg = (
                             f"Convocatoria: {conv['nombre']}\n"
                             f"Apartado: {seccion['codigo']} — {seccion['nombre']} "
                             f"(puntos_max: {seccion.get('puntos_max') or 'no especificado'}, "
                             f"habilitante: {seccion.get('es_habilitante', False)})\n\n"
-                            f"Documentos de la convocatoria:\n{context}"
+                            f"Documentos de la convocatoria:\n{section_context}"
                         )
                         if instrucciones.strip():
                             user_msg += f"\n\nINSTRUCCIONES ADICIONALES DEL CONSULTOR: {instrucciones.strip()}"
-                        raw_section = _claude(client, system=p.SECTION_PROMPT_SYSTEM, user=user_msg, max_tokens=2000)
+                        raw_section = _claude(
+                            client, system=p.SECTION_PROMPT_SYSTEM, user=user_msg,
+                            max_tokens=2000, model=model, _track=track,
+                        )
                         markdown_parts.append(raw_section)
-
                         yield _evt({"tipo": "progreso_4", "actual": i + 1, "total": n})
 
                     markdown_4 = "\n\n---\n\n".join(markdown_parts)
-
-                    # Paso 3: extraer JSON del markdown completo en una sola llamada.
+                    time.sleep(2)
                     raw_json_4 = _claude(
-                        client,
-                        system=p.OUTPUT_4_JSON_EXTRACTOR,
-                        user=markdown_4,
-                        max_tokens=8192,
+                        client, system=p.OUTPUT_4_JSON_EXTRACTOR, user=markdown_4,
+                        max_tokens=8192, model=model, _track=track,
                     )
                     try:
                         json_sections = _parse_json(raw_json_4)
@@ -515,33 +764,33 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
 
                 elif output_type == 5:
                     user_prompt = _build_user_prompt(conv["nombre"], context, 5, instrucciones)
-                    md_text = _claude(client, system=p.SYSTEM_PROMPTS[5], user=user_prompt, max_tokens=p.MAX_TOKENS[5])
+                    md_text = _claude(
+                        client, system=p.SYSTEM_PROMPTS[5], user=user_prompt,
+                        max_tokens=p.MAX_TOKENS[5], model=model, _track=track,
+                    )
                     generated["5"] = md_text
                     generated["5_json"] = json.dumps(
-                        _generate_output_5_json(client, md_text), ensure_ascii=False
+                        _generate_output_5_json(client, md_text, model=model, _track=track),
+                        ensure_ascii=False,
                     )
 
                 else:
                     user_prompt = _build_user_prompt(conv["nombre"], context, output_type, instrucciones, modo)
                     generated[str(output_type)] = _claude(
-                        client,
-                        system=p.SYSTEM_PROMPTS[output_type],
-                        user=user_prompt,
-                        max_tokens=p.MAX_TOKENS[output_type],
+                        client, system=p.SYSTEM_PROMPTS[output_type], user=user_prompt,
+                        max_tokens=p.MAX_TOKENS[output_type], model=model, _track=track,
                     )
 
                 yield _evt({"tipo": "salida_completada", "num": output_type})
 
             except anthropic.APITimeoutError:
-                yield _evt({"tipo": "error", "mensaje": f"La generación de la salida {output_type} superó el tiempo límite. Inténtalo de nuevo."})
+                yield _evt({"tipo": "error", "mensaje": f"La salida {output_type} superó el tiempo límite."})
                 return
             except anthropic.APIError:
-                yield _evt({"tipo": "error", "mensaje": f"Error al comunicarse con la API de Claude al generar la salida {output_type}. Inténtalo de nuevo."})
+                yield _evt({"tipo": "error", "mensaje": f"Error de API al generar la salida {output_type}."})
                 return
 
         db.update_entregables(convocatoria_id, generated)
-
-        # Devolver texto completo para renderizado + señal booleana para claves _json.
         result = {k: (True if k.endswith("_json") else v) for k, v in generated.items()}
         yield _evt({"tipo": "completado", "entregables": result})
 
@@ -558,20 +807,14 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
 
 @app.get("/convocatorias/{convocatoria_id}/json/{output_num}")
 def get_output_json(convocatoria_id: int, output_num: int):
-    """
-    Devuelve el JSON estructurado de la salida 4 o 5 según el esquema del PRD v2.2 sección 12.
-    El frontend lo descarga como fichero .json.
-    """
     if output_num not in (4, 5):
         raise HTTPException(status_code=422, detail="Solo las salidas 4 y 5 tienen exportación JSON.")
-
     conv = db.get_convocatoria(convocatoria_id)
     if conv is None:
         raise HTTPException(status_code=404, detail="Convocatoria no encontrada.")
 
     entregables = conv["entregables_json"]
     key = f"{output_num}_json"
-
     if key not in entregables:
         raise HTTPException(
             status_code=404,
@@ -579,8 +822,15 @@ def get_output_json(convocatoria_id: int, output_num: int):
         )
 
     if output_num == 4:
-        data = exporters.export_output_4(entregables[key])
+        return exporters.export_output_4(entregables[key])
     else:
-        data = exporters.export_output_5(entregables[key])
+        return exporters.export_output_5(entregables[key])
 
-    return data
+
+# ---------------------------------------------------------------------------
+# Estadísticas globales de uso de la API
+# ---------------------------------------------------------------------------
+
+@app.get("/stats")
+def get_stats():
+    return db.get_api_stats()

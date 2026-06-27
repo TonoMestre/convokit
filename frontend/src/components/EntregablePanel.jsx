@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useApp } from "../context/AppContext";
 
 const SALIDAS = [
@@ -28,10 +28,6 @@ function downloadFile(content, filename) {
   URL.revokeObjectURL(url);
 }
 
-// ---------------------------------------------------------------------------
-// Controles de instrucciones para la lista de pendientes
-// ---------------------------------------------------------------------------
-
 function InstruccionesField({ num, instructions, setInstructions, placeholder }) {
   return (
     <textarea
@@ -44,15 +40,18 @@ function InstruccionesField({ num, instructions, setInstructions, placeholder })
   );
 }
 
-function PendingSalidaRow({ salida, selected, onToggle, generating, progress, instructions, setInstructions, instructionsOpen, setInstructionsOpen, mode3, setMode3 }) {
+function PendingSalidaRow({
+  salida, selected, onToggle, outputStatuses, output4Progress,
+  instructions, setInstructions, instructionsOpen, setInstructionsOpen, mode3, setMode3,
+}) {
   const isChecked = selected.includes(salida.num);
-  const isGenerating = !!generating[salida.num];
+  const outputStatus = outputStatuses[String(salida.num)]?.status;
+  const isRunning = outputStatus === "queued" || outputStatus === "running";
 
   function toggleInstructions() {
     const isOpen = !!instructionsOpen[salida.num];
     const hasText = !!(instructions[salida.num] || "").trim();
     if (isOpen && !hasText) {
-      // Vacío → colapsar limpiamente
       setInstructionsOpen((prev) => ({ ...prev, [salida.num]: false }));
     } else {
       setInstructionsOpen((prev) => ({ ...prev, [salida.num]: !isOpen }));
@@ -62,37 +61,43 @@ function PendingSalidaRow({ salida, selected, onToggle, generating, progress, in
   const instrOpen = !!instructionsOpen[salida.num];
   const hasInstr = !!(instructions[salida.num] || "").trim();
 
+  let statusLabel = null;
+  if (outputStatus === "queued") {
+    statusLabel = "En cola...";
+  } else if (outputStatus === "running") {
+    if (salida.num === 4 && output4Progress) {
+      statusLabel = output4Progress.actual === 0
+        ? "Identificando apartados..."
+        : `Apartado ${output4Progress.actual} de ${output4Progress.total}`;
+    } else {
+      statusLabel = "Generando...";
+    }
+  }
+
   return (
     <div className="py-1.5">
-      {/* Fila principal: checkbox + label + spinner */}
       <label className="flex items-center gap-3 cursor-pointer group">
         <input
           type="checkbox"
           checked={isChecked}
           onChange={onToggle}
-          disabled={isGenerating}
+          disabled={isRunning}
           className="accent-brand-red w-4 h-4 shrink-0"
         />
         <span className="text-sm text-gray-700 group-hover:text-brand-blue transition-colors flex-1">
           <span className="font-semibold text-brand-red mr-1">{salida.num}.</span>
           {salida.label}
         </span>
-        {isGenerating && (
+        {isRunning && (
           <span className="flex items-center gap-1.5 text-xs text-brand-red shrink-0">
             <Spinner className="w-3 h-3" />
-            {salida.num === 4 && progress
-              ? progress.actual === 0
-                ? "Identificando apartados..."
-                : `Apartado ${progress.actual} de ${progress.total}`
-              : "Generando..."}
+            {statusLabel}
           </span>
         )}
       </label>
 
-      {/* Controles extra cuando está marcado */}
       {isChecked && (
         <div className="ml-7 mt-2 space-y-2">
-          {/* Salida 3: selector de modo + instrucciones siempre visible */}
           {salida.hasMode ? (
             <>
               <div className="flex flex-col gap-1.5">
@@ -129,7 +134,6 @@ function PendingSalidaRow({ salida, selected, onToggle, generating, progress, in
               </div>
             </>
           ) : (
-            /* Salidas 1, 2, 4, 5: enlace + campo colapsable */
             <>
               <button
                 type="button"
@@ -165,15 +169,8 @@ function PendingSalidaRow({ salida, selected, onToggle, generating, progress, in
 // ---------------------------------------------------------------------------
 
 function EntregableItem({
-  salida,
-  texto,
-  hasJsonData,
-  convocatoriaId,
-  isOpen,
-  onToggle,
-  onRegenerate,
-  regenerating,
-  progress,
+  salida, texto, hasJsonData, convocatoriaId, isOpen, onToggle,
+  onRegenerate, outputStatus, output4Progress, costEur,
 }) {
   const { API } = useApp();
   const [copied, setCopied] = useState(false);
@@ -214,16 +211,19 @@ function EntregableItem({
     }
   }
 
+  const isRegenerating = outputStatus === "queued" || outputStatus === "running";
   const open = isOpen;
   const btnBase = "text-xs px-2.5 py-1 border transition-colors";
   const btnDark = "border-white/40 text-white hover:bg-white hover:text-brand-blue";
   const btnLight = "border-gray-300 text-gray-600 hover:border-brand-blue hover:text-brand-blue";
 
   let loadingMsg = "Generando...";
-  if (progress) {
-    loadingMsg = progress.actual === 0
+  if (outputStatus === "queued") {
+    loadingMsg = "En cola...";
+  } else if (outputStatus === "running" && salida.num === 4 && output4Progress) {
+    loadingMsg = output4Progress.actual === 0
       ? "Identificando apartados..."
-      : `Apartado ${progress.actual} de ${progress.total}`;
+      : `Apartado ${output4Progress.actual} de ${output4Progress.total}`;
   }
 
   return (
@@ -242,6 +242,15 @@ function EntregableItem({
         </span>
 
         <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+          {/* Coste de la última generación */}
+          {costEur != null && !isRegenerating && (
+            <span className={`text-xs ${open ? "text-white/50" : "text-gray-400"}`}>
+              {costEur < 0.01
+                ? `<0.01 €`
+                : `${costEur.toFixed(3)} €`}
+            </span>
+          )}
+
           <button onClick={handleCopy} className={`${btnBase} ${open ? btnDark : btnLight}`}>
             {copied ? "¡Copiado!" : "Copiar"}
           </button>
@@ -258,11 +267,8 @@ function EntregableItem({
             </button>
           )}
 
-          {regenerating ? (
-            <span
-              className={`flex items-center gap-1.5 text-xs ${open ? "text-white" : "text-brand-red"}`}
-              onClick={(e) => e.stopPropagation()}
-            >
+          {isRegenerating ? (
+            <span className={`flex items-center gap-1.5 text-xs ${open ? "text-white" : "text-brand-red"}`}>
               <Spinner className="w-3 h-3" />
               <span className="whitespace-nowrap">{loadingMsg}</span>
             </span>
@@ -300,21 +306,31 @@ function EntregableItem({
 // Panel principal
 // ---------------------------------------------------------------------------
 
-export default function EntregablePanel({ convocatoria, onUpdate }) {
-  const { API } = useApp();
+export default function EntregablePanel({ convocatoria, onUpdate: _onUpdate }) {
+  const { API, openConvocatoria } = useApp();
   const entregables = convocatoria.entregables_json ?? {};
 
   const [openNum, setOpenNum] = useState(null);
   const [selected, setSelected] = useState([]);
-  const [generating, setGenerating] = useState({});
-  const [progress, setProgress] = useState(null);
+  // { "1": {status: "queued"|"running"|"completed"|"error", cost_eur?: number} }
+  const [outputStatuses, setOutputStatuses] = useState({});
+  const [output4Progress, setOutput4Progress] = useState(null);
   const [error, setError] = useState(null);
 
-  // Instrucciones adicionales por salida
   const [instructions, setInstructions] = useState({});
   const [instructionsOpen, setInstructionsOpen] = useState({});
-  // Modo para salida 3
   const [mode3, setMode3] = useState("ABIERTA");
+
+  const pollRef = useRef(null);
+
+  function stopPolling() {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  }
+
+  useEffect(() => () => stopPolling(), []);
 
   function toggleAccordion(num) {
     setOpenNum((prev) => (prev === num ? null : num));
@@ -326,12 +342,51 @@ export default function EntregablePanel({ convocatoria, onUpdate }) {
     );
   }
 
+  function isAnyRunning() {
+    return Object.values(outputStatuses).some(
+      (s) => s.status === "queued" || s.status === "running"
+    );
+  }
+
+  async function pollJob(jobId, types) {
+    try {
+      const res = await fetch(`${API}/jobs/${jobId}`);
+      if (!res.ok) return;
+      const job = await res.json();
+      const { status, progress } = job;
+
+      const outputs = progress?.outputs || {};
+      setOutputStatuses(outputs);
+
+      const p4 = progress?.output4_progress;
+      setOutput4Progress(p4 || null);
+
+      if (status === "completed" || status === "error") {
+        stopPolling();
+        setSelected([]);
+        if (types.length === 1 && status === "completed") {
+          setOpenNum(types[0]);
+        }
+        if (status === "error" && !Object.values(outputs).some((o) => o.status === "completed")) {
+          setError("Ha ocurrido un error durante la generación.");
+        }
+        await openConvocatoria(convocatoria.id);
+      }
+    } catch {
+      // transient network error, keep polling
+    }
+  }
+
   async function generate(types, overrideInstructions) {
+    stopPolling();
     setError(null);
-    setGenerating(Object.fromEntries(types.map((n) => [n, true])));
-    setProgress(null);
+    setOutput4Progress(null);
 
     const instrMap = overrideInstructions ?? instructions;
+
+    const initialStatuses = {};
+    types.forEach((t) => { initialStatuses[String(t)] = { status: "queued" }; });
+    setOutputStatuses(initialStatuses);
 
     const salidas = types.map((t) => ({
       output_type: t,
@@ -340,7 +395,7 @@ export default function EntregablePanel({ convocatoria, onUpdate }) {
     }));
 
     try {
-      const res = await fetch(`${API}/convocatorias/${convocatoria.id}/generate/stream`, {
+      const res = await fetch(`${API}/convocatorias/${convocatoria.id}/generate/async`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ salidas }),
@@ -348,62 +403,17 @@ export default function EntregablePanel({ convocatoria, onUpdate }) {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.detail ?? "Error al generar.");
+        throw new Error(data.detail ?? "Error al iniciar la generación.");
       }
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
+      const { job_id } = await res.json();
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const parts = buffer.split("\n\n");
-        buffer = parts.pop() ?? "";
-
-        for (const part of parts) {
-          const dataLine = part.split("\n").find((l) => l.startsWith("data: "));
-          if (!dataLine) continue;
-
-          let event;
-          try {
-            event = JSON.parse(dataLine.slice(6));
-          } catch {
-            continue;
-          }
-
-          switch (event.tipo) {
-            case "inicio_4":
-              setProgress({ actual: 0, total: event.total });
-              break;
-            case "progreso_4":
-              setProgress({ actual: event.actual, total: event.total });
-              break;
-            case "salida_completada":
-              setGenerating((prev) => {
-                const next = { ...prev };
-                delete next[event.num];
-                return next;
-              });
-              if (event.num === 4) setProgress(null);
-              break;
-            case "completado":
-              onUpdate(event.entregables);
-              setSelected([]);
-              if (types.length === 1) setOpenNum(types[0]);
-              break;
-            case "error":
-              throw new Error(event.mensaje);
-          }
-        }
-      }
+      // Primera consulta inmediata, luego cada 2s
+      await pollJob(job_id, types);
+      pollRef.current = setInterval(() => pollJob(job_id, types), 2000);
     } catch (err) {
       setError(err.message);
-    } finally {
-      setGenerating({});
-      setProgress(null);
+      setOutputStatuses({});
     }
   }
 
@@ -429,8 +439,8 @@ export default function EntregablePanel({ convocatoria, onUpdate }) {
                 salida={s}
                 selected={selected}
                 onToggle={() => toggleSalida(s.num)}
-                generating={generating}
-                progress={progress}
+                outputStatuses={outputStatuses}
+                output4Progress={output4Progress}
                 instructions={instructions}
                 setInstructions={setInstructions}
                 instructionsOpen={instructionsOpen}
@@ -442,7 +452,7 @@ export default function EntregablePanel({ convocatoria, onUpdate }) {
           </div>
           <button
             onClick={() => generate(selected)}
-            disabled={selected.length === 0 || Object.keys(generating).length > 0}
+            disabled={selected.length === 0 || isAnyRunning()}
             className="bg-brand-blue text-white text-sm font-semibold px-5 py-2 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
           >
             Generar seleccionados
@@ -457,20 +467,24 @@ export default function EntregablePanel({ convocatoria, onUpdate }) {
             Entregables generados
           </h3>
           <div className="border border-gray-200">
-            {generadas.map((s) => (
-              <EntregableItem
-                key={s.num}
-                salida={s}
-                texto={entregables[String(s.num)]}
-                hasJsonData={!!entregables[`${s.num}_json`]}
-                convocatoriaId={convocatoria.id}
-                isOpen={openNum === s.num}
-                onToggle={() => toggleAccordion(s.num)}
-                regenerating={!!generating[s.num]}
-                progress={s.num === 4 && generating[s.num] ? progress : null}
-                onRegenerate={() => generate([s.num])}
-              />
-            ))}
+            {generadas.map((s) => {
+              const salStatus = outputStatuses[String(s.num)];
+              return (
+                <EntregableItem
+                  key={s.num}
+                  salida={s}
+                  texto={entregables[String(s.num)]}
+                  hasJsonData={!!entregables[`${s.num}_json`]}
+                  convocatoriaId={convocatoria.id}
+                  isOpen={openNum === s.num}
+                  onToggle={() => toggleAccordion(s.num)}
+                  outputStatus={salStatus?.status}
+                  output4Progress={s.num === 4 ? output4Progress : null}
+                  costEur={salStatus?.cost_eur ?? null}
+                  onRegenerate={() => generate([s.num])}
+                />
+              );
+            })}
           </div>
         </section>
       )}

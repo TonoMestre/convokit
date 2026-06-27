@@ -7,7 +7,7 @@ const API = import.meta.env.VITE_API_URL;
 export function AppProvider({ children }) {
   const [convocatorias, setConvocatorias] = useState([]);
   const [activeConvocatoria, setActiveConvocatoria] = useState(null); // detalle completo
-  const [view, setView] = useState("nueva"); // "nueva" | "detalle"
+  const [view, setView] = useState("nueva"); // "nueva" | "detalle" | "stats"
   const [error, setError] = useState(null);
 
   async function loadConvocatorias() {
@@ -50,6 +50,11 @@ export function AppProvider({ children }) {
     setView("nueva");
   }
 
+  function openStats() {
+    setActiveConvocatoria(null);
+    setView("stats");
+  }
+
   function clearError() {
     setError(null);
   }
@@ -71,6 +76,7 @@ export function AppProvider({ children }) {
         openConvocatoria,
         deleteConvocatoria,
         startNueva,
+        openStats,
         API,
       }}
     >

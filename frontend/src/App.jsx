@@ -3,12 +3,15 @@ import Sidebar from "./components/Sidebar";
 import ErrorBanner from "./components/ErrorBanner";
 import NuevaConvocatoria from "./components/NuevaConvocatoria";
 import DetalleConvocatoria from "./components/DetalleConvocatoria";
+import StatsPanel from "./components/StatsPanel";
 
 function Main() {
   const { view } = useApp();
   return (
     <main className="flex-1 overflow-y-auto bg-white">
-      {view === "nueva" ? <NuevaConvocatoria /> : <DetalleConvocatoria />}
+      {view === "nueva" && <NuevaConvocatoria />}
+      {view === "detalle" && <DetalleConvocatoria />}
+      {view === "stats" && <StatsPanel />}
     </main>
   );
 }

@@ -22,7 +22,7 @@ MODEL_PER_OUTPUT: dict[int, str] = {
     3: MODELS["haiku"],
     4: MODELS["sonnet"],
     5: MODELS["haiku"],
-    6: MODELS["sonnet"],  # direct HTML generation — needs reliable full-template output
+    6: MODELS["sonnet"],  # JSON-only CFG extraction — sonnet for accuracy on baremo/elegibilidad
 }
 
 # ---------------------------------------------------------------------------

@@ -214,9 +214,8 @@ def _generate_output_6(
 ) -> str:
     """
     Generación de la salida 6 (evaluador HTML interactivo).
-    Claude recibe el template completo en el system prompt y devuelve el HTML
-    con los placeholders {{CONFIG_JSON}} y {{TITULO_EVALUADOR}} rellenados.
-    No hay paso intermedio de extracción JSON.
+    Claude genera SOLO el objeto JSON de configuración (CFG).
+    El backend inyecta ese JSON en la plantilla estática evaluador_template.html.
     """
     model = model or pricing.MODEL_PER_OUTPUT.get(6, pricing.MODELS["sonnet"])
 
@@ -227,7 +226,7 @@ def _generate_output_6(
     user_msg = (
         f"Documentos de la convocatoria '{conv_name}':\n\n{context}"
         + instr_block
-        + "\n\nGenera el evaluador HTML completo siguiendo las instrucciones del system prompt."
+        + "\n\nExtrae el objeto JSON de configuración del evaluador siguiendo las instrucciones del system prompt."
     )
 
     raw = _claude(
@@ -239,36 +238,15 @@ def _generate_output_6(
         _track=_track,
     )
 
-    html = _strip_fences(raw)
-    if not html.strip().lower().startswith("<!doctype html"):
+    try:
+        config = _parse_json(raw)
+    except Exception:
         raise HTTPException(
             status_code=502,
-            detail="El evaluador no se generó correctamente. Por favor, regenera la salida.",
+            detail="El evaluador no se generó correctamente (JSON inválido). Por favor, regenera la salida.",
         )
 
-    # Claude may modify the JavaScript onclick handlers (e.g. changing this.dataset
-    # to string concatenation with wrong quoting), causing a SyntaxError that leaves
-    # the page blank. Fix: extract the CFG JSON Claude filled in, then rebuild the
-    # HTML using the known-good Python template which has correct onclick handlers.
-    cfg_match = re.search(r'const\s+CFG\s*=\s*(\{.*?\})\s*;', html, re.DOTALL)
-    if cfg_match:
-        try:
-            config = json.loads(cfg_match.group(1))
-            return output6_template.build_output_6_html(config)
-        except Exception:
-            pass  # fall through to the raw HTML path below
-
-    # Fallback: return Claude's HTML but escape </ inside script blocks to prevent
-    # premature </script> tag closure from JSON values.
-    def _escape_script_content(m: re.Match) -> str:
-        return m.group(1) + m.group(2).replace("</", "<\\/") + m.group(3)
-    html = re.sub(
-        r'(<script[^>]*>)(.*?)(</script>)',
-        _escape_script_content,
-        html,
-        flags=re.DOTALL | re.IGNORECASE,
-    )
-    return html
+    return output6_template.build_output_6_html(config)
 
 
 # ---------------------------------------------------------------------------

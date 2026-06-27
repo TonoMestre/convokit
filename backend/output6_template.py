@@ -269,7 +269,7 @@ _TEMPLATE = """<!DOCTYPE html>
 </main>
 
 <footer class="site-footer">
-  © Innóvate Consultoría Ayudas Públicas, S.L. &nbsp;|&nbsp;
+  © Innóvate 4.0 Estrategia Empresarial, S.L. &nbsp;|&nbsp;
   <a href="https://innovate40.es/aviso-legal/" target="_blank" rel="noopener">Aviso legal</a>
   &nbsp;|&nbsp;
   <a href="mailto:proyectos2@innovate40.es">proyectos2@innovate40.es</a>
@@ -374,7 +374,7 @@ function renderInicio() {
     '<input type="text" id="f-municipio" placeholder="Municipio donde opera la empresa" autocomplete="address-level2" value="' + escHtml(STATE.municipio) + '" /></div>' +
     '<div class="rgpd-block">' +
     '<strong>Información sobre protección de datos</strong><br /><br />' +
-    '<strong>Responsable:</strong> INNÓVATE CONSULTORÍA AYUDAS PÚBLICAS S.L. — NIF B-01.734.813<br />' +
+    '<strong>Responsable:</strong> INNÓVATE 4.0 ESTRATEGIA EMPRESARIAL, S.L. — NIF B-01.734.813<br />' +
     '<strong>Dirección:</strong> C/ Almirante Cadarso 13-8ª, 46005 València<br />' +
     '<strong>Email:</strong> <a href="mailto:GDPR@INNOVATE40.ES">GDPR@INNOVATE40.ES</a><br /><br />' +
     'Tus datos se utilizarán exclusivamente para atender tu consulta sobre ayudas públicas y no se cederán a terceros sin tu consentimiento. ' +
@@ -837,8 +837,14 @@ async function enviarWeb3Forms(datos) {
 
 // ── Init ─────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", function() {
-  buildScreens();
-  renderScreen();
+  try {
+    buildScreens();
+    renderScreen();
+  } catch (err) {
+    document.getElementById("screen-content").innerHTML =
+      '<div style="background:#c50339;color:#fff;padding:24px;margin:40px 0;">' +
+      '<strong>Error al cargar el evaluador:</strong> ' + String(err) + '</div>';
+  }
 });
 </script>
 </body>

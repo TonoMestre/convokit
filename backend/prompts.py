@@ -318,8 +318,8 @@ Por cada sección, extrae los siguientes campos y devuelve ÚNICAMENTE un array 
 - codigo: string con el código de la sección (ej: 'II.C')
 - nombre: string con el nombre exacto del apartado
 - puntos_max: número entero extraído de la cabecera, o null si es criterio excluyente o no consta
-- inputs_minimos: array de strings — lo mínimo para redactar algo con sentido. Incluye el PEE si aparece en la sublista del Perfil, más el documento adicional más básico si lo hay.
-- inputs_puntuacion_completa: array de strings — todo lo necesario para puntuación máxima: PEE más todos los documentos adicionales de la sublista "proyecto".
+- inputs_minimos: array de strings en lenguaje natural legible (ej: "Actividad principal de la empresa y CNAE", "Descripción del proyecto en bruto"). NUNCA identificadores técnicos ni nombres de campo (nada de snake_case, camelCase ni abreviaturas internas). Incluye el PEE si aparece en la sublista del Perfil, más el documento adicional más básico si lo hay.
+- inputs_puntuacion_completa: array de strings en lenguaje natural legible (mismo criterio que inputs_minimos). Todo lo necesario para puntuación máxima: PEE más todos los documentos adicionales de la sublista "proyecto".
 - documentos_requeridos: array de objetos, uno por cada ítem de ambas sublistas de "QUÉ DEBES APORTAR":
   {
     "nombre": string con el nombre del documento o dato,

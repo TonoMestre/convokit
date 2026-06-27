@@ -40,6 +40,7 @@ class SalidaRequest(BaseModel):
     output_type: int
     instrucciones_adicionales: str = ""
     modo: str | None = None  # Solo para salida 3: "ABIERTA" o "ANTICIPADA"
+    variante: str | None = None  # Solo para salida 3: "A", "B" o "C" (distribución de fondos)
 
 
 class GenerateRequest(BaseModel):
@@ -50,6 +51,10 @@ class LandingSeoRequest(BaseModel):
     seo_title: str
     meta_description: str
     slug: str
+
+
+class LandingVariantRequest(BaseModel):
+    variante: str  # "A", "B" o "C"
 
 
 # ---------------------------------------------------------------------------
@@ -232,19 +237,22 @@ def _generate_output_3(
     context: str,
     instrucciones: str = "",
     modo: str = "ABIERTA",
+    variant: str = "A",
     model: str | None = None,
     _track: Callable | None = None,
 ) -> tuple[str, dict]:
     """
     Generación de la salida 3 (landing page).
-    Claude devuelve los campos SEO (seo_title, meta_description, slug) + el cuerpo HTML.
-    El backend separa ambas partes, envuelve el cuerpo en la plantilla estática e inyecta
-    el SEO en el <head>.
+    Claude devuelve los campos SEO (seo_title, meta_description, slug) + el cuerpo HTML
+    (8 bloques con clases seccion-N, sin fondos). El backend separa ambas partes, aplica la
+    variante de distribución (fondos por bloque), envuelve el cuerpo en la plantilla estática
+    e inyecta el SEO en el <head>.
 
-    Devuelve (html_completo, seo) donde seo incluye también body_html y el flag confirmed,
-    para poder re-aplicar ediciones de SEO sin regenerar toda la landing.
+    Devuelve (html_completo, seo) donde seo incluye también body_html, variant y el flag
+    confirmed, para poder re-aplicar SEO o cambiar de variante sin regenerar la landing.
     """
     model = model or pricing.MODEL_PER_OUTPUT.get(3, pricing.MODELS["haiku"])
+    variant = output3_template.normalize_variant(variant)
     user_prompt = _build_user_prompt(conv_name, context, 3, instrucciones, modo)
     raw = _claude(
         client,
@@ -255,8 +263,10 @@ def _generate_output_3(
         _track=_track,
     )
     seo, body = output3_template.parse_landing_response(raw, fallback_name=conv_name)
-    html = output3_template.build_output_3_html(body, seo["seo_title"], seo["meta_description"])
-    seo_full = {**seo, "body_html": body, "confirmed": False}
+    html = output3_template.build_output_3_html(
+        body, seo["seo_title"], seo["meta_description"], variant
+    )
+    seo_full = {**seo, "body_html": body, "variant": variant, "confirmed": False}
     return html, seo_full
 
 
@@ -523,6 +533,7 @@ def _process_job(job_id: int, conv_id: int, salida_requests: list[dict]) -> None
             output_type = salida_req["output_type"]
             instrucciones = salida_req.get("instrucciones_adicionales", "")
             modo = salida_req.get("modo") or "ABIERTA"
+            variante = salida_req.get("variante") or "A"
             key = str(output_type)
 
             progress["outputs"][key] = {"status": "running"}
@@ -577,7 +588,7 @@ def _process_job(job_id: int, conv_id: int, salida_requests: list[dict]) -> None
 
                 elif output_type == 3:
                     html_3, seo_3 = _generate_output_3(
-                        client, conv_name, context, instrucciones, modo,
+                        client, conv_name, context, instrucciones, modo, variante,
                         model=model, _track=track,
                     )
                     generated["3"] = html_3
@@ -828,15 +839,13 @@ def get_job(job_id: int):
 
 
 # ---------------------------------------------------------------------------
-# Confirmación / edición de los campos SEO de la landing (salida 3)
+# Landing (salida 3): SEO editable + variante de distribución
 # ---------------------------------------------------------------------------
 
-@app.post("/convocatorias/{convocatoria_id}/landing/seo")
-def update_landing_seo(convocatoria_id: int, body: LandingSeoRequest):
+def _load_landing_seo(convocatoria_id: int) -> tuple[dict, dict]:
     """
-    Re-aplica los campos SEO editados a la landing ya generada SIN llamar a Claude.
-    Reconstruye el HTML a partir del cuerpo guardado + el nuevo título y meta
-    description. El slug se guarda pero no se inserta en el HTML.
+    Carga la metadata de la landing (3_seo) de una convocatoria ya generada.
+    Devuelve (seo, entregables). Lanza HTTPException si no existe o falta el cuerpo.
     """
     conv = db.get_convocatoria(convocatoria_id)
     if conv is None:
@@ -846,42 +855,75 @@ def update_landing_seo(convocatoria_id: int, body: LandingSeoRequest):
     if "3_seo" not in entregables or "3" not in entregables:
         raise HTTPException(
             status_code=404,
-            detail="La landing aún no se ha generado. Genérala antes de editar el SEO.",
+            detail="La landing aún no se ha generado. Genérala antes de editarla.",
         )
-
     try:
         seo = json.loads(entregables["3_seo"])
     except Exception:
         seo = {}
-
-    body_html = seo.get("body_html", "")
-    if not body_html:
+    if not seo.get("body_html"):
         raise HTTPException(
             status_code=422,
-            detail="No se conserva el cuerpo de la landing. Regenera la landing para poder editar el SEO.",
+            detail="No se conserva el cuerpo de la landing. Regenérala para poder editarla.",
         )
+    return seo, entregables
+
+
+def _public_seo(seo: dict) -> dict:
+    """Subconjunto de la metadata de landing que se devuelve al frontend."""
+    return {k: seo.get(k) for k in ("seo_title", "meta_description", "slug", "variant", "confirmed")}
+
+
+@app.post("/convocatorias/{convocatoria_id}/landing/seo")
+def update_landing_seo(convocatoria_id: int, body: LandingSeoRequest):
+    """
+    Re-aplica los campos SEO editados a la landing ya generada SIN llamar a Claude.
+    Reconstruye el HTML a partir del cuerpo guardado + el nuevo título y meta description,
+    conservando la variante de distribución actual. El slug se guarda pero no va en el HTML.
+    """
+    seo, _ = _load_landing_seo(convocatoria_id)
+    body_html = seo["body_html"]
+    variant = output3_template.normalize_variant(seo.get("variant", "A"))
 
     seo_title = body.seo_title.strip()
     meta_description = body.meta_description.strip()
     slug = output3_template.slugify(body.slug) if body.slug.strip() else seo.get("slug", "")
 
-    new_html = output3_template.build_output_3_html(body_html, seo_title, meta_description)
+    new_html = output3_template.build_output_3_html(body_html, seo_title, meta_description, variant)
     new_seo = {
         "seo_title": seo_title,
         "meta_description": meta_description,
         "slug": slug,
         "body_html": body_html,
+        "variant": variant,
         "confirmed": True,
     }
     db.update_entregables(convocatoria_id, {
         "3": new_html,
         "3_seo": json.dumps(new_seo, ensure_ascii=False),
     })
+    return {"convocatoria_id": convocatoria_id, "seo": _public_seo(new_seo)}
 
-    return {
-        "convocatoria_id": convocatoria_id,
-        "seo": {k: new_seo[k] for k in ("seo_title", "meta_description", "slug", "confirmed")},
-    }
+
+@app.post("/convocatorias/{convocatoria_id}/landing/variant")
+def update_landing_variant(convocatoria_id: int, body: LandingVariantRequest):
+    """
+    Cambia la variante de distribución (fondos por bloque) de la landing ya generada SIN
+    llamar a Claude. Reconstruye el HTML a partir del cuerpo y el SEO guardados con la nueva
+    variante. El contenido y el SEO no cambian.
+    """
+    seo, _ = _load_landing_seo(convocatoria_id)
+    variant = output3_template.normalize_variant(body.variante)
+
+    new_html = output3_template.build_output_3_html(
+        seo["body_html"], seo.get("seo_title", ""), seo.get("meta_description", ""), variant
+    )
+    new_seo = {**seo, "variant": variant}
+    db.update_entregables(convocatoria_id, {
+        "3": new_html,
+        "3_seo": json.dumps(new_seo, ensure_ascii=False),
+    })
+    return {"convocatoria_id": convocatoria_id, "seo": _public_seo(new_seo)}
 
 
 # ---------------------------------------------------------------------------
@@ -914,6 +956,7 @@ def generate_outputs(convocatoria_id: int, body: GenerateRequest):
         output_type = salida_req.output_type
         instrucciones = salida_req.instrucciones_adicionales
         modo = salida_req.modo or "ABIERTA"
+        variante = salida_req.variante or "A"
         model = pricing.MODEL_PER_OUTPUT.get(output_type, pricing.MODELS["sonnet"])
         track = _make_tracker(convocatoria_id, str(output_type))
 
@@ -952,7 +995,7 @@ def generate_outputs(convocatoria_id: int, body: GenerateRequest):
 
             elif output_type == 3:
                 html_3, seo_3 = _generate_output_3(
-                    client, conv["nombre"], context, instrucciones, modo,
+                    client, conv["nombre"], context, instrucciones, modo, variante,
                     model=model, _track=track,
                 )
                 generated["3"] = html_3
@@ -1024,6 +1067,7 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
             output_type = salida_req.output_type
             instrucciones = salida_req.instrucciones_adicionales
             modo = salida_req.modo or "ABIERTA"
+            variante = salida_req.variante or "A"
             model = pricing.MODEL_PER_OUTPUT.get(output_type, pricing.MODELS["sonnet"])
             track = _make_tracker(convocatoria_id, str(output_type))
 
@@ -1122,7 +1166,7 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
 
                 elif output_type == 3:
                     html_3, seo_3 = _generate_output_3(
-                        client, conv["nombre"], context, instrucciones, modo,
+                        client, conv["nombre"], context, instrucciones, modo, variante,
                         model=model, _track=track,
                     )
                     generated["3"] = html_3

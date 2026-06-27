@@ -27,6 +27,22 @@ _TEMPLATE_PATH = pathlib.Path(__file__).parent / "landing_template.html"
 _SEO_MARKER = "===SEO_JSON==="
 _HTML_MARKER = "===LANDING_HTML==="
 
+# Distribución de fondos por bloque (1..8) para cada variante.
+# El contenido y el SEO son idénticos en las tres: solo cambia el fondo de cada bloque,
+# para que dos convocatorias publicadas a la vez no se vean estructuralmente calcadas.
+# Bloques: 1 hero · 2 qué consigue · 3 a quién · 4 qué financia · 5 importe · 6 cómo trabajamos · 7 CTA final · 8 Ruta i40
+VARIANT_BG: dict[str, list[str]] = {
+    "A": ["navy", "white", "cream", "white", "cream", "white", "navy", "cream"],
+    "B": ["cream", "white", "white", "cream", "navy", "white", "navy", "cream"],
+    "C": ["navy", "navy", "white", "cream", "white", "cream", "navy", "cream"],
+}
+DEFAULT_VARIANT = "A"
+
+
+def normalize_variant(variant: str | None) -> str:
+    v = (variant or "").strip().upper()
+    return v if v in VARIANT_BG else DEFAULT_VARIANT
+
 
 def _load_template() -> str:
     return _TEMPLATE_PATH.read_text(encoding="utf-8")
@@ -146,13 +162,35 @@ def parse_landing_response(raw: str, fallback_name: str = "") -> tuple[dict, str
     return seo, _clean_body(body)
 
 
-def build_output_3_html(body_html: str, seo_title: str, meta_description: str) -> str:
+def _apply_variant(body: str, variant: str) -> str:
     """
-    Envuelve el cuerpo de la landing en la plantilla estática e inyecta el SEO en el <head>.
+    Inyecta la clase de fondo (bg-navy/bg-cream/bg-white) en cada bloque seccion-N
+    según la variante elegida. No toca el contenido ni el texto.
+    """
+    bg_roles = VARIANT_BG[variant]
+    for n, role in enumerate(bg_roles, start=1):
+        # Añade la clase bg-* justo después de seccion-N (token con límite de palabra).
+        body = re.sub(rf"\bseccion-{n}\b", f"seccion-{n} bg-{role}", body)
+    return body
+
+
+def build_output_3_html(
+    body_html: str,
+    seo_title: str,
+    meta_description: str,
+    variant: str = DEFAULT_VARIANT,
+) -> str:
+    """
+    Envuelve el cuerpo de la landing en la plantilla estática, aplica la variante de
+    distribución (fondos por bloque) e inyecta el SEO en el <head>.
     El slug NO se usa aquí: no se inserta en el HTML.
     """
+    variant = normalize_variant(variant)
+    body = _apply_variant(_clean_body(body_html), variant)
+
     html = _load_template()
-    html = html.replace("{{LANDING_BODY}}", _clean_body(body_html))
+    html = html.replace("{{LANDING_BODY}}", body)
+    html = html.replace("{{VARIANT_CLASS}}", f"variante-{variant.lower()}")
     html = html.replace("{{SEO_TITLE}}", _esc_text(seo_title) or "Innóvate 4.0")
     html = html.replace("{{META_DESCRIPTION}}", _esc_attr(meta_description))
     html = html.replace("{{LOGO_SRC}}", _load_logo_b64())

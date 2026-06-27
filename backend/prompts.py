@@ -637,38 +637,44 @@ Primero el bloque SEO, exactamente así:
 
 Y a continuación, el cuerpo HTML de la landing (las secciones de contenido).
 
-Para el cuerpo HTML: NO incluyas <!DOCTYPE>, <html>, <head>, <title>, <meta>, <style>, <body>, <header> ni <footer>. Esos elementos, el CSS de marca, la cabecera con logo y el pie ya los aporta la plantilla. Tú generas solo las secciones de contenido. NO escribas CSS ni atributos style="..." propios: usa exclusivamente las clases documentadas abajo. Si incluyes alguna <img>, añade siempre un atributo alt descriptivo.
+Para el cuerpo HTML: NO incluyas <!DOCTYPE>, <html>, <head>, <title>, <meta>, <style>, <body>, <header> ni <footer>. Esos elementos, el CSS de marca, la cabecera con logo y el pie ya los aporta la plantilla. Tú generas solo las secciones de contenido.
 
-Estructura HTML obligatoria (en este orden):
+REGLAS ESTRUCTURALES IMPORTANTES:
+- La landing tiene EXACTAMENTE 8 bloques, en este orden, cada uno una <section> con su clase "seccion seccion-N" (N de 1 a 8). Respeta esos números exactos: el backend los usa para aplicar el diseño.
+- NO escribas CSS, atributos style="..." ni clases de color/fondo (nada de bg-navy, bg-cream, etc.). El fondo de cada bloque lo decide el backend según la variante elegida. Tú solo aportas contenido y las clases de maquetación documentadas.
+- Usa exclusivamente las clases documentadas abajo.
+- Si incluyes alguna <img>, añade siempre un atributo alt descriptivo.
 
-1. HERO — sección de apertura. El H1 es el NOMBRE BASE sin año; el gancho es el porcentaje/importe:
-<section class="hero">
+Estructura HTML obligatoria (los 8 bloques, en este orden):
+
+1. HERO. El H1 es el NOMBRE BASE sin año; el gancho es el porcentaje/importe:
+<section class="seccion seccion-1 hero">
   <p class="hero-gancho">Hasta el 40% a fondo perdido</p>
   <h1>Nombre base de la convocatoria, sin año</h1>
   <p class="hero-sub">Subtítulo: a quién va dirigida en una frase</p>
-  <a class="btn btn-light" href="#contacto">Quiero saber si puedo solicitarla</a>
+  <a class="btn btn-cta" href="#contacto">Quiero saber si puedo solicitarla</a>
 </section>
 
-2. BENEFICIOS — qué gana la empresa:
-<section class="bloque"><div class="wrap">
+2. QUÉ CONSIGUE TU EMPRESA:
+<section class="seccion seccion-2"><div class="wrap">
   <h2 class="bloque-titulo">Qué consigue tu empresa</h2>
   <ul class="lista">
     <li><strong>Beneficio concreto.</strong> Explicación en una frase.</li>
   </ul>
 </div></section>
 
-3. ELEGIBILIDAD — a quién va dirigida (mismo patrón: section.bloque > div.wrap > h2.bloque-titulo + ul.lista o <p>).
+3. A QUIÉN VA DIRIGIDA (mismo patrón: section.seccion.seccion-3 > div.wrap > h2.bloque-titulo + ul.lista o <p>).
 
-4. QUÉ FINANCIA — usa tarjetas:
-<section class="bloque"><div class="wrap">
+4. QUÉ PUEDES FINANCIAR — usa tarjetas:
+<section class="seccion seccion-4"><div class="wrap">
   <h2 class="bloque-titulo">Qué puedes financiar</h2>
   <div class="grid">
     <div class="card"><h3>Categoría</h3><p>Descripción llana.</p></div>
   </div>
 </div></section>
 
-5. CONVOCATORIA [AÑO] — aquí van el año y los datos de la edición vigente. El <h2> debe ser "Convocatoria [año]":
-<section class="bloque"><div class="wrap">
+5. IMPORTE DE LA AYUDA — el <h2> debe ser "Convocatoria [año]"; aquí van el año y los datos de la edición vigente:
+<section class="seccion seccion-5"><div class="wrap">
   <h2 class="bloque-titulo">Convocatoria 2026</h2>
   <ul class="lista"><li>Porcentaje, importe máximo, presupuesto y plazo de esta edición.</li></ul>
   <div class="destacado">
@@ -677,25 +683,12 @@ Estructura HTML obligatoria (en este orden):
   </div>
 </div></section>
 
-6. CÓMO TRABAJAMOS — section.bloque > div.wrap > h2.bloque-titulo + ul.lista.
+6. CÓMO TRABAJAMOS — section.seccion.seccion-6 > div.wrap > h2.bloque-titulo + ul.lista.
 
-7. CTA PRIMARIO (Ruta por convocatoria):
-<section class="cta cta-primary">
-  <h2>Titular que invite a actuar</h2>
+7. CTA FINAL — incluye el formulario de contacto. Lleva id="contacto". Usa EXACTAMENTE esta estructura de formulario (es Web3Forms, funciona sin JS al desplegarse). Sustituye NOMBRE_CONVOCATORIA por el nombre base:
+<section class="seccion seccion-7 cta" id="contacto"><div class="wrap">
+  <h2>Quiero que revisen mi caso</h2>
   <p>Qué pasa cuando contactan: análisis de viabilidad, sin compromiso.</p>
-  <a class="btn btn-cta" href="#contacto">Analiza mi caso</a>
-</section>
-
-8. CTA SECUNDARIO (Ruta i40):
-<section class="cta cta-secondary">
-  <h2>¿Tienes más inversiones previstas?</h2>
-  <p>Una frase explicando Ruta i40.</p>
-  <a class="btn btn-outline" href="#contacto">Cuéntanos tu situación</a>
-</section>
-
-9. FORMULARIO — usa EXACTAMENTE esta estructura (es Web3Forms, funciona sin JS al desplegarse). Sustituye NOMBRE_CONVOCATORIA por el nombre base y el texto del botón por la frase del CTA primario:
-<section class="bloque" id="contacto"><div class="wrap">
-  <h2 class="bloque-titulo">Quiero que revisen mi caso</h2>
   <form class="form-landing" action="https://api.web3forms.com/submit" method="POST">
     <input type="hidden" name="access_key" value="9230bf98-4a35-437a-b326-eb6e24e88f2e" />
     <input type="hidden" name="subject" value="[Landing] NOMBRE_CONVOCATORIA — nueva consulta" />
@@ -710,9 +703,16 @@ Estructura HTML obligatoria (en este orden):
   </form>
 </div></section>
 
-Clases CSS disponibles (no inventes otras): hero, hero-gancho, hero-sub, hero-body, bloque, wrap, bloque-titulo, lista, grid, card, destacado, destacado-cifra, destacado-detalle, cta, cta-primary, cta-secondary, btn, btn-cta, btn-light, btn-outline, form-landing, field, form-nota.
+8. CROSS-SELL RUTA i40:
+<section class="seccion seccion-8 cta-cross"><div class="wrap">
+  <h2>¿Tienes más inversiones previstas?</h2>
+  <p>Una frase explicando Ruta i40: programa de acompañamiento anual para empresas que trabajan las ayudas públicas de forma sistemática.</p>
+  <a class="btn btn-outline" href="#contacto">Cuéntanos tu situación</a>
+</section>
 
-Debe haber un único <h1> en toda la landing (el del hero). Cada sección lleva su <h2>. Todos los enlaces de CTA y botones apuntan a href="#contacto".""",
+Clases CSS disponibles (no inventes otras, y NO uses clases de fondo/color): seccion, seccion-1 … seccion-8, hero, hero-gancho, hero-sub, hero-body, wrap, bloque-titulo, lista, grid, card, destacado, destacado-cifra, destacado-detalle, cta, cta-cross, btn, btn-cta, btn-outline, form-landing, field, form-nota.
+
+Debe haber un único <h1> en toda la landing (el del hero). Cada bloque del 2 al 8 lleva su <h2>. Todos los enlaces de CTA y botones apuntan a href="#contacto".""",
 
     # ------------------------------------------------------------------
     # Salida 4 — Set de prompts para la memoria (alta exigencia)

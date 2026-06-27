@@ -46,7 +46,7 @@ function InstruccionesField({ value, onChange }) {
 
 function PendingSalidaRow({
   salida, selected, onToggle, outputStatuses, output4Progress,
-  instructions, setInstructions, mode3, setMode3,
+  instructions, setInstructions, mode3, setMode3, variant3, setVariant3,
 }) {
   const isChecked = selected.includes(salida.num);
   const outputStatus = outputStatuses[String(salida.num)]?.status;
@@ -115,6 +115,34 @@ function PendingSalidaRow({
               </div>
             </div>
           )}
+          {salida.num === 3 && (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-semibold text-brand-blue uppercase tracking-wide">
+                Variante de distribución
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {VARIANT_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setVariant3(opt.value)}
+                    title={opt.hint}
+                    className={`text-xs px-3 py-1.5 border transition-colors ${
+                      variant3 === opt.value
+                        ? "bg-brand-blue text-white border-brand-blue font-semibold"
+                        : "bg-white text-brand-blue border-brand-blue/40 hover:border-brand-blue"
+                    }`}
+                    style={{ borderRadius: 0 }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <span className="text-xs text-gray-500">
+                {VARIANT_OPTIONS.find((o) => o.value === variant3)?.hint}. Podrás cambiarla luego en la vista previa.
+              </span>
+            </div>
+          )}
           <InstruccionesField
             value={instructions[salida.num] || ""}
             onChange={(v) => setInstructions((prev) => ({ ...prev, [salida.num]: v }))}
@@ -137,11 +165,81 @@ function parseSeo(seoRaw) {
       seo_title: s.seo_title || "",
       meta_description: s.meta_description || "",
       slug: s.slug || "",
+      variant: (s.variant || "A").toUpperCase(),
       confirmed: !!s.confirmed,
     };
   } catch {
     return null;
   }
+}
+
+const VARIANT_OPTIONS = [
+  { value: "A", label: "Variante A", hint: "Alterna crema y blanco; hero navy" },
+  { value: "B", label: "Variante B", hint: "Hero en crema; importe en navy" },
+  { value: "C", label: "Variante C", hint: "Hero a un lado; más bloques navy" },
+];
+
+function VariantSelector({ seoRaw, convocatoriaId }) {
+  const { API, openConvocatoria } = useApp();
+  const current = parseSeo(seoRaw)?.variant || "A";
+  const [busy, setBusy] = useState(null);
+  const [error, setError] = useState(null);
+
+  async function pickVariant(v) {
+    if (v === current || busy) return;
+    setBusy(v);
+    setError(null);
+    try {
+      const res = await fetch(`${API}/convocatorias/${convocatoriaId}/landing/variant`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ variante: v }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail ?? "No se pudo cambiar la variante.");
+      }
+      await openConvocatoria(convocatoriaId);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <div className="mb-3 p-3" style={{ border: "1px solid var(--color-navy-20)", background: "#f9fafb" }}>
+      <span className="block text-xs font-semibold text-brand-blue uppercase tracking-wide mb-2">
+        Variante de distribución
+      </span>
+      <div className="flex flex-wrap gap-2">
+        {VARIANT_OPTIONS.map((opt) => {
+          const active = opt.value === current;
+          return (
+            <button
+              key={opt.value}
+              onClick={() => pickVariant(opt.value)}
+              disabled={!!busy}
+              title={opt.hint}
+              className={`text-xs px-3 py-1.5 border transition-colors disabled:opacity-50 ${
+                active
+                  ? "bg-brand-blue text-white border-brand-blue font-semibold"
+                  : "bg-white text-brand-blue border-brand-blue/40 hover:border-brand-blue"
+              }`}
+              style={{ borderRadius: 0 }}
+            >
+              {busy === opt.value ? "Aplicando…" : opt.label}
+            </button>
+          );
+        })}
+      </div>
+      <p className="text-xs text-gray-500 mt-2">
+        {VARIANT_OPTIONS.find((o) => o.value === current)?.hint}. Cambia solo la distribución de
+        fondos; el contenido y el SEO no cambian.
+      </p>
+      {error && <p className="text-xs text-brand-red mt-1">{error}</p>}
+    </div>
+  );
 }
 
 function SeoPanel({ seoRaw, convocatoriaId }) {
@@ -482,7 +580,10 @@ function EntregableItem({
           {salida.isHtml ? (
             <div className="space-y-3">
               {salida.num === 3 && seoRaw && (
-                <SeoPanel seoRaw={seoRaw} convocatoriaId={convocatoriaId} />
+                <>
+                  <VariantSelector seoRaw={seoRaw} convocatoriaId={convocatoriaId} />
+                  <SeoPanel seoRaw={seoRaw} convocatoriaId={convocatoriaId} />
+                </>
               )}
               <iframe
                 srcDoc={texto}
@@ -532,6 +633,7 @@ export default function EntregablePanel({ convocatoria, onUpdate: _onUpdate }) {
 
   const [instructions, setInstructions] = useState({});
   const [mode3, setMode3] = useState("ABIERTA");
+  const [variant3, setVariant3] = useState("A");
 
   const pollRef = useRef(null);
 
@@ -595,7 +697,7 @@ export default function EntregablePanel({ convocatoria, onUpdate: _onUpdate }) {
     const salidas = types.map((t) => ({
       output_type: t,
       instrucciones_adicionales: instrMap[t] || "",
-      ...(t === 3 ? { modo: mode3 } : {}),
+      ...(t === 3 ? { modo: mode3, variante: variant3 } : {}),
     }));
 
     try {
@@ -648,6 +750,8 @@ export default function EntregablePanel({ convocatoria, onUpdate: _onUpdate }) {
                 setInstructions={setInstructions}
                 mode3={mode3}
                 setMode3={setMode3}
+                variant3={variant3}
+                setVariant3={setVariant3}
               />
             ))}
           </div>

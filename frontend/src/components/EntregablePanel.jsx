@@ -4,7 +4,7 @@ import { useApp } from "../context/AppContext";
 const SALIDAS = [
   { num: 1, label: "Guía interna del consultor",                  ext: "md" },
   { num: 2, label: "Ficha comercial para el cliente",             ext: "md" },
-  { num: 3, label: "Landing page",                                ext: "md", hasMode: true },
+  { num: 3, label: "Landing page",                                ext: "html", hasMode: true, isHtml: true },
   { num: 4, label: "Set de prompts para la memoria",              ext: "md", hasJson: true },
   { num: 5, label: "Lista de documentación + correo al cliente",  ext: "md", hasJson: true },
   { num: 6, label: "Evaluador de encaje (HTML interactivo)",      ext: "html", isHtml: true },
@@ -327,9 +327,9 @@ function EntregableItem({
             <div className="space-y-3">
               <iframe
                 srcDoc={texto}
-                title="Evaluador de encaje"
+                title={salida.label}
                 style={{ width: "100%", height: "680px", border: "1px solid #e5e7eb" }}
-                sandbox="allow-scripts allow-forms allow-same-origin"
+                sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
               />
               <div className="flex gap-2 flex-wrap">
                 <button

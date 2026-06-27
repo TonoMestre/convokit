@@ -9,9 +9,10 @@ mediante la API de Claude:
 
 1. Guía interna del consultor
 2. Ficha comercial para el cliente (.md para Claude design)
-3. Landing page (.md para Claude design)
+3. Landing page (HTML completo desplegable, con la marca Innóvate 4.0)
 4. Set de prompts para la memoria (+ JSON)
 5. Lista de documentación + correo al cliente (+ JSON)
+6. Evaluador de encaje (HTML interactivo desplegable)
 
 Uso exclusivamente interno. Sin clientes finales. Sin autenticación en el MVP.
 
@@ -140,7 +141,14 @@ Seguir este orden. Validar cada paso antes de seguir al siguiente.
 - Colores: azul #1d254c, rojo #c50339, blanco #FFFFFF, negro #000000. Sin otros colores.
 - Tipografía: Roboto Slab (títulos), Inter (cuerpo y UI). Ambas desde Google Fonts.
 - Border-radius: 0px en todos los elementos.
-- Las salidas 2 (ficha comercial) y 3 (landing) salen en .md limpio con jerarquía clara
-  (H1, H2, bullets, destacados). El diseño visual lo aplica Claude design después, que ya
-  tiene el design system de Innóvate 4.0; no generar frontmatter de marca ni CSS en esas
-  salidas.
+- La salida 2 (ficha comercial) sale en .md limpio con jerarquía clara (H1, H2, bullets,
+  destacados). El diseño visual lo aplica Claude design después, que ya tiene el design
+  system de Innóvate 4.0; no generar frontmatter de marca ni CSS en esa salida.
+- La salida 3 (landing) y la salida 6 (evaluador) salen como HTML completo y autocontenido,
+  con la marca Innóvate 4.0 ya aplicada, listo para subir a innovate40.es como subcarpeta.
+  Ambas usan el mismo patrón: Claude genera solo el contenido variable (cuerpo HTML en la
+  salida 3, objeto CFG JSON en la salida 6) y el backend lo inyecta en una plantilla
+  estática (backend/landing_template.html y backend/evaluador_template.html) que contiene
+  el CSS de marca, la cabecera con logo y el pie. Así la marca nunca depende de que Claude
+  reescriba el CSS. El logo se incrusta en base64 para que la vista previa en iframe
+  (srcDoc) funcione.

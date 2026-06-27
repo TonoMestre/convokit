@@ -22,6 +22,7 @@ load_dotenv()
 import database as db
 import exporters
 import extractors
+import output3_template
 import output6_template
 import pricing
 import prompts as p
@@ -198,6 +199,37 @@ def _generate_output_1(
     )
 
     return part_1.rstrip() + "\n\n" + part_2.lstrip()
+
+
+# ---------------------------------------------------------------------------
+# Generación de salida 3 (landing page HTML desplegable)
+# ---------------------------------------------------------------------------
+
+def _generate_output_3(
+    client: anthropic.Anthropic,
+    conv_name: str,
+    context: str,
+    instrucciones: str = "",
+    modo: str = "ABIERTA",
+    model: str | None = None,
+    _track: Callable | None = None,
+) -> str:
+    """
+    Generación de la salida 3 (landing page).
+    Claude genera SOLO el cuerpo HTML de la landing; el backend lo envuelve en la
+    plantilla estática landing_template.html (cabecera, CSS de marca y pie fijos).
+    """
+    model = model or pricing.MODEL_PER_OUTPUT.get(3, pricing.MODELS["haiku"])
+    user_prompt = _build_user_prompt(conv_name, context, 3, instrucciones, modo)
+    body = _claude(
+        client,
+        system=p.SYSTEM_PROMPTS[3],
+        user=user_prompt,
+        max_tokens=p.MAX_TOKENS[3],
+        model=model,
+        _track=_track,
+    )
+    return output3_template.build_output_3_html(body, titulo=f"{conv_name} — Innóvate 4.0")
 
 
 # ---------------------------------------------------------------------------
@@ -520,6 +552,12 @@ def _process_job(job_id: int, conv_id: int, salida_requests: list[dict]) -> None
                         model=model, _track=track,
                     )
 
+                elif output_type == 3:
+                    generated["3"] = _generate_output_3(
+                        client, conv_name, context, instrucciones, modo,
+                        model=model, _track=track,
+                    )
+
                 else:
                     user_prompt = _build_user_prompt(conv_name, context, output_type, instrucciones, modo)
                     generated[key] = _claude(
@@ -830,6 +868,12 @@ def generate_outputs(convocatoria_id: int, body: GenerateRequest):
                     model=model, _track=track,
                 )
 
+            elif output_type == 3:
+                generated["3"] = _generate_output_3(
+                    client, conv["nombre"], context, instrucciones, modo,
+                    model=model, _track=track,
+                )
+
             else:
                 user_prompt = _build_user_prompt(conv["nombre"], context, output_type, instrucciones, modo)
                 generated[str(output_type)] = _claude(
@@ -990,6 +1034,12 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
                 elif output_type == 6:
                     generated["6"] = _generate_output_6(
                         client, conv["nombre"], context, instrucciones,
+                        model=model, _track=track,
+                    )
+
+                elif output_type == 3:
+                    generated["3"] = _generate_output_3(
+                        client, conv["nombre"], context, instrucciones, modo,
                         model=model, _track=track,
                     )
 

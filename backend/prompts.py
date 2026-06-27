@@ -21,10 +21,10 @@ Si un dato no está en el documento, se omite o se indica explícitamente que no
 MAX_TOKENS: dict[int, int] = {
     1: 8192,
     2: 4096,
-    3: 4096,
+    3: 6000,  # HTML completo de la landing (más verboso que markdown)
     4: 8192,
     5: 4096,
-    6: 5000,  # JSON de CFG — suficiente para baremos extensos
+    6: 8192,  # JSON de CFG — baremos muy extensos (ej. INPYME) necesitan margen
 }
 
 # ---------------------------------------------------------------------------
@@ -102,6 +102,9 @@ ESQUEMA EXACTO DEL OBJETO JSON (respeta todos los campos y tipos):
     "nota_fuente": "Datos extraídos de las bases reguladoras y convocatoria de [nombre] publicadas por [organismo]."
   }
 }
+
+REGLA DE BREVEDAD (IMPORTANTE):
+Los textos de "ayuda" de cada pregunta deben ser de UNA frase corta (máximo 20 palabras). Los "label" de las opciones deben ser concisos (máximo 12 palabras). No redactes párrafos largos ni justificaciones extensas: el evaluador es una herramienta interactiva, no un documento. Textos largos provocan que el JSON se corte y el evaluador falle.
 
 REGLAS DE CAMPO:
 
@@ -434,7 +437,7 @@ Teléfono: 960 66 66 10
 Email: proyectos2@innovate40.es""",
 
     # ------------------------------------------------------------------
-    # Salida 3 — Landing page (.md para Claude design)
+    # Salida 3 — Landing page (HTML completo desplegable)
     # ------------------------------------------------------------------
     3: _RULE_JERARQUIA + "\n\n" + _RULE_REFS_TEMPORALES + """
 
@@ -465,9 +468,7 @@ Si el consultor no indica el modo, usa MODO ABIERTA por defecto.
 
 Genera siempre estos bloques en este orden. Cada bloque debe caber en media pantalla como máximo. Si un bloque supera 4 bullets o 80 palabras de texto corrido, está demasiado largo: recorta.
 
-Indica el tipo de cada bloque entre corchetes: [HERO], [BENEFICIOS], [ELEGIBILIDAD], [QUÉ FINANCIA], [IMPORTE], [CÓMO TRABAJAMOS], [CTA PRIMARIO], [CTA SECUNDARIO], [FORMULARIO].
-
-Para bloques con mucho detalle disponible en las bases, añade la nota [NOTA DISEÑO: candidato a acordeón desplegable] justo antes del bloque.
+Los nombres entre corchetes ([HERO], [BENEFICIOS], etc.) identifican el contenido de cada bloque y NO deben aparecer en la salida. Cada bloque se traduce a HTML con las clases CSS indicadas en la sección FORMATO DE SALIDA.
 
 ---
 
@@ -603,7 +604,80 @@ Nunca inventes cifras, estadísticas ni afirmaciones que no estén en los docume
 
 ## FORMATO DE SALIDA
 
-Markdown limpio. Sin frontmatter, sin CSS, sin instrucciones de color ni tipografía. El diseño lo aplica Claude design.""",
+Devuelve ÚNICAMENTE el cuerpo HTML de la landing. Sin texto antes ni después. Sin bloques de código markdown (sin ```html). Empieza directamente con la primera etiqueta y termina con la última.
+
+NO incluyas: <!DOCTYPE>, <html>, <head>, <style>, <body>, <header> ni <footer>. Esos elementos, el CSS de marca, la cabecera con logo y el pie ya los aporta la plantilla. Tú generas solo las secciones de contenido. NO escribas CSS ni atributos style="..." propios: usa exclusivamente las clases documentadas abajo.
+
+Estructura HTML obligatoria (en este orden):
+
+1. HERO — sección de apertura:
+<section class="hero">
+  <h1>Titular orientado al beneficio (importe/porcentaje a fondo perdido)</h1>
+  <p class="hero-sub">Subtítulo: a quién va dirigida, con el nombre de la convocatoria</p>
+  <p class="hero-body">Presupuesto total y plazo, si están confirmados</p>
+  <a class="btn btn-light" href="#contacto">Quiero saber si puedo solicitarla</a>
+</section>
+
+2. BENEFICIOS — qué gana la empresa:
+<section class="bloque"><div class="wrap">
+  <h2 class="bloque-titulo">Qué consigue tu empresa</h2>
+  <ul class="lista">
+    <li><strong>Beneficio concreto.</strong> Explicación en una frase.</li>
+  </ul>
+</div></section>
+
+3. ELEGIBILIDAD — a quién va dirigida (mismo patrón: section.bloque > div.wrap > h2.bloque-titulo + ul.lista o <p>).
+
+4. QUÉ FINANCIA — usa tarjetas:
+<section class="bloque"><div class="wrap">
+  <h2 class="bloque-titulo">Qué puedes financiar</h2>
+  <div class="grid">
+    <div class="card"><h3>Categoría</h3><p>Descripción llana.</p></div>
+  </div>
+</div></section>
+
+5. IMPORTE — porcentajes e importe máximo en <p> o <ul class="lista">. Si hay ejemplo de cálculo con datos reales, añádelo en un destacado:
+<div class="destacado">
+  <div class="destacado-cifra">90.000 €</div>
+  <div class="destacado-detalle">Una inversión de 300.000 € al 30% genera esta ayuda a fondo perdido.</div>
+</div>
+
+6. CÓMO TRABAJAMOS — section.bloque > div.wrap > h2.bloque-titulo + ul.lista.
+
+7. CTA PRIMARIO (Ruta por convocatoria):
+<section class="cta cta-primary">
+  <h2>Titular que invite a actuar</h2>
+  <p>Qué pasa cuando contactan: análisis de viabilidad, sin compromiso.</p>
+  <a class="btn btn-cta" href="#contacto">Analiza mi caso</a>
+</section>
+
+8. CTA SECUNDARIO (Ruta i40):
+<section class="cta cta-secondary">
+  <h2>¿Tienes más inversiones previstas?</h2>
+  <p>Una frase explicando Ruta i40.</p>
+  <a class="btn btn-outline" href="#contacto">Cuéntanos tu situación</a>
+</section>
+
+9. FORMULARIO — usa EXACTAMENTE esta estructura (es Web3Forms, funciona sin JS al desplegarse). Sustituye NOMBRE_CONVOCATORIA por el nombre real y el texto del botón por la frase del CTA primario:
+<section class="bloque" id="contacto"><div class="wrap">
+  <h2 class="bloque-titulo">Quiero que revisen mi caso</h2>
+  <form class="form-landing" action="https://api.web3forms.com/submit" method="POST">
+    <input type="hidden" name="access_key" value="9230bf98-4a35-437a-b326-eb6e24e88f2e" />
+    <input type="hidden" name="subject" value="[Landing] NOMBRE_CONVOCATORIA — nueva consulta" />
+    <input type="hidden" name="from_name" value="Landing Innóvate 4.0" />
+    <div class="field"><label for="l-nombre">Nombre y apellidos</label><input type="text" id="l-nombre" name="nombre" required /></div>
+    <div class="field"><label for="l-empresa">Empresa</label><input type="text" id="l-empresa" name="empresa" required /></div>
+    <div class="field"><label for="l-email">Email</label><input type="email" id="l-email" name="email" required /></div>
+    <div class="field"><label for="l-tel">Teléfono</label><input type="tel" id="l-tel" name="telefono" required /></div>
+    <div class="field"><label for="l-msg">Mensaje (opcional)</label><textarea id="l-msg" name="mensaje" placeholder="¿En qué inviertes? ¿A qué sector pertenece tu empresa?"></textarea></div>
+    <button type="submit" class="btn btn-cta">Quiero saber si puedo solicitarla</button>
+    <p class="form-nota">Tiempo de respuesta habitual: 24-48 horas laborables.</p>
+  </form>
+</div></section>
+
+Clases CSS disponibles (no inventes otras): hero, hero-sub, hero-body, bloque, wrap, bloque-titulo, lista, grid, card, destacado, destacado-cifra, destacado-detalle, cta, cta-primary, cta-secondary, btn, btn-cta, btn-light, btn-outline, form-landing, field, form-nota.
+
+Todos los enlaces de CTA y botones apuntan a href="#contacto" para llevar al formulario.""",
 
     # ------------------------------------------------------------------
     # Salida 4 — Set de prompts para la memoria (alta exigencia)

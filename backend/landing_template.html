@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>{{TITULO}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --navy: #1D254C;
+    --red: #C50339;
+    --cream: #F2EBD8;
+    --white: #FFFFFF;
+    --black: #000000;
+    --navy-10: rgba(29,37,76,0.10);
+    --navy-20: rgba(29,37,76,0.20);
+    --navy-60: rgba(29,37,76,0.60);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--white);
+    color: var(--navy);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Header ── */
+  .site-header {
+    background: var(--navy);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid var(--red);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .site-header img { display: block; height: 30px; object-fit: contain; }
+  .site-header .header-cta {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--white);
+    text-decoration: none;
+    border: 1.5px solid rgba(255,255,255,0.4);
+    padding: 8px 18px;
+    transition: background 0.2s, color 0.2s;
+  }
+  .site-header .header-cta:hover { background: var(--white); color: var(--navy); }
+
+  /* ── Layout ── */
+  .wrap { max-width: 920px; margin: 0 auto; padding: 0 24px; }
+  .bloque { padding: 56px 0; border-bottom: 1px solid var(--navy-10); }
+  .bloque:last-of-type { border-bottom: none; }
+
+  /* ── Tipografía ── */
+  h1, h2, h3 { font-family: 'Roboto Slab', serif; font-weight: 700; color: var(--navy); line-height: 1.15; }
+  .bloque-titulo {
+    font-size: 1.7rem;
+    margin-bottom: 22px;
+  }
+  .bloque-titulo::after {
+    content: '';
+    display: block;
+    width: 48px;
+    height: 3px;
+    background: var(--red);
+    margin-top: 12px;
+  }
+  p { margin-bottom: 14px; }
+  p:last-child { margin-bottom: 0; }
+  strong { color: var(--navy); font-weight: 700; }
+
+  /* ── Hero ── */
+  .hero {
+    background: var(--navy);
+    color: var(--white);
+    padding: 72px 24px;
+    text-align: center;
+  }
+  .hero h1 { color: var(--white); font-size: 2.6rem; margin-bottom: 18px; max-width: 800px; margin-left: auto; margin-right: auto; }
+  .hero .hero-sub { font-size: 1.25rem; font-weight: 500; color: var(--white); margin-bottom: 18px; max-width: 720px; margin-left: auto; margin-right: auto; }
+  .hero .hero-body { font-size: 1rem; color: rgba(255,255,255,0.85); margin-bottom: 32px; max-width: 640px; margin-left: auto; margin-right: auto; }
+
+  /* ── Listas ── */
+  .lista { list-style: none; max-width: 760px; }
+  .lista li {
+    position: relative;
+    padding-left: 30px;
+    margin-bottom: 16px;
+    font-size: 1.02rem;
+  }
+  .lista li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 9px;
+    width: 10px;
+    height: 10px;
+    background: var(--red);
+  }
+  .lista li strong { display: block; margin-bottom: 2px; }
+
+  /* ── Tarjetas de beneficios / qué financia ── */
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; }
+  .card {
+    background: var(--cream);
+    border-left: 3px solid var(--red);
+    padding: 22px;
+  }
+  .card h3 { font-size: 1.05rem; margin-bottom: 8px; }
+  .card p { font-size: 0.95rem; color: var(--navy-60); margin-bottom: 0; }
+
+  /* ── Destacado (ejemplo de importe) ── */
+  .destacado {
+    background: var(--cream);
+    padding: 28px;
+    margin-top: 24px;
+    border-top: 3px solid var(--red);
+  }
+  .destacado .destacado-cifra {
+    font-family: 'Roboto Slab', serif;
+    font-weight: 700;
+    font-size: 2rem;
+    color: var(--red);
+    margin-bottom: 6px;
+  }
+  .destacado .destacado-detalle { font-size: 0.95rem; color: var(--navy-60); }
+
+  /* ── Botones ── */
+  .btn {
+    display: inline-block;
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 15px 34px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+  .btn-cta { background: var(--red); color: var(--white); }
+  .btn-cta:hover { background: #a00230; }
+  .btn-light { background: var(--white); color: var(--navy); }
+  .btn-light:hover { background: var(--cream); }
+  .btn-outline { background: transparent; color: var(--navy); border: 1.5px solid var(--navy); }
+  .btn-outline:hover { background: var(--navy); color: var(--white); }
+
+  /* ── Bloques CTA ── */
+  .cta {
+    padding: 56px 24px;
+    text-align: center;
+  }
+  .cta-primary { background: var(--navy); color: var(--white); }
+  .cta-primary h2 { color: var(--white); font-size: 1.9rem; margin-bottom: 14px; }
+  .cta-primary p { color: rgba(255,255,255,0.85); max-width: 600px; margin-left: auto; margin-right: auto; margin-bottom: 28px; }
+  .cta-secondary { background: var(--cream); }
+  .cta-secondary h2 { font-size: 1.5rem; margin-bottom: 12px; }
+  .cta-secondary p { color: var(--navy-60); max-width: 600px; margin-left: auto; margin-right: auto; margin-bottom: 24px; }
+
+  /* ── Formulario ── */
+  .form-landing {
+    max-width: 560px;
+    margin: 0 auto;
+    text-align: left;
+    background: var(--white);
+    padding: 32px;
+    border: 1px solid var(--navy-20);
+  }
+  .form-landing .field { margin-bottom: 18px; }
+  .form-landing label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--navy);
+    margin-bottom: 6px;
+  }
+  .form-landing input,
+  .form-landing textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--navy-20);
+    background: var(--white);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    color: var(--navy);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-landing input:focus,
+  .form-landing textarea:focus { border-color: var(--navy); }
+  .form-landing textarea { resize: vertical; min-height: 90px; }
+  .form-landing .btn { width: 100%; margin-top: 6px; }
+  .form-nota { font-size: 0.8rem; color: var(--navy-60); margin-top: 14px; text-align: center; }
+
+  /* ── Footer ── */
+  .site-footer {
+    background: var(--navy);
+    color: rgba(255,255,255,0.55);
+    text-align: center;
+    padding: 28px 24px;
+    font-size: 0.8rem;
+    line-height: 1.9;
+  }
+  .site-footer a { color: rgba(255,255,255,0.55); }
+  .site-footer a:hover { color: var(--white); }
+
+  @media (max-width: 600px) {
+    .hero { padding: 48px 20px; }
+    .hero h1 { font-size: 1.9rem; }
+    .hero .hero-sub { font-size: 1.05rem; }
+    .bloque { padding: 40px 0; }
+    .bloque-titulo { font-size: 1.4rem; }
+    .form-landing { padding: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <img src="{{LOGO_SRC}}" alt="Innóvate 4.0" />
+  <a class="header-cta" href="#contacto">Quiero que revisen mi caso</a>
+</header>
+
+{{LANDING_BODY}}
+
+<footer class="site-footer">
+  © Innóvate 4.0 Estrategia Empresarial, S.L. &nbsp;|&nbsp;
+  <a href="https://innovate40.es/aviso-legal/" target="_blank" rel="noopener">Aviso legal</a>
+  &nbsp;|&nbsp;
+  <a href="mailto:proyectos2@innovate40.es">proyectos2@innovate40.es</a>
+  &nbsp;|&nbsp; 960 66 66 10
+</footer>
+
+</body>
+</html>

@@ -8,20 +8,22 @@ import StatsPanel from "./components/StatsPanel";
 function AppHeader() {
   return (
     <header
-      className="bg-brand-blue flex items-center px-5 h-14 shrink-0"
-      style={{ borderBottom: "2px solid var(--color-red)" }}
+      className="bg-brand-blue flex items-center justify-between shrink-0"
+      style={{ padding: "16px 24px", borderBottom: "2px solid var(--color-red)" }}
     >
+      <div className="flex flex-col">
+        <span style={{ fontFamily: "var(--font-titles)", fontWeight: 700, fontSize: "22px", color: "#fff", lineHeight: 1.1 }}>
+          ConvoKit
+        </span>
+        <span style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: "11px", color: "rgba(255,255,255,0.6)", letterSpacing: "0.15em", marginTop: "2px" }}>
+          by innóvate 4.0
+        </span>
+      </div>
       <img
         src="/logo-negativo.png"
         alt="Innóvate 4.0"
-        className="h-8 mr-3 object-contain"
+        style={{ height: "28px", objectFit: "contain" }}
       />
-      <span
-        className="text-white text-base tracking-wide"
-        style={{ fontFamily: "var(--font-body)", fontWeight: 500 }}
-      >
-        ConvoKit
-      </span>
     </header>
   );
 }

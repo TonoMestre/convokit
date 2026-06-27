@@ -7,6 +7,7 @@ const SALIDAS = [
   { num: 3, label: "Landing page",                                ext: "md", hasMode: true },
   { num: 4, label: "Set de prompts para la memoria",              ext: "md", hasJson: true },
   { num: 5, label: "Lista de documentación + correo al cliente",  ext: "md", hasJson: true },
+  { num: 6, label: "Evaluador de encaje (HTML interactivo)",      ext: "html", isHtml: true },
 ];
 
 function Spinner({ className = "" }) {
@@ -195,6 +196,14 @@ function EntregableItem({
     );
   }
 
+  function handlePreview(e) {
+    e.stopPropagation();
+    const blob = new Blob([texto], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    window.open(url, "_blank");
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  }
+
   async function handleDownloadJson(e) {
     e.stopPropagation();
     setDownloadingJson(true);
@@ -272,12 +281,19 @@ function EntregableItem({
             </span>
           )}
 
-          <button onClick={handleCopy} className={`${btnBase} ${isOpen ? btnOpen : btnClosed}`}>
-            {copied ? "¡Copiado!" : "Copiar"}
-          </button>
+          {!salida.isHtml && (
+            <button onClick={handleCopy} className={`${btnBase} ${isOpen ? btnOpen : btnClosed}`}>
+              {copied ? "¡Copiado!" : "Copiar"}
+            </button>
+          )}
           <button onClick={handleDownload} className={`${btnBase} ${isOpen ? btnOpen : btnClosed}`}>
             .{salida.ext}
           </button>
+          {salida.isHtml && (
+            <button onClick={handlePreview} className={`${btnBase} ${isOpen ? btnOpen : btnClosed}`}>
+              Vista previa
+            </button>
+          )}
           {salida.hasJson && hasJsonData && (
             <button
               onClick={handleDownloadJson}
@@ -312,9 +328,31 @@ function EntregableItem({
 
       {isOpen && (
         <div className="px-5 py-5" style={{ borderTop: "1px solid var(--color-navy-20)" }}>
-          <pre className="whitespace-pre-wrap text-sm text-gray-800 font-sans leading-relaxed">
-            {texto}
-          </pre>
+          {salida.isHtml ? (
+            <div className="space-y-3">
+              <p className="text-sm text-gray-600">
+                Archivo HTML listo. Usa los botones para descargarlo o abrirlo en el navegador.
+              </p>
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  onClick={handleDownload}
+                  className="text-xs px-3 py-1.5 bg-brand-blue text-white font-medium hover:bg-navy-dark transition-colors"
+                >
+                  Descargar .html
+                </button>
+                <button
+                  onClick={handlePreview}
+                  className="text-xs px-3 py-1.5 border border-brand-blue text-brand-blue font-medium hover:bg-brand-blue hover:text-white transition-colors"
+                >
+                  Abrir en el navegador
+                </button>
+              </div>
+            </div>
+          ) : (
+            <pre className="whitespace-pre-wrap text-sm text-gray-800 font-sans leading-relaxed">
+              {texto}
+            </pre>
+          )}
         </div>
       )}
     </div>

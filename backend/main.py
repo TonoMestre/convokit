@@ -21,6 +21,7 @@ load_dotenv()
 import database as db
 import exporters
 import extractors
+import output6_template
 import pricing
 import prompts as p
 
@@ -196,6 +197,55 @@ def _generate_output_1(
     )
 
     return part_1.rstrip() + "\n\n" + part_2.lstrip()
+
+
+# ---------------------------------------------------------------------------
+# Generación de salida 6 (evaluador HTML interactivo)
+# ---------------------------------------------------------------------------
+
+def _generate_output_6(
+    client: anthropic.Anthropic,
+    conv_name: str,
+    context: str,
+    instrucciones: str = "",
+    model: str | None = None,
+    _track: Callable | None = None,
+) -> str:
+    """
+    Generación de la salida 6 (evaluador HTML interactivo).
+    Paso 1: Claude extrae JSON de config de los documentos.
+    Paso 2: Python construye el HTML desde la plantilla estática.
+    """
+    model = model or pricing.MODEL_PER_OUTPUT.get(6, pricing.MODELS["haiku"])
+
+    instr_block = (
+        f"\n\nINSTRUCCIONES ADICIONALES DEL CONSULTOR: {instrucciones.strip()}"
+        if instrucciones.strip() else ""
+    )
+    user_msg = (
+        f"Documentos de la convocatoria '{conv_name}':\n\n{context}"
+        + instr_block
+        + "\n\nGenera el objeto JSON de configuración del evaluador siguiendo exactamente el esquema del system prompt."
+    )
+
+    raw_config = _claude(
+        client,
+        system=p.OUTPUT_6_CONFIG_PROMPT,
+        user=user_msg,
+        max_tokens=p.MAX_TOKENS[6],
+        model=model,
+        _track=_track,
+    )
+
+    try:
+        config = _parse_json(raw_config)
+    except Exception:
+        raise HTTPException(
+            status_code=502,
+            detail="No se pudo generar la configuración del evaluador. Comprueba que los documentos contienen los criterios de la convocatoria.",
+        )
+
+    return output6_template.build_output_6_html(config)
 
 
 # ---------------------------------------------------------------------------
@@ -451,6 +501,12 @@ def _process_job(job_id: int, conv_id: int, salida_requests: list[dict]) -> None
                         ensure_ascii=False,
                     )
 
+                elif output_type == 6:
+                    generated["6"] = _generate_output_6(
+                        client, conv_name, context, instrucciones,
+                        model=model, _track=track,
+                    )
+
                 else:
                     user_prompt = _build_user_prompt(conv_name, context, output_type, instrucciones, modo)
                     generated[key] = _claude(
@@ -610,11 +666,11 @@ def generate_async(convocatoria_id: int, body: GenerateRequest):
             detail="Esta convocatoria no tiene documentos. Sube los archivos antes de generar entregables.",
         )
     requested_types = {s.output_type for s in body.salidas}
-    unknown = requested_types - set(range(1, 6))
+    unknown = requested_types - set(range(1, 7))
     if unknown:
         raise HTTPException(
             status_code=422,
-            detail=f"Tipos de salida no válidos: {sorted(unknown)}. Usa números del 1 al 5.",
+            detail=f"Tipos de salida no válidos: {sorted(unknown)}. Usa números del 1 al 6.",
         )
 
     salidas_list = [s.model_dump() for s in body.salidas]
@@ -653,7 +709,7 @@ def generate_outputs(convocatoria_id: int, body: GenerateRequest):
             detail="Esta convocatoria no tiene documentos. Sube los archivos antes de generar entregables.",
         )
     requested_types = {s.output_type for s in body.salidas}
-    unknown = requested_types - set(range(1, 6))
+    unknown = requested_types - set(range(1, 7))
     if unknown:
         raise HTTPException(
             status_code=422,
@@ -696,6 +752,12 @@ def generate_outputs(convocatoria_id: int, body: GenerateRequest):
                 generated["5_json"] = json.dumps(
                     _generate_output_5_json(client, md_text, model=model, _track=track),
                     ensure_ascii=False,
+                )
+
+            elif output_type == 6:
+                generated["6"] = _generate_output_6(
+                    client, conv["nombre"], context, instrucciones,
+                    model=model, _track=track,
                 )
 
             else:
@@ -742,7 +804,7 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
             detail="Esta convocatoria no tiene documentos. Sube los archivos antes de generar entregables.",
         )
     requested_types = {s.output_type for s in body.salidas}
-    unknown = requested_types - set(range(1, 6))
+    unknown = requested_types - set(range(1, 7))
     if unknown:
         raise HTTPException(
             status_code=422,
@@ -851,6 +913,12 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
                     generated["5_json"] = json.dumps(
                         _generate_output_5_json(client, md_text, model=model, _track=track),
                         ensure_ascii=False,
+                    )
+
+                elif output_type == 6:
+                    generated["6"] = _generate_output_6(
+                        client, conv["nombre"], context, instrucciones,
+                        model=model, _track=track,
                     )
 
                 else:

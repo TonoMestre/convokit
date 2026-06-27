@@ -24,12 +24,113 @@ MAX_TOKENS: dict[int, int] = {
     3: 4096,
     4: 8192,
     5: 4096,
+    6: 4096,
 }
 
 # ---------------------------------------------------------------------------
 # Prompts auxiliares usados en la generación multi-llamada de la salida 4.
 # No son salidas finales: los usa internamente el endpoint /generate.
 # ---------------------------------------------------------------------------
+
+OUTPUT_6_CONFIG_PROMPT = """Analiza los documentos oficiales de una convocatoria de ayudas públicas y genera el objeto JSON de configuración para el evaluador interactivo de encaje.
+
+REGLA ABSOLUTA — NO INVENCIÓN:
+Solo puedes incluir datos que figuren literalmente en los documentos aportados: importes, porcentajes, criterios de baremo, requisitos de elegibilidad, sectores, tamaños de empresa. Si un dato no consta en los documentos, omítelo. Prohibido estimar, inferir o completar con conocimiento general.
+
+JERARQUÍA DE FUENTES:
+La convocatoria del ejercicio prevalece sobre las bases reguladoras. Si un dato aparece en ambas y son distintos, usa el de la convocatoria.
+
+Devuelve ÚNICAMENTE el objeto JSON, sin bloques de código markdown, sin texto antes ni después.
+
+ESQUEMA EXACTO (respeta todos los campos y tipos):
+
+{
+  "titulo_corto": "Nombre corto de la convocatoria, ej: INPYME 2026",
+  "organismo": "Nombre del organismo convocante",
+  "strip": [
+    {"label": "Etiqueta corta", "valor": "Dato concreto"}
+  ],
+  "elegibilidad": [
+    {
+      "id": "e1",
+      "pregunta": "Pregunta de sí/no en segunda persona sobre un requisito de elegibilidad",
+      "ayuda": "Breve explicación del criterio extraída de las bases",
+      "opciones": [
+        {"label": "Respuesta afirmativa", "bloquea": false},
+        {"label": "Respuesta negativa", "bloquea": true, "motivo": "Explicación de por qué bloquea, extraída de las bases."}
+      ]
+    }
+  ],
+  "baremo": [
+    {
+      "id": "b1",
+      "pregunta": "Pregunta sobre el criterio de baremo en segunda persona",
+      "ayuda": "Breve explicación del criterio y cómo se valora",
+      "puntos_max": 20,
+      "influenciable": true,
+      "opciones": [
+        {"label": "Descripción de la opción", "puntos": 0},
+        {"label": "Descripción de la opción", "puntos": 10},
+        {"label": "Descripción de la opción", "puntos": 20}
+      ]
+    }
+  ],
+  "puntos_max_total": 100,
+  "inversion": {
+    "tiene_campo": true,
+    "etiqueta_campo": "Inversión elegible prevista (€)",
+    "formula_texto": "Descripción de la fórmula de ayuda extraída de las bases",
+    "pct_min": 30,
+    "pct_max": 40,
+    "tope_euros": 200000
+  },
+  "textos": {
+    "titulo_evaluador": "Evaluador [nombre convocatoria]",
+    "intro_titulo": "¿Tu empresa encaja en [nombre convocatoria]?",
+    "intro_lead": "Descripción breve de qué financia la convocatoria. Responde en 5 minutos y descubre tu puntuación estimada.",
+    "veredicto_alto": "{empresa} tiene un buen encaje con [nombre]. Con la documentación adecuada, la puntuación estimada está en el tramo competitivo. La puntuación final depende de la evaluación del organismo.",
+    "veredicto_medio": "{empresa} puede acceder a [nombre], aunque hay criterios mejorables. Trabajando los aspectos influenciables antes de la solicitud se puede mejorar significativamente la posición.",
+    "veredicto_bajo": "La puntuación estimada de {empresa} está por debajo del tramo habitual de concesión. Antes de presentar la solicitud conviene reforzar los criterios del baremo.",
+    "no_elegible_titulo": "Esta convocatoria no está disponible para tu empresa",
+    "no_elegible_texto": "Desde Innóvate 4.0 podemos orientarte hacia otras convocatorias y programas de ayuda adaptados a tu perfil.",
+    "cta_titulo": "¿Quieres maximizar tu puntuación en [nombre]?",
+    "cta_texto": "Nuestro equipo puede ayudarte a mejorar los criterios influenciables y preparar la solicitud con la documentación adecuada.",
+    "nota_fuente": "Datos extraídos de las bases reguladoras y convocatoria de [nombre] publicadas por [organismo]."
+  }
+}
+
+REGLAS DE CAMPO:
+
+strip:
+- Incluir 2 o 3 datos clave de la convocatoria: plazo de solicitud, ayuda máxima, porcentaje de subvención.
+- Solo datos que figuren explícitamente en los documentos.
+
+elegibilidad:
+- Solo incluir criterios que sean realmente bloqueantes (la empresa queda excluida si no los cumple): domicilio fiscal, CNAE admitidos, tamaño de empresa, forma jurídica si se especifica, etc.
+- Cada pregunta debe tener exactamente dos opciones: una que no bloquea y otra que sí bloquea (con "motivo" explicando por qué, extraído de las bases).
+- Si la convocatoria no establece criterios de elegibilidad claros y bloqueantes, devolver "elegibilidad": [].
+- No inventar criterios de elegibilidad.
+
+baremo:
+- Solo incluir criterios que figuren literalmente en las bases con puntuación asignada.
+- "puntos_max": puntuación máxima del criterio como número entero.
+- "influenciable": true si Innóvate 4.0 puede ayudar a mejorar este criterio antes de presentar (ej: alcance del proyecto, plan de empleo, nivel de innovación, certificaciones obtenibles). false si es objetivo e inmodificable (ej: ubicación de la empresa, CNAE actual, tamaño actual).
+- Las opciones deben cubrir toda la escala de puntuación del criterio, de menor a mayor.
+- Si la convocatoria no tiene baremo (ayuda directa, préstamo participativo sin concurrencia), devolver "baremo": [] y "puntos_max_total": 0.
+
+inversion:
+- Si la convocatoria financia un porcentaje de la inversión elegible del solicitante: "tiene_campo": true, con pct_min, pct_max y tope_euros extraídos de las bases.
+- Si pct_min === pct_max (porcentaje único), igualar ambos campos.
+- Si la convocatoria tiene un importe fijo por empresa (sin depender de la inversión del solicitante): "tiene_campo": false, añadir campo "importe_fijo": número en euros.
+- "tope_euros": importe máximo de ayuda por empresa/proyecto según las bases.
+
+textos:
+- Personalizar con el nombre real de la convocatoria y el organismo.
+- Los veredictos usan "{empresa}" como placeholder (se sustituye en runtime con el nombre que el usuario introduzca).
+- "nota_fuente": citar el nombre oficial de la convocatoria y el organismo tal como aparecen en los documentos.
+
+IMPORTANTE: Devuelve ÚNICAMENTE el objeto JSON. Sin texto antes ni después. Sin bloques de código markdown."""
+
 
 SECTION_EXTRACTOR_PROMPT = """Analiza la plantilla de memoria y las bases reguladoras de la convocatoria.
 

@@ -198,7 +198,12 @@
   /* ── Resultado ── */
   .resultado-card { background: var(--white); border: 1px solid var(--navy-10); padding: 28px; margin-bottom: 20px; }
   .resultado-empresa { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--red); margin-bottom: 8px; }
+  .eleg-apto { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.1rem; color: var(--navy); margin-bottom: 14px; line-height: 1.4; }
   .veredicto-texto { font-size: 0.95rem; line-height: 1.65; color: var(--navy); }
+
+  .concurrencia-block { background: var(--cream); border-left: 3px solid var(--red); padding: 22px 24px; margin-bottom: 20px; }
+  .concurrencia-block p { font-size: 0.92rem; line-height: 1.6; color: var(--navy); margin-bottom: 12px; }
+  .concurrencia-block p:last-child { margin-bottom: 0; }
 
   .score-display { display: flex; gap: 20px; flex-wrap: wrap; margin: 20px 0; }
   .score-box { flex: 1 1 auto; background: var(--cream); padding: 16px 20px; text-align: center; }
@@ -208,10 +213,6 @@
 
   .score-bar-wrap { height: 8px; background: var(--navy-10); margin-bottom: 6px; }
   .score-bar-inner { height: 100%; background: var(--navy); transition: width 0.6s ease; width: 0%; }
-  .score-bar-inner.potencial { background: var(--red); opacity: 0.5; }
-
-  .mejoras-lista { list-style: none; }
-  .mejoras-lista li { padding: 10px 14px; border-left: 3px solid var(--red); background: var(--white); margin-bottom: 8px; font-size: 0.88rem; line-height: 1.5; color: var(--navy); }
 
   .calc-block { background: var(--white); border: 1px solid var(--navy-10); padding: 24px; margin-bottom: 20px; }
   .calc-block h3 { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1rem; color: var(--navy); margin-bottom: 8px; }
@@ -703,48 +704,52 @@ function renderResultado(score) {
       : (CFG.textos.veredicto_bajo  || "");
   veredicto = veredicto.replace(/\{empresa\}/g, empresa);
 
+  var margen = Math.max(0, score.potencial - score.actual);
+
+  // Mensaje de elegibilidad: quien llega a esta pantalla ha superado los requisitos de acceso.
+  var elegBadge =
+    '<p class="eleg-apto">✓ Tu empresa cumple los requisitos de acceso a esta convocatoria</p>';
+
   var html = "";
 
   if (score.max > 0) {
-    var potBox = score.potencial > score.actual
+    var margenBox = margen > 0
       ? '<div class="score-box potencial">' +
-        '<div class="score-num">' + score.potencial + '</div>' +
-        '<div class="score-label">Potencial con Innóvate</div>' +
+        '<div class="score-num">' + margen + '</div>' +
+        '<div class="score-label">Puntos de margen de mejora</div>' +
         '</div>'
-      : '';
-    var potBar = score.potencial > score.actual
-      ? '<div class="score-bar-wrap" style="margin-top:4px">' +
-        '<div class="score-bar-inner potencial" id="bar-pot"></div></div>'
-      : '';
-    var legend = score.potencial > score.actual
-      ? '<p style="font-size:0.75rem;color:rgba(29,37,76,0.55);margin-top:6px;">Puntuación sobre ' + score.max + ' puntos totales</p>'
       : '';
 
     html +=
       '<div class="resultado-card">' +
       '<p class="resultado-empresa">' + escHtml(empresa) + '</p>' +
+      elegBadge +
       '<p class="veredicto-texto">' + escHtml(veredicto) + '</p>' +
       '<div class="score-display">' +
       '<div class="score-box"><div class="score-num">' + score.actual + '</div>' +
       '<div class="score-label">Puntuación estimada</div></div>' +
-      potBox + '</div>' +
+      margenBox + '</div>' +
       '<div class="score-bar-wrap"><div class="score-bar-inner" id="bar-act"></div></div>' +
-      potBar + legend +
+      '<p style="font-size:0.75rem;color:rgba(29,37,76,0.55);margin-top:6px;">Puntuación estimada sobre ' + score.max + ' puntos totales</p>' +
       '</div>';
   } else {
     html +=
       '<div class="resultado-card">' +
       '<p class="resultado-empresa">' + escHtml(empresa) + '</p>' +
+      elegBadge +
       '<p class="veredicto-texto">' + escHtml(veredicto) + '</p>' +
       '</div>';
   }
 
-  if (score.mejoras && score.mejoras.length > 0) {
-    html += '<p class="section-header">Criterios mejorables antes de solicitar</p><ul class="mejoras-lista">';
-    score.mejoras.forEach(function(m) {
-      html += '<li><strong>' + escHtml(m.pregunta) + '</strong> — hasta <strong>' + m.puntos_ganables + ' pt</strong> adicionales</li>';
-    });
-    html += '</ul>';
+  // Mensaje fijo: en concurrencia competitiva la puntuación se argumenta en la memoria.
+  if (score.max > 0) {
+    html +=
+      '<div class="concurrencia-block">' +
+      '<p>En concurrencia competitiva, la puntuación no se obtiene marcando casillas: ' +
+      'cada criterio debe <strong>argumentarse y justificarse en la memoria técnica</strong>. ' +
+      'Dos empresas con el mismo perfil pueden obtener puntuaciones muy distintas según cómo esté redactada su memoria.</p>' +
+      '<p>Ahí es donde entra el trabajo de Innóvate 4.0: convertir tu margen de mejora en puntos reales sobre el papel.</p>' +
+      '</div>';
   }
 
   var inv = CFG.inversion;
@@ -777,14 +782,10 @@ function renderResultado(score) {
 
   setContent(html);
 
-  // Animate bars
+  // Animate bar
   if (score.max > 0) {
     var pctA = Math.round((score.actual / score.max) * 100);
     setTimeout(function() { var b = document.getElementById("bar-act"); if (b) b.style.width = pctA + "%"; }, 100);
-    if (score.potencial > score.actual) {
-      var pctP = Math.min(Math.round((score.potencial / score.max) * 100), 100);
-      setTimeout(function() { var b = document.getElementById("bar-pot"); if (b) b.style.width = pctP + "%"; }, 200);
-    }
   }
 
   // Bind investment calculator

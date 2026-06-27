@@ -29,12 +29,15 @@ function downloadFile(content, filename) {
   URL.revokeObjectURL(url);
 }
 
-function InstruccionesField({ num, instructions, setInstructions, placeholder }) {
+const INSTR_PLACEHOLDER =
+  "Instrucción adicional opcional: p.ej. 'El año correcto es 2026', 'No incluyas el apartado X'";
+
+function InstruccionesField({ value, onChange }) {
   return (
     <textarea
-      value={instructions[num] || ""}
-      onChange={(e) => setInstructions((prev) => ({ ...prev, [num]: e.target.value }))}
-      placeholder={placeholder}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={INSTR_PLACEHOLDER}
       rows={2}
       className="textarea-brand mt-1"
     />
@@ -43,24 +46,11 @@ function InstruccionesField({ num, instructions, setInstructions, placeholder })
 
 function PendingSalidaRow({
   salida, selected, onToggle, outputStatuses, output4Progress,
-  instructions, setInstructions, instructionsOpen, setInstructionsOpen, mode3, setMode3,
+  instructions, setInstructions, mode3, setMode3,
 }) {
   const isChecked = selected.includes(salida.num);
   const outputStatus = outputStatuses[String(salida.num)]?.status;
   const isRunning = outputStatus === "queued" || outputStatus === "running";
-
-  function toggleInstructions() {
-    const isOpen = !!instructionsOpen[salida.num];
-    const hasText = !!(instructions[salida.num] || "").trim();
-    if (isOpen && !hasText) {
-      setInstructionsOpen((prev) => ({ ...prev, [salida.num]: false }));
-    } else {
-      setInstructionsOpen((prev) => ({ ...prev, [salida.num]: !isOpen }));
-    }
-  }
-
-  const instrOpen = !!instructionsOpen[salida.num];
-  const hasInstr = !!(instructions[salida.num] || "").trim();
 
   let statusLabel = null;
   if (outputStatus === "queued") {
@@ -100,69 +90,35 @@ function PendingSalidaRow({
 
       {isChecked && (
         <div className="ml-7 mt-2 space-y-2">
-          {salida.hasMode ? (
-            <>
-              <div className="flex flex-col gap-1.5">
-                <span className="text-xs font-semibold text-brand-blue uppercase tracking-wide">
-                  Modo de generación
-                </span>
-                <div className="flex flex-col gap-1">
-                  {[
-                    { value: "ABIERTA",    label: "Convocatoria abierta o inminente" },
-                    { value: "ANTICIPADA", label: "Posicionamiento anticipado (edición futura)" },
-                  ].map((opt) => (
-                    <label key={opt.value} className="flex items-center gap-2 cursor-pointer text-xs text-gray-700">
-                      <input
-                        type="radio"
-                        name="mode3"
-                        value={opt.value}
-                        checked={mode3 === opt.value}
-                        onChange={() => setMode3(opt.value)}
-                        style={{ accentColor: "var(--color-navy)" }}
-                      />
-                      {opt.label}
-                    </label>
-                  ))}
-                </div>
+          {salida.hasMode && (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-semibold text-brand-blue uppercase tracking-wide">
+                Modo de generación
+              </span>
+              <div className="flex flex-col gap-1">
+                {[
+                  { value: "ABIERTA",    label: "Convocatoria abierta o inminente" },
+                  { value: "ANTICIPADA", label: "Posicionamiento anticipado (edición futura)" },
+                ].map((opt) => (
+                  <label key={opt.value} className="flex items-center gap-2 cursor-pointer text-xs text-gray-700">
+                    <input
+                      type="radio"
+                      name="mode3"
+                      value={opt.value}
+                      checked={mode3 === opt.value}
+                      onChange={() => setMode3(opt.value)}
+                      style={{ accentColor: "var(--color-navy)" }}
+                    />
+                    {opt.label}
+                  </label>
+                ))}
               </div>
-              <div>
-                <label className="text-xs font-semibold text-brand-blue uppercase tracking-wide">
-                  Instrucciones adicionales{" "}
-                  <span className="font-normal normal-case text-gray-400">(opcional)</span>
-                </label>
-                <InstruccionesField
-                  num={salida.num}
-                  instructions={instructions}
-                  setInstructions={setInstructions}
-                  placeholder="Ej: enfoca el CTA hacia empresas del sector metalmecánico"
-                />
-              </div>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={toggleInstructions}
-                className={`text-xs transition-colors ${
-                  hasInstr ? "text-brand-blue font-semibold" : "text-gray-400 hover:text-brand-blue"
-                }`}
-              >
-                {instrOpen
-                  ? "− Instrucciones adicionales"
-                  : hasInstr
-                  ? "✓ Instrucciones añadidas"
-                  : "+ Añadir instrucciones"}
-              </button>
-              {instrOpen && (
-                <InstruccionesField
-                  num={salida.num}
-                  instructions={instructions}
-                  setInstructions={setInstructions}
-                  placeholder="Ej: el cliente ya tiene Perfil Estratégico, incluirlo como fuente principal"
-                />
-              )}
-            </>
+            </div>
           )}
+          <InstruccionesField
+            value={instructions[salida.num] || ""}
+            onChange={(v) => setInstructions((prev) => ({ ...prev, [salida.num]: v }))}
+          />
         </div>
       )}
     </div>
@@ -174,12 +130,14 @@ function PendingSalidaRow({
 // ---------------------------------------------------------------------------
 
 function EntregableItem({
-  salida, texto, hasJsonData, convocatoriaId, isOpen, onToggle,
+  salida, texto, instruccionPrevia, hasJsonData, convocatoriaId, isOpen, onToggle,
   onRegenerate, outputStatus, output4Progress, costEur,
 }) {
   const { API } = useApp();
   const [copied, setCopied] = useState(false);
   const [downloadingJson, setDownloadingJson] = useState(false);
+  const [showRegenPanel, setShowRegenPanel] = useState(false);
+  const [regenInstr, setRegenInstr] = useState(instruccionPrevia || "");
 
   function handleCopy(e) {
     e.stopPropagation();
@@ -311,7 +269,7 @@ function EntregableItem({
             </span>
           ) : (
             <button
-              onClick={(e) => { e.stopPropagation(); onRegenerate(); }}
+              onClick={(e) => { e.stopPropagation(); setShowRegenPanel((v) => !v); }}
               className={`${btnBase} border-brand-red text-brand-red hover:bg-brand-red hover:text-white ${
                 isOpen ? "border-brand-red/70 text-white/80 hover:bg-brand-red hover:border-brand-red hover:text-white" : ""
               }`}
@@ -325,6 +283,43 @@ function EntregableItem({
           {isOpen ? "▲" : "▼"}
         </span>
       </div>
+
+      {showRegenPanel && !isRegenerating && (
+        <div
+          className="px-5 py-4 flex flex-col gap-2"
+          style={{ borderTop: "1px solid var(--color-navy-20)", background: "#f9f9f9" }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <label className="text-xs font-semibold text-brand-blue uppercase tracking-wide">
+            Instrucción adicional{" "}
+            <span className="font-normal normal-case text-gray-400">(opcional)</span>
+          </label>
+          <textarea
+            value={regenInstr}
+            onChange={(e) => setRegenInstr(e.target.value)}
+            placeholder={INSTR_PLACEHOLDER}
+            rows={2}
+            className="textarea-brand"
+          />
+          <div className="flex gap-2 mt-1">
+            <button
+              onClick={() => {
+                setShowRegenPanel(false);
+                onRegenerate(regenInstr);
+              }}
+              className="text-xs px-3 py-1.5 bg-brand-red text-white font-semibold hover:bg-red-800 transition-colors"
+            >
+              Confirmar regeneración
+            </button>
+            <button
+              onClick={() => setShowRegenPanel(false)}
+              className="text-xs px-3 py-1.5 border border-gray-300 text-gray-500 hover:border-gray-500 transition-colors"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
 
       {isOpen && (
         <div className="px-5 py-5" style={{ borderTop: "1px solid var(--color-navy-20)" }}>
@@ -377,7 +372,6 @@ export default function EntregablePanel({ convocatoria, onUpdate: _onUpdate }) {
   const [error, setError] = useState(null);
 
   const [instructions, setInstructions] = useState({});
-  const [instructionsOpen, setInstructionsOpen] = useState({});
   const [mode3, setMode3] = useState("ABIERTA");
 
   const pollRef = useRef(null);
@@ -434,7 +428,7 @@ export default function EntregablePanel({ convocatoria, onUpdate: _onUpdate }) {
     setError(null);
     setOutput4Progress(null);
 
-    const instrMap = overrideInstructions ?? instructions;
+    const instrMap = overrideInstructions != null ? overrideInstructions : instructions;
     const initialStatuses = {};
     types.forEach((t) => { initialStatuses[String(t)] = { status: "queued" }; });
     setOutputStatuses(initialStatuses);
@@ -493,8 +487,6 @@ export default function EntregablePanel({ convocatoria, onUpdate: _onUpdate }) {
                 output4Progress={output4Progress}
                 instructions={instructions}
                 setInstructions={setInstructions}
-                instructionsOpen={instructionsOpen}
-                setInstructionsOpen={setInstructionsOpen}
                 mode3={mode3}
                 setMode3={setMode3}
               />
@@ -524,6 +516,7 @@ export default function EntregablePanel({ convocatoria, onUpdate: _onUpdate }) {
                   key={s.num}
                   salida={s}
                   texto={entregables[String(s.num)]}
+                  instruccionPrevia={entregables[`${s.num}_instruccion`] || ""}
                   hasJsonData={!!entregables[`${s.num}_json`]}
                   convocatoriaId={convocatoria.id}
                   isOpen={openNum === s.num}
@@ -531,7 +524,7 @@ export default function EntregablePanel({ convocatoria, onUpdate: _onUpdate }) {
                   outputStatus={salStatus?.status}
                   output4Progress={s.num === 4 ? output4Progress : null}
                   costEur={salStatus?.cost_eur ?? null}
-                  onRegenerate={() => generate([s.num])}
+                  onRegenerate={(instr) => generate([s.num], { [s.num]: instr })}
                 />
               );
             })}

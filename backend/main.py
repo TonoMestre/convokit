@@ -171,7 +171,7 @@ def _generate_output_1(
     )
 
     instr_block = (
-        f"\n\nINSTRUCCIONES ADICIONALES DEL CONSULTOR: {instrucciones.strip()}"
+        f"\n\nINSTRUCCIÓN ADICIONAL DEL USUARIO:\n{instrucciones.strip()}"
         if instrucciones.strip() else ""
     )
     user_2 = (
@@ -219,7 +219,7 @@ def _generate_output_6(
     model = model or pricing.MODEL_PER_OUTPUT.get(6, pricing.MODELS["haiku"])
 
     instr_block = (
-        f"\n\nINSTRUCCIONES ADICIONALES DEL CONSULTOR: {instrucciones.strip()}"
+        f"\n\nINSTRUCCIÓN ADICIONAL DEL USUARIO:\n{instrucciones.strip()}"
         if instrucciones.strip() else ""
     )
     user_msg = (
@@ -321,7 +321,7 @@ def _generate_output_4(
             f"Documentos de la convocatoria:\n{section_context}"
         )
         if instrucciones.strip():
-            user_msg += f"\n\nINSTRUCCIONES ADICIONALES DEL CONSULTOR: {instrucciones.strip()}"
+            user_msg += f"\n\nINSTRUCCIÓN ADICIONAL DEL USUARIO:\n{instrucciones.strip()}"
 
         raw_section = _claude(
             client,
@@ -395,7 +395,7 @@ def _build_user_prompt(
     modo: str = "ABIERTA",
 ) -> str:
     instr_block = (
-        f"\nINSTRUCCIONES ADICIONALES DEL CONSULTOR: {instrucciones.strip()}"
+        f"\nINSTRUCCIÓN ADICIONAL DEL USUARIO:\n{instrucciones.strip()}"
         if instrucciones.strip() else ""
     )
     if output_type == 3:
@@ -514,6 +514,7 @@ def _process_job(job_id: int, conv_id: int, salida_requests: list[dict]) -> None
                         max_tokens=p.MAX_TOKENS[output_type], model=model, _track=track,
                     )
 
+                generated[f"{output_type}_instruccion"] = instrucciones
                 db.update_entregables(conv_id, generated)
 
                 total_cost = sum(salida_costs)
@@ -767,6 +768,8 @@ def generate_outputs(convocatoria_id: int, body: GenerateRequest):
                     max_tokens=p.MAX_TOKENS[output_type], model=model, _track=track,
                 )
 
+            generated[f"{output_type}_instruccion"] = instrucciones
+
         except HTTPException:
             raise
         except anthropic.APITimeoutError:
@@ -879,7 +882,7 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
                             f"Documentos de la convocatoria:\n{section_context}"
                         )
                         if instrucciones.strip():
-                            user_msg += f"\n\nINSTRUCCIONES ADICIONALES DEL CONSULTOR: {instrucciones.strip()}"
+                            user_msg += f"\n\nINSTRUCCIÓN ADICIONAL DEL USUARIO:\n{instrucciones.strip()}"
                         raw_section = _claude(
                             client, system=p.SECTION_PROMPT_SYSTEM, user=user_msg,
                             max_tokens=4096, model=model, _track=track,

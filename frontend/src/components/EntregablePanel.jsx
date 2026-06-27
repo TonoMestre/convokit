@@ -675,7 +675,14 @@ export default function EntregablePanel({ convocatoria, onUpdate: _onUpdate }) {
         stopPolling();
         setSelected([]);
         if (types.length === 1 && status === "completed") setOpenNum(types[0]);
-        if (status === "error") setError("Ha ocurrido un error durante la generación.");
+        if (status === "error") {
+          const outputErrors = Object.entries(progress?.outputs || {})
+            .filter(([, v]) => v.status === "error")
+            .map(([k, v]) => `Salida ${k}: ${v.error || "error desconocido"}`)
+            .join(" | ");
+          const topError = progress?.error || "";
+          setError(outputErrors || topError || "Ha ocurrido un error durante la generación.");
+        }
         await openConvocatoria(convocatoria.id);
       }
     } catch {

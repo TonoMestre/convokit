@@ -138,6 +138,67 @@ def _slice_context_for_section(documents_json: list) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Generación de salida 1 (dos llamadas consecutivas)
+# ---------------------------------------------------------------------------
+
+def _generate_output_1(
+    client: anthropic.Anthropic,
+    conv_name: str,
+    context: str,
+    instrucciones: str = "",
+    model: str | None = None,
+    _track: Callable | None = None,
+) -> str:
+    """
+    La guía del consultor se genera en dos llamadas sucesivas para evitar cortes.
+
+    Llamada 1: genera la guía desde el principio con el límite de 8192 tokens.
+    Llamada 2: recibe la primera parte + los documentos y continúa desde el corte,
+               completando las secciones pendientes (Plan de trabajo, Alertas...).
+    Resultado: concatenación de ambas partes como un único documento markdown.
+    """
+    model = model or pricing.MODEL_PER_OUTPUT[1]
+
+    user_1 = _build_user_prompt(conv_name, context, 1, instrucciones)
+    part_1 = _claude(
+        client,
+        system=p.SYSTEM_PROMPTS[1],
+        user=user_1,
+        max_tokens=p.MAX_TOKENS[1],
+        model=model,
+        _track=_track,
+    )
+
+    instr_block = (
+        f"\n\nINSTRUCCIONES ADICIONALES DEL CONSULTOR: {instrucciones.strip()}"
+        if instrucciones.strip() else ""
+    )
+    user_2 = (
+        f"Documentos de la convocatoria '{conv_name}':\n\n{context}\n\n"
+        f"---\n\n"
+        f"Has generado la primera parte de la guía interna. Aquí está el texto ya producido:\n\n"
+        f"{part_1}\n\n"
+        f"---\n\n"
+        f"Continúa EXACTAMENTE donde se ha cortado el texto anterior. "
+        f"Completa las secciones que estén incompletas o no hayan aparecido aún "
+        f"(incluyendo ## Plan de trabajo y ## Alertas de cumplimiento si faltan o quedaron sin terminar). "
+        f"No repitas ninguna sección ya completada en la primera parte. "
+        f"Empieza directamente con el contenido que falta, sin preámbulo."
+        f"{instr_block}"
+    )
+    part_2 = _claude(
+        client,
+        system=p.SYSTEM_PROMPTS[1],
+        user=user_2,
+        max_tokens=p.MAX_TOKENS[1],
+        model=model,
+        _track=_track,
+    )
+
+    return part_1.rstrip() + "\n\n" + part_2.lstrip()
+
+
+# ---------------------------------------------------------------------------
 # Generación de salida 4
 # ---------------------------------------------------------------------------
 
@@ -360,7 +421,13 @@ def _process_job(job_id: int, conv_id: int, salida_requests: list[dict]) -> None
             generated: dict[str, str] = {}
 
             try:
-                if output_type == 4:
+                if output_type == 1:
+                    generated["1"] = _generate_output_1(
+                        client, conv_name, context, instrucciones,
+                        model=model, _track=track,
+                    )
+
+                elif output_type == 4:
                     def progress_cb(actual: int, total: int) -> None:
                         progress["output4_progress"] = {"actual": actual, "total": total}
                         db.update_job(job_id, "running", progress)
@@ -605,7 +672,13 @@ def generate_outputs(convocatoria_id: int, body: GenerateRequest):
         track = _make_tracker(convocatoria_id, str(output_type))
 
         try:
-            if output_type == 4:
+            if output_type == 1:
+                generated["1"] = _generate_output_1(
+                    client, conv["nombre"], context, instrucciones,
+                    model=model, _track=track,
+                )
+
+            elif output_type == 4:
                 md_text, json_sections = _generate_output_4(
                     client, conv["nombre"], conv["documentos_json"], instrucciones,
                     model=model, _track=track,
@@ -693,7 +766,13 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
             track = _make_tracker(convocatoria_id, str(output_type))
 
             try:
-                if output_type == 4:
+                if output_type == 1:
+                    generated["1"] = _generate_output_1(
+                        client, conv["nombre"], context, instrucciones,
+                        model=model, _track=track,
+                    )
+
+                elif output_type == 4:
                     # Paso 1: extraer secciones
                     raw_sections = _claude(
                         client,

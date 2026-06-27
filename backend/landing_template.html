@@ -12,7 +12,7 @@
   :root {
     --navy: #1D254C;
     --red: #C50339;
-    --cream: #F7F4EE;
+    --cream: #F2EBD8;
     --white: #FFFFFF;
     --black: #000000;
     --navy-10: rgba(29,37,76,0.10);
@@ -54,56 +54,17 @@
   }
   .site-header .header-cta:hover { background: var(--white); color: var(--navy); }
 
-  /* ── Bloques (.seccion) ── */
-  .seccion { padding: 60px 0; }
+  /* ── Layout ── */
   .wrap { max-width: 920px; margin: 0 auto; padding: 0 24px; }
-
-  /* ── Variantes (solo background-color por sección; layout/spacing intactos) ── */
-
-  /* Variante A: 1=navy, 2=blanco, 3=crema, 4=blanco, 5=crema, 6=blanco, 7=navy, 8=crema */
-  .variante-a .seccion-3,
-  .variante-a .seccion-5,
-  .variante-a .seccion-8 { background: var(--cream); }
-
-  .variante-a .seccion-1,
-  .variante-a .seccion-7 { background: var(--navy); }
-
-  /* Variante B: 1=crema, 2=blanco, 3=blanco, 4=crema, 5=navy, 6=blanco, 7=navy, 8=crema */
-  .variante-b .seccion-1,
-  .variante-b .seccion-4,
-  .variante-b .seccion-8 { background: var(--cream); }
-
-  .variante-b .seccion-5,
-  .variante-b .seccion-7 { background: var(--navy); }
-
-  /* Texto en secciones navy */
-  .variante-a .seccion-1,
-  .variante-a .seccion-7,
-  .variante-b .seccion-5,
-  .variante-b .seccion-7 { color: var(--white); }
-
-  .variante-a .seccion-1 h1, .variante-a .seccion-1 h2, .variante-a .seccion-1 h3,
-  .variante-a .seccion-7 h1, .variante-a .seccion-7 h2, .variante-a .seccion-7 h3,
-  .variante-b .seccion-5 h1, .variante-b .seccion-5 h2, .variante-b .seccion-5 h3,
-  .variante-b .seccion-7 h1, .variante-b .seccion-7 h2, .variante-b .seccion-7 h3 { color: var(--white); }
-
-  .variante-a .seccion-1 p, .variante-a .seccion-1 li,
-  .variante-a .seccion-7 p, .variante-a .seccion-7 li,
-  .variante-b .seccion-5 p, .variante-b .seccion-5 li,
-  .variante-b .seccion-7 p, .variante-b .seccion-7 li { color: rgba(255,255,255,0.9); }
-
-  .variante-a .seccion-1 .btn-outline, .variante-a .seccion-7 .btn-outline,
-  .variante-b .seccion-5 .btn-outline, .variante-b .seccion-7 .btn-outline { color: var(--white); border-color: rgba(255,255,255,0.6); }
-
-  .variante-a .seccion-1 .btn-outline:hover, .variante-a .seccion-7 .btn-outline:hover,
-  .variante-b .seccion-5 .btn-outline:hover, .variante-b .seccion-7 .btn-outline:hover { background: var(--white); color: var(--navy); }
-
-  /* Destacado dentro de sección navy (B-seccion-5): aclara para mantener contraste */
-  .variante-b .seccion-5 .destacado { background: rgba(255,255,255,0.10); }
+  .bloque { padding: 56px 0; border-bottom: 1px solid var(--navy-10); }
+  .bloque:last-of-type { border-bottom: none; }
 
   /* ── Tipografía ── */
   h1, h2, h3 { font-family: 'Roboto Slab', serif; font-weight: 700; color: var(--navy); line-height: 1.15; }
-  .bloque-titulo { font-size: 1.7rem; margin-bottom: 22px; }
+  .bloque-titulo {
+    font-size: 1.7rem;
+    margin-bottom: 22px;
+  }
   .bloque-titulo::after {
     content: '';
     display: block;
@@ -114,10 +75,15 @@
   }
   p { margin-bottom: 14px; }
   p:last-child { margin-bottom: 0; }
-  strong { font-weight: 700; }
+  strong { color: var(--navy); font-weight: 700; }
 
-  /* ── Hero (.seccion-1) ── */
-  .hero { text-align: center; padding: 78px 0; }
+  /* ── Hero ── */
+  .hero {
+    background: var(--navy);
+    color: var(--white);
+    padding: 72px 24px;
+    text-align: center;
+  }
   .hero .hero-gancho {
     display: inline-block;
     font-family: 'Roboto Slab', serif;
@@ -128,9 +94,10 @@
     padding: 7px 18px;
     margin-bottom: 22px;
   }
-  .hero h1 { font-size: 3.2rem; margin-bottom: 16px; max-width: 840px; margin-left: auto; margin-right: auto; }
-  .hero .hero-sub { font-size: 1.2rem; font-weight: 500; margin-bottom: 18px; max-width: 720px; margin-left: auto; margin-right: auto; }
-  .hero .hero-body { font-size: 1rem; opacity: 0.85; margin-bottom: 32px; max-width: 640px; margin-left: auto; margin-right: auto; }
+  .hero h1 { color: var(--white); font-size: 3.2rem; margin-bottom: 16px; max-width: 840px; margin-left: auto; margin-right: auto; }
+  .hero .hero-sub { font-size: 1.2rem; font-weight: 500; color: rgba(255,255,255,0.9); margin-bottom: 18px; max-width: 720px; margin-left: auto; margin-right: auto; }
+  .hero .hero-body { font-size: 1rem; color: rgba(255,255,255,0.8); margin-bottom: 32px; max-width: 640px; margin-left: auto; margin-right: auto; }
+
   /* ── Listas ── */
   .lista { list-style: none; max-width: 760px; }
   .lista li {
@@ -150,33 +117,31 @@
   }
   .lista li strong { display: block; margin-bottom: 2px; }
 
-  /* ── Tarjetas (qué financia) ── */
+  /* ── Tarjetas de beneficios / qué financia ── */
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; }
   .card {
-    background: var(--white);
-    border: 1px solid var(--navy-10);
+    background: var(--cream);
     border-left: 3px solid var(--red);
     padding: 22px;
   }
-  .card h3 { font-size: 1.05rem; margin-bottom: 8px; color: var(--navy); }
+  .card h3 { font-size: 1.05rem; margin-bottom: 8px; }
   .card p { font-size: 0.95rem; color: var(--navy-60); margin-bottom: 0; }
 
-  /* ── Destacado (caja del importe) ── */
+  /* ── Destacado (ejemplo de importe) ── */
   .destacado {
-    background: var(--navy);
-    color: var(--white);
+    background: var(--cream);
     padding: 28px;
     margin-top: 24px;
-    border-top: 4px solid var(--red);
+    border-top: 3px solid var(--red);
   }
   .destacado .destacado-cifra {
     font-family: 'Roboto Slab', serif;
     font-weight: 700;
     font-size: 2rem;
-    color: var(--white);
+    color: var(--red);
     margin-bottom: 6px;
   }
-  .destacado .destacado-detalle { font-size: 0.95rem; color: rgba(255,255,255,0.85); }
+  .destacado .destacado-detalle { font-size: 0.95rem; color: var(--navy-60); }
 
   /* ── Botones ── */
   .btn {
@@ -196,21 +161,23 @@
   .btn-light:hover { background: var(--cream); }
   .btn-outline { background: transparent; color: var(--navy); border: 1.5px solid var(--navy); }
   .btn-outline:hover { background: var(--navy); color: var(--white); }
-  .bg-navy .btn-outline { color: var(--white); border-color: rgba(255,255,255,0.6); }
-  .bg-navy .btn-outline:hover { background: var(--white); color: var(--navy); }
 
-  /* ── CTA (.seccion-7 y .seccion-8) ── */
-  .cta { text-align: center; }
-  .cta h2 { font-size: 1.9rem; margin-bottom: 14px; }
-  .cta p { max-width: 600px; margin-left: auto; margin-right: auto; margin-bottom: 28px; }
-  .cta-cross { text-align: center; }
-  .cta-cross h2 { font-size: 1.5rem; margin-bottom: 12px; }
-  .cta-cross p { max-width: 600px; margin-left: auto; margin-right: auto; margin-bottom: 24px; color: var(--navy-60); }
+  /* ── Bloques CTA ── */
+  .cta {
+    padding: 56px 24px;
+    text-align: center;
+  }
+  .cta-primary { background: var(--navy); color: var(--white); }
+  .cta-primary h2 { color: var(--white); font-size: 1.9rem; margin-bottom: 14px; }
+  .cta-primary p { color: rgba(255,255,255,0.85); max-width: 600px; margin-left: auto; margin-right: auto; margin-bottom: 28px; }
+  .cta-secondary { background: var(--cream); }
+  .cta-secondary h2 { font-size: 1.5rem; margin-bottom: 12px; }
+  .cta-secondary p { color: var(--navy-60); max-width: 600px; margin-left: auto; margin-right: auto; margin-bottom: 24px; }
 
   /* ── Formulario ── */
   .form-landing {
     max-width: 560px;
-    margin: 28px auto 0;
+    margin: 0 auto;
     text-align: left;
     background: var(--white);
     padding: 32px;
@@ -257,14 +224,41 @@
   .site-footer a:hover { color: var(--white); }
 
   @media (max-width: 600px) {
-    .hero { padding: 48px 0; }
+    .hero { padding: 48px 20px; }
     .hero h1 { font-size: 2.2rem; }
     .hero .hero-gancho { font-size: 0.95rem; }
     .hero .hero-sub { font-size: 1.05rem; }
-    .seccion { padding: 44px 0; }
+    .bloque { padding: 40px 0; }
     .bloque-titulo { font-size: 1.4rem; }
     .form-landing { padding: 22px; }
   }
+
+  /* ── Variantes (solo background-color; layout, padding y tipografía intactos) ── */
+  /* Secciones dentro de .landing son los hijos directos section, en este orden:
+     1=hero  2=beneficios  3=elegibilidad  4=qué-financia  5=importe  6=cómo-trabajamos
+     7=cta-primary  8=cta-secondary  9=formulario                                      */
+
+  /* Variante A: elegibilidad (3) e importe (5) en crema; el resto hereda su color base */
+  body.variante-a .landing > section:nth-child(3) { background: var(--cream); }
+  body.variante-a .landing > section:nth-child(5) { background: var(--cream); }
+
+  /* Variante B: hero crema (texto navy), qué-financia (4) crema, importe (5) navy */
+  body.variante-b .hero { background: var(--cream); }
+  body.variante-b .hero h1 { color: var(--navy); }
+  body.variante-b .hero .hero-sub { color: var(--navy); }
+  body.variante-b .hero .hero-body { color: var(--navy-60); }
+
+  body.variante-b .landing > section:nth-child(4) { background: var(--cream); }
+
+  body.variante-b .landing > section:nth-child(5) { background: var(--navy); color: var(--white); }
+  body.variante-b .landing > section:nth-child(5) h2,
+  body.variante-b .landing > section:nth-child(5) h3 { color: var(--white); }
+  body.variante-b .landing > section:nth-child(5) p,
+  body.variante-b .landing > section:nth-child(5) li { color: rgba(255,255,255,0.9); }
+  body.variante-b .landing > section:nth-child(5) strong { color: var(--white); }
+  body.variante-b .landing > section:nth-child(5) .destacado { background: rgba(255,255,255,0.12); border-top-color: var(--red); }
+  body.variante-b .landing > section:nth-child(5) .destacado-cifra { color: var(--white); }
+  body.variante-b .landing > section:nth-child(5) .destacado-detalle { color: rgba(255,255,255,0.85); }
 </style>
 </head>
 <body class="{{VARIANT_CLASS}}">

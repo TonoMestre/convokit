@@ -26,8 +26,14 @@ class ConvocatoriaCreate(BaseModel):
     nombre: str
 
 
+class SalidaRequest(BaseModel):
+    output_type: int
+    instrucciones_adicionales: str = ""
+    modo: str | None = None  # Solo para salida 3: "ABIERTA" o "ANTICIPADA"
+
+
 class GenerateRequest(BaseModel):
-    output_types: list[int]
+    salidas: list[SalidaRequest]
 
 
 def _get_anthropic_client() -> anthropic.Anthropic:
@@ -68,7 +74,8 @@ def _parse_json(text: str) -> object:
     return json.loads(_strip_fences(text))
 
 
-def _generate_output_4(client: anthropic.Anthropic, conv_name: str, context: str) -> tuple[str, list[dict]]:
+def _generate_output_4(client: anthropic.Anthropic, conv_name: str, context: str,
+                        instrucciones: str = "") -> tuple[str, list[dict]]:
     """
     Generación multi-llamada de la salida 4 (set de prompts para la memoria).
 
@@ -120,6 +127,8 @@ def _generate_output_4(client: anthropic.Anthropic, conv_name: str, context: str
             f"habilitante: {seccion.get('es_habilitante', False)})\n\n"
             f"Documentos de la convocatoria:\n{context}"
         )
+        if instrucciones.strip():
+            user_msg += f"\n\nINSTRUCCIONES ADICIONALES DEL CONSULTOR: {instrucciones.strip()}"
         raw_section = _claude(client, system=p.SECTION_PROMPT_SYSTEM, user=user_msg, max_tokens=2000)
 
         try:
@@ -149,6 +158,43 @@ def _generate_output_4(client: anthropic.Anthropic, conv_name: str, context: str
 
     markdown = "\n\n---\n\n".join(markdown_parts)
     return markdown, json_sections
+
+
+def _build_user_prompt(conv_name: str, context: str, output_type: int,
+                        instrucciones: str = "", modo: str = "ABIERTA") -> str:
+    """Construye el user message para Claude según el tipo de salida."""
+    instr_block = (
+        f"\nINSTRUCCIONES ADICIONALES DEL CONSULTOR: {instrucciones.strip()}"
+        if instrucciones.strip() else ""
+    )
+    if output_type == 3:
+        modo_label = (modo or "ABIERTA").upper()
+        if modo_label == "ANTICIPADA":
+            modo_block = (
+                "*** MODO DE GENERACIÓN OBLIGATORIO: ANTICIPADA ***\n"
+                "Esta landing se genera para posicionamiento anticipado de una convocatoria futura aún no publicada. "
+                "Los documentos aportados son de una edición anterior y sirven exclusivamente como referencia histórica. "
+                "DEBES redactar en condicional: usa 'se espera', 'en línea con ediciones anteriores', 'habitualmente'. "
+                "No afirmes NINGÚN importe, porcentaje ni plazo como cifra confirmada para la próxima edición. "
+                "Menciona el descuento por contratación anticipada de Ruta por convocatoria, sin indicar el porcentaje."
+            )
+        else:
+            modo_block = (
+                "MODO DE GENERACIÓN: ABIERTA\n"
+                "Usa los datos confirmados de los documentos aportados: importes, porcentajes, plazos, presupuesto total."
+            )
+        return (
+            f"{modo_block}"
+            f"{instr_block}\n\n"
+            f"Documentos de la convocatoria '{conv_name}':\n\n{context}\n\n"
+            f"Genera la landing page siguiendo las instrucciones del system prompt."
+        )
+    else:
+        return (
+            f"A continuación tienes los documentos de la convocatoria procesados:\n\n{context}"
+            f"{instr_block}\n\n"
+            f"Genera el entregable siguiendo las instrucciones del system prompt."
+        )
 
 
 def _generate_output_5_json(client: anthropic.Anthropic, md_text: str) -> list[dict]:
@@ -294,8 +340,8 @@ def generate_outputs(convocatoria_id: int, body: GenerateRequest):
             detail="Esta convocatoria no tiene documentos. Sube los archivos antes de generar entregables.",
         )
 
-    requested = set(body.output_types)
-    unknown = requested - set(range(1, 6))
+    requested_types = {s.output_type for s in body.salidas}
+    unknown = requested_types - set(range(1, 6))
     if unknown:
         raise HTTPException(
             status_code=422,
@@ -306,33 +352,31 @@ def generate_outputs(convocatoria_id: int, body: GenerateRequest):
     client = _get_anthropic_client()
     generated: dict[str, str] = {}
 
-    for output_type in sorted(requested):
+    for salida_req in sorted(body.salidas, key=lambda s: s.output_type):
+        output_type = salida_req.output_type
+        instrucciones = salida_req.instrucciones_adicionales
+        modo = salida_req.modo or "ABIERTA"
+
         try:
             if output_type == 4:
-                # Multi-llamada: una por sección de la memoria.
-                md_text, json_sections = _generate_output_4(client, conv["nombre"], context)
+                md_text, json_sections = _generate_output_4(client, conv["nombre"], context, instrucciones)
                 generated["4"] = md_text
                 generated["4_json"] = json.dumps(json_sections, ensure_ascii=False)
 
             elif output_type == 5:
-                # Llamada estándar + conversión JSON del listado de documentación.
-                md_text = _claude(
-                    client,
-                    system=p.SYSTEM_PROMPTS[5],
-                    user=f"Documentos de la convocatoria '{conv['nombre']}':\n\n{context}",
-                    max_tokens=p.MAX_TOKENS[5],
-                )
+                user_prompt = _build_user_prompt(conv["nombre"], context, 5, instrucciones)
+                md_text = _claude(client, system=p.SYSTEM_PROMPTS[5], user=user_prompt, max_tokens=p.MAX_TOKENS[5])
                 generated["5"] = md_text
                 generated["5_json"] = json.dumps(
                     _generate_output_5_json(client, md_text), ensure_ascii=False
                 )
 
             else:
-                # Llamada estándar para salidas 1, 2, 3.
+                user_prompt = _build_user_prompt(conv["nombre"], context, output_type, instrucciones, modo)
                 generated[str(output_type)] = _claude(
                     client,
                     system=p.SYSTEM_PROMPTS[output_type],
-                    user=f"Documentos de la convocatoria '{conv['nombre']}':\n\n{context}",
+                    user=user_prompt,
                     max_tokens=p.MAX_TOKENS[output_type],
                 )
 
@@ -390,8 +434,8 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
             status_code=422,
             detail="Esta convocatoria no tiene documentos. Sube los archivos antes de generar entregables.",
         )
-    requested = set(body.output_types)
-    unknown = requested - set(range(1, 6))
+    requested_types = {s.output_type for s in body.salidas}
+    unknown = requested_types - set(range(1, 6))
     if unknown:
         raise HTTPException(
             status_code=422,
@@ -407,10 +451,14 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
     def stream():
         generated: dict[str, str] = {}
 
-        for output_type in sorted(requested):
+        for salida_req in sorted(body.salidas, key=lambda s: s.output_type):
+            output_type = salida_req.output_type
+            instrucciones = salida_req.instrucciones_adicionales
+            modo = salida_req.modo or "ABIERTA"
+
             try:
                 if output_type == 4:
-                    # Paso 1: extraer secciones
+                    # Paso 1: extraer secciones (sin instrucciones: solo necesita los docs)
                     raw_sections = _claude(
                         client,
                         system=p.SECTION_EXTRACTOR_PROMPT,
@@ -450,6 +498,8 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
                             f"habilitante: {seccion.get('es_habilitante', False)})\n\n"
                             f"Documentos de la convocatoria:\n{context}"
                         )
+                        if instrucciones.strip():
+                            user_msg += f"\n\nINSTRUCCIONES ADICIONALES DEL CONSULTOR: {instrucciones.strip()}"
                         raw_section = _claude(client, system=p.SECTION_PROMPT_SYSTEM, user=user_msg, max_tokens=2000)
 
                         try:
@@ -482,22 +532,19 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
                     generated["4_json"] = json.dumps(json_sections, ensure_ascii=False)
 
                 elif output_type == 5:
-                    md_text = _claude(
-                        client,
-                        system=p.SYSTEM_PROMPTS[5],
-                        user=f"Documentos de la convocatoria '{conv['nombre']}':\n\n{context}",
-                        max_tokens=p.MAX_TOKENS[5],
-                    )
+                    user_prompt = _build_user_prompt(conv["nombre"], context, 5, instrucciones)
+                    md_text = _claude(client, system=p.SYSTEM_PROMPTS[5], user=user_prompt, max_tokens=p.MAX_TOKENS[5])
                     generated["5"] = md_text
                     generated["5_json"] = json.dumps(
                         _generate_output_5_json(client, md_text), ensure_ascii=False
                     )
 
                 else:
+                    user_prompt = _build_user_prompt(conv["nombre"], context, output_type, instrucciones, modo)
                     generated[str(output_type)] = _claude(
                         client,
                         system=p.SYSTEM_PROMPTS[output_type],
-                        user=f"Documentos de la convocatoria '{conv['nombre']}':\n\n{context}",
+                        user=user_prompt,
                         max_tokens=p.MAX_TOKENS[output_type],
                     )
 

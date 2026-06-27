@@ -8,7 +8,9 @@ Esquemas (PRD v2.2, sección 12):
 
   Salida 4 — secciones de la memoria:
     [{ "codigo", "nombre", "puntos_max", "inputs_minimos",
-       "inputs_puntuacion_completa", "documentos_requeridos", "prompt" }]
+       "inputs_puntuacion_completa",
+       "documentos_requeridos": [{"nombre", "fuente"}],  # fuente: "perfil_estrategico" | "proyecto"
+       "prompt" }]
 
   Salida 5 — lista de documentación:
     [{ "documento", "obligatorio", "modelo_oficial", "ambito", "vigencia" }]
@@ -40,13 +42,23 @@ def export_output_4(raw_json: str | None) -> list[dict]:
     for item in items:
         if not isinstance(item, dict):
             continue
+        docs_raw = item.get("documentos_requeridos") or []
+        docs_normalized = []
+        for doc in docs_raw:
+            if isinstance(doc, dict):
+                docs_normalized.append({
+                    "nombre": doc.get("nombre") or "",
+                    "fuente": doc.get("fuente") or "proyecto",
+                })
+            elif isinstance(doc, str):
+                docs_normalized.append({"nombre": doc, "fuente": "proyecto"})
         result.append({
             "codigo": item.get("codigo") or "",
             "nombre": item.get("nombre") or "",
             "puntos_max": item.get("puntos_max"),
             "inputs_minimos": item.get("inputs_minimos") or [],
             "inputs_puntuacion_completa": item.get("inputs_puntuacion_completa") or [],
-            "documentos_requeridos": item.get("documentos_requeridos") or [],
+            "documentos_requeridos": docs_normalized,
             "prompt": item.get("prompt") or "",
         })
     return result

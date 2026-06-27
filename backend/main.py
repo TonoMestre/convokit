@@ -107,7 +107,7 @@ def _generate_output_4(client: anthropic.Anthropic, conv_name: str, context: str
             detail="No se encontraron apartados en la plantilla de memoria.",
         )
 
-    # Paso 2: generar prompt por sección
+    # Paso 2: generar markdown por sección
     header = (
         f"# Set de prompts para la memoria — {conv_name}\n\n"
         "> **Nota de uso:** El **Perfil Estratégico de Empresa** (documento de Ruta i40) "
@@ -117,7 +117,6 @@ def _generate_output_4(client: anthropic.Anthropic, conv_name: str, context: str
         "ADICIONAL específica del proyecto que el Perfil no cubre.\n\n---"
     )
     markdown_parts = [header]
-    json_sections: list[dict] = []
 
     for seccion in secciones:
         user_msg = (
@@ -133,30 +132,28 @@ def _generate_output_4(client: anthropic.Anthropic, conv_name: str, context: str
 
         try:
             section_data = _parse_json(raw_section)
-            markdown_parts.append(section_data.get("markdown", f"### Sección {seccion['codigo']}: {seccion['nombre']}\n\n_Error al generar._"))
-            json_sections.append({
-                "codigo": seccion["codigo"],
-                "nombre": seccion["nombre"],
-                "puntos_max": seccion.get("puntos_max"),
-                "inputs_minimos": section_data.get("inputs_minimos", []),
-                "inputs_puntuacion_completa": section_data.get("inputs_puntuacion_completa", []),
-                "documentos_requeridos": section_data.get("documentos_requeridos", []),
-                "prompt": section_data.get("prompt_texto", ""),
-            })
+            md_block = section_data.get("markdown") or f"### Sección {seccion['codigo']}: {seccion['nombre']}\n\n{raw_section}"
         except Exception:
-            # Si el JSON falla, incluir el texto raw como markdown y continuar.
-            markdown_parts.append(f"### Sección {seccion['codigo']}: {seccion['nombre']}\n\n{raw_section}")
-            json_sections.append({
-                "codigo": seccion["codigo"],
-                "nombre": seccion["nombre"],
-                "puntos_max": seccion.get("puntos_max"),
-                "inputs_minimos": [],
-                "inputs_puntuacion_completa": [],
-                "documentos_requeridos": [],
-                "prompt": "",
-            })
+            md_block = f"### Sección {seccion['codigo']}: {seccion['nombre']}\n\n{raw_section}"
+        markdown_parts.append(md_block)
 
     markdown = "\n\n---\n\n".join(markdown_parts)
+
+    # Paso 3: extraer JSON estructurado del markdown completo en una sola llamada.
+    # Más fiable que parsear el JSON embebido en cada sección individualmente.
+    raw_json = _claude(
+        client,
+        system=p.OUTPUT_4_JSON_EXTRACTOR,
+        user=f"Extrae los datos estructurados del siguiente set de prompts para la memoria:\n\n{markdown}",
+        max_tokens=4000,
+    )
+    try:
+        json_sections = _parse_json(raw_json)
+        if not isinstance(json_sections, list):
+            json_sections = []
+    except Exception:
+        json_sections = []
+
     return markdown, json_sections
 
 
@@ -478,7 +475,7 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
 
                     yield _evt({"tipo": "inicio_4", "total": n})
 
-                    # Paso 2: generar prompt por sección
+                    # Paso 2: generar markdown por sección
                     header = (
                         f"# Set de prompts para la memoria — {conv['nombre']}\n\n"
                         "> **Nota de uso:** El **Perfil Estratégico de Empresa** (documento de Ruta i40) "
@@ -488,7 +485,6 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
                         "ADICIONAL específica del proyecto que el Perfil no cubre.\n\n---"
                     )
                     markdown_parts = [header]
-                    json_sections: list[dict] = []
 
                     for i, seccion in enumerate(secciones):
                         user_msg = (
@@ -504,31 +500,30 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
 
                         try:
                             section_data = _parse_json(raw_section)
-                            markdown_parts.append(section_data.get("markdown", f"### Sección {seccion['codigo']}: {seccion['nombre']}\n\n_Error al generar._"))
-                            json_sections.append({
-                                "codigo": seccion["codigo"],
-                                "nombre": seccion["nombre"],
-                                "puntos_max": seccion.get("puntos_max"),
-                                "inputs_minimos": section_data.get("inputs_minimos", []),
-                                "inputs_puntuacion_completa": section_data.get("inputs_puntuacion_completa", []),
-                                "documentos_requeridos": section_data.get("documentos_requeridos", []),
-                                "prompt": section_data.get("prompt_texto", ""),
-                            })
+                            md_block = section_data.get("markdown") or f"### Sección {seccion['codigo']}: {seccion['nombre']}\n\n{raw_section}"
                         except Exception:
-                            markdown_parts.append(f"### Sección {seccion['codigo']}: {seccion['nombre']}\n\n{raw_section}")
-                            json_sections.append({
-                                "codigo": seccion["codigo"],
-                                "nombre": seccion["nombre"],
-                                "puntos_max": seccion.get("puntos_max"),
-                                "inputs_minimos": [],
-                                "inputs_puntuacion_completa": [],
-                                "documentos_requeridos": [],
-                                "prompt": "",
-                            })
+                            md_block = f"### Sección {seccion['codigo']}: {seccion['nombre']}\n\n{raw_section}"
+                        markdown_parts.append(md_block)
 
                         yield _evt({"tipo": "progreso_4", "actual": i + 1, "total": n})
 
-                    generated["4"] = "\n\n---\n\n".join(markdown_parts)
+                    markdown_4 = "\n\n---\n\n".join(markdown_parts)
+
+                    # Paso 3: extraer JSON del markdown completo en una sola llamada.
+                    raw_json_4 = _claude(
+                        client,
+                        system=p.OUTPUT_4_JSON_EXTRACTOR,
+                        user=f"Extrae los datos estructurados del siguiente set de prompts para la memoria:\n\n{markdown_4}",
+                        max_tokens=4000,
+                    )
+                    try:
+                        json_sections = _parse_json(raw_json_4)
+                        if not isinstance(json_sections, list):
+                            json_sections = []
+                    except Exception:
+                        json_sections = []
+
+                    generated["4"] = markdown_4
                     generated["4_json"] = json.dumps(json_sections, ensure_ascii=False)
 
                 elif output_type == 5:

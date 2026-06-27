@@ -46,6 +46,12 @@ class GenerateRequest(BaseModel):
     salidas: list[SalidaRequest]
 
 
+class LandingSeoRequest(BaseModel):
+    seo_title: str
+    meta_description: str
+    slug: str
+
+
 # ---------------------------------------------------------------------------
 # Helpers de Claude
 # ---------------------------------------------------------------------------
@@ -228,15 +234,19 @@ def _generate_output_3(
     modo: str = "ABIERTA",
     model: str | None = None,
     _track: Callable | None = None,
-) -> str:
+) -> tuple[str, dict]:
     """
     Generación de la salida 3 (landing page).
-    Claude genera SOLO el cuerpo HTML de la landing; el backend lo envuelve en la
-    plantilla estática landing_template.html (cabecera, CSS de marca y pie fijos).
+    Claude devuelve los campos SEO (seo_title, meta_description, slug) + el cuerpo HTML.
+    El backend separa ambas partes, envuelve el cuerpo en la plantilla estática e inyecta
+    el SEO en el <head>.
+
+    Devuelve (html_completo, seo) donde seo incluye también body_html y el flag confirmed,
+    para poder re-aplicar ediciones de SEO sin regenerar toda la landing.
     """
     model = model or pricing.MODEL_PER_OUTPUT.get(3, pricing.MODELS["haiku"])
     user_prompt = _build_user_prompt(conv_name, context, 3, instrucciones, modo)
-    body = _claude(
+    raw = _claude(
         client,
         system=p.SYSTEM_PROMPTS[3],
         user=user_prompt,
@@ -244,7 +254,10 @@ def _generate_output_3(
         model=model,
         _track=_track,
     )
-    return output3_template.build_output_3_html(body, titulo=f"{conv_name} — Innóvate 4.0")
+    seo, body = output3_template.parse_landing_response(raw, fallback_name=conv_name)
+    html = output3_template.build_output_3_html(body, seo["seo_title"], seo["meta_description"])
+    seo_full = {**seo, "body_html": body, "confirmed": False}
+    return html, seo_full
 
 
 # ---------------------------------------------------------------------------
@@ -563,10 +576,12 @@ def _process_job(job_id: int, conv_id: int, salida_requests: list[dict]) -> None
                     )
 
                 elif output_type == 3:
-                    generated["3"] = _generate_output_3(
+                    html_3, seo_3 = _generate_output_3(
                         client, conv_name, context, instrucciones, modo,
                         model=model, _track=track,
                     )
+                    generated["3"] = html_3
+                    generated["3_seo"] = json.dumps(seo_3, ensure_ascii=False)
 
                 else:
                     user_prompt = _build_user_prompt(conv_name, context, output_type, instrucciones, modo)
@@ -813,6 +828,63 @@ def get_job(job_id: int):
 
 
 # ---------------------------------------------------------------------------
+# Confirmación / edición de los campos SEO de la landing (salida 3)
+# ---------------------------------------------------------------------------
+
+@app.post("/convocatorias/{convocatoria_id}/landing/seo")
+def update_landing_seo(convocatoria_id: int, body: LandingSeoRequest):
+    """
+    Re-aplica los campos SEO editados a la landing ya generada SIN llamar a Claude.
+    Reconstruye el HTML a partir del cuerpo guardado + el nuevo título y meta
+    description. El slug se guarda pero no se inserta en el HTML.
+    """
+    conv = db.get_convocatoria(convocatoria_id)
+    if conv is None:
+        raise HTTPException(status_code=404, detail="Convocatoria no encontrada.")
+
+    entregables = conv["entregables_json"]
+    if "3_seo" not in entregables or "3" not in entregables:
+        raise HTTPException(
+            status_code=404,
+            detail="La landing aún no se ha generado. Genérala antes de editar el SEO.",
+        )
+
+    try:
+        seo = json.loads(entregables["3_seo"])
+    except Exception:
+        seo = {}
+
+    body_html = seo.get("body_html", "")
+    if not body_html:
+        raise HTTPException(
+            status_code=422,
+            detail="No se conserva el cuerpo de la landing. Regenera la landing para poder editar el SEO.",
+        )
+
+    seo_title = body.seo_title.strip()
+    meta_description = body.meta_description.strip()
+    slug = output3_template.slugify(body.slug) if body.slug.strip() else seo.get("slug", "")
+
+    new_html = output3_template.build_output_3_html(body_html, seo_title, meta_description)
+    new_seo = {
+        "seo_title": seo_title,
+        "meta_description": meta_description,
+        "slug": slug,
+        "body_html": body_html,
+        "confirmed": True,
+    }
+    db.update_entregables(convocatoria_id, {
+        "3": new_html,
+        "3_seo": json.dumps(new_seo, ensure_ascii=False),
+    })
+
+    return {
+        "convocatoria_id": convocatoria_id,
+        "seo": {k: new_seo[k] for k in ("seo_title", "meta_description", "slug", "confirmed")},
+    }
+
+
+# ---------------------------------------------------------------------------
 # Generación síncrona (sin streaming — compatibilidad)
 # ---------------------------------------------------------------------------
 
@@ -879,10 +951,12 @@ def generate_outputs(convocatoria_id: int, body: GenerateRequest):
                 )
 
             elif output_type == 3:
-                generated["3"] = _generate_output_3(
+                html_3, seo_3 = _generate_output_3(
                     client, conv["nombre"], context, instrucciones, modo,
                     model=model, _track=track,
                 )
+                generated["3"] = html_3
+                generated["3_seo"] = json.dumps(seo_3, ensure_ascii=False)
 
             else:
                 user_prompt = _build_user_prompt(conv["nombre"], context, output_type, instrucciones, modo)
@@ -1047,10 +1121,12 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
                     )
 
                 elif output_type == 3:
-                    generated["3"] = _generate_output_3(
+                    html_3, seo_3 = _generate_output_3(
                         client, conv["nombre"], context, instrucciones, modo,
                         model=model, _track=track,
                     )
+                    generated["3"] = html_3
+                    generated["3_seo"] = json.dumps(seo_3, ensure_ascii=False)
 
                 else:
                     user_prompt = _build_user_prompt(conv["nombre"], context, output_type, instrucciones, modo)

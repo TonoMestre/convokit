@@ -474,9 +474,10 @@ Los nombres entre corchetes ([HERO], [BENEFICIOS], etc.) identifican el contenid
 
 ### [HERO]
 
-- H1: titular orientado al beneficio principal. Debe mencionar el importe máximo o el porcentaje de financiación y que es a fondo perdido. El nombre oficial de la convocatoria va en el subtítulo, nunca en el H1.
-- H2: subtítulo que identifica a quién va dirigida en una frase, con el nombre de la convocatoria.
-- Cuerpo: una o dos frases con el presupuesto total (si está confirmado) y el plazo de solicitud.
+- GANCHO: línea corta y potente con el beneficio principal — importe máximo o porcentaje de financiación, y que es a fondo perdido. Es el primer reclamo visual. Ej: "Hasta el 40% a fondo perdido".
+- H1: el NOMBRE BASE de la convocatoria SIN AÑO. Es el encabezado principal y debe tener el mayor peso visual. Ej: "INPYME — Ayudas a la pyme industrial". Nunca metas el año ni el porcentaje en el H1.
+- Subtítulo: identifica a quién va dirigida en una frase.
+- Cuerpo (opcional): una frase con el presupuesto total o el plazo si están confirmados. Si mencionas el año o datos de la edición vigente, recuerda que su sitio natural es la sección "Convocatoria [año]", no el hero.
 - CTA: frase en primera persona. Ejemplos válidos: "Quiero saber si puedo solicitarla", "Analiza si mi empresa encaja", "Quiero que revisen mi caso".
 
 ---
@@ -516,10 +517,13 @@ Bien: "Maquinaria y equipos productivos nuevos directamente vinculados a la fabr
 
 ---
 
-### [IMPORTE]
+### [IMPORTE — sección "Convocatoria [año]"]
+
+Esta sección es la que concentra los datos de la EDICIÓN VIGENTE. Su <h2> debe ser "Convocatoria [año]" (ej. "Convocatoria 2026"). Aquí —y no en el hero ni en el H1— van el año y las cifras de la edición.
 
 - Porcentaje o porcentajes aplicables, explicados en una frase cada uno.
 - Importe máximo por empresa.
+- Presupuesto total y plazo de solicitud de la edición vigente, si constan.
 - Si hay límite de minimis relevante, una frase sencilla.
 - Si es posible con los datos reales, incluye un ejemplo de cálculo orientativo con cifras concretas. Ejemplo: "Una inversión subvencionable de 300.000 € con el tipo del 30% generaría una ayuda de 90.000 €."
 - Sin fórmulas ni tecnicismos.
@@ -602,19 +606,46 @@ Nunca inventes cifras, estadísticas ni afirmaciones que no estén en los docume
 
 ---
 
+## CRITERIO DEL AÑO (nombre base vs. edición)
+
+El NOMBRE BASE de la convocatoria es su nombre propio SIN el año. El año identifica la edición anual.
+
+- El nombre base (sin año) se usa en: seo_title, meta_description, H1 y slug.
+- El año y los datos de la edición vigente (porcentajes, presupuesto, plazo) van SOLO en el cuerpo, bajo el <h2> "Convocatoria [año]".
+- Separa el año únicamente cuando es CLARAMENTE una edición anual. Ejemplo: "INPYME 2026" → base "INPYME", año "2026".
+- Si NO está claro si un número forma parte del nombre propio o es el año de la edición, MANTENLO en el nombre base por defecto. No recortes nombres oficiales. Ej: "Industria 4.0" → el "4.0" se queda en el nombre base (no es un año).
+
+---
+
+## SEO
+
+Debes decidir tres campos SEO, todos SIN AÑO:
+- seo_title: nombre base de la convocatoria, orientado a búsqueda. Máximo 60 caracteres. Ej: "INPYME — Ayudas a la pyme industrial".
+- meta_description: resumen de la ayuda (objeto, beneficiarios y porcentaje de financiación), sin año. Máximo 155 caracteres.
+- slug: versión-url del nombre base, en minúsculas, sin año, palabras separadas por guiones, sin tildes ni caracteres especiales. Ej: "inpyme-ayudas-pyme-industrial".
+
+---
+
 ## FORMATO DE SALIDA
 
-Devuelve ÚNICAMENTE el cuerpo HTML de la landing. Sin texto antes ni después. Sin bloques de código markdown (sin ```html). Empieza directamente con la primera etiqueta y termina con la última.
+Devuelve la respuesta en DOS partes separadas por marcadores literales. Sin texto antes, después ni entre medias salvo lo indicado. Sin bloques de código markdown (sin ```).
 
-NO incluyas: <!DOCTYPE>, <html>, <head>, <style>, <body>, <header> ni <footer>. Esos elementos, el CSS de marca, la cabecera con logo y el pie ya los aporta la plantilla. Tú generas solo las secciones de contenido. NO escribas CSS ni atributos style="..." propios: usa exclusivamente las clases documentadas abajo.
+Primero el bloque SEO, exactamente así:
+===SEO_JSON===
+{"seo_title": "...", "meta_description": "...", "slug": "..."}
+===LANDING_HTML===
+
+Y a continuación, el cuerpo HTML de la landing (las secciones de contenido).
+
+Para el cuerpo HTML: NO incluyas <!DOCTYPE>, <html>, <head>, <title>, <meta>, <style>, <body>, <header> ni <footer>. Esos elementos, el CSS de marca, la cabecera con logo y el pie ya los aporta la plantilla. Tú generas solo las secciones de contenido. NO escribas CSS ni atributos style="..." propios: usa exclusivamente las clases documentadas abajo. Si incluyes alguna <img>, añade siempre un atributo alt descriptivo.
 
 Estructura HTML obligatoria (en este orden):
 
-1. HERO — sección de apertura:
+1. HERO — sección de apertura. El H1 es el NOMBRE BASE sin año; el gancho es el porcentaje/importe:
 <section class="hero">
-  <h1>Titular orientado al beneficio (importe/porcentaje a fondo perdido)</h1>
-  <p class="hero-sub">Subtítulo: a quién va dirigida, con el nombre de la convocatoria</p>
-  <p class="hero-body">Presupuesto total y plazo, si están confirmados</p>
+  <p class="hero-gancho">Hasta el 40% a fondo perdido</p>
+  <h1>Nombre base de la convocatoria, sin año</h1>
+  <p class="hero-sub">Subtítulo: a quién va dirigida en una frase</p>
   <a class="btn btn-light" href="#contacto">Quiero saber si puedo solicitarla</a>
 </section>
 
@@ -636,11 +667,15 @@ Estructura HTML obligatoria (en este orden):
   </div>
 </div></section>
 
-5. IMPORTE — porcentajes e importe máximo en <p> o <ul class="lista">. Si hay ejemplo de cálculo con datos reales, añádelo en un destacado:
-<div class="destacado">
-  <div class="destacado-cifra">90.000 €</div>
-  <div class="destacado-detalle">Una inversión de 300.000 € al 30% genera esta ayuda a fondo perdido.</div>
-</div>
+5. CONVOCATORIA [AÑO] — aquí van el año y los datos de la edición vigente. El <h2> debe ser "Convocatoria [año]":
+<section class="bloque"><div class="wrap">
+  <h2 class="bloque-titulo">Convocatoria 2026</h2>
+  <ul class="lista"><li>Porcentaje, importe máximo, presupuesto y plazo de esta edición.</li></ul>
+  <div class="destacado">
+    <div class="destacado-cifra">90.000 €</div>
+    <div class="destacado-detalle">Una inversión de 300.000 € al 30% genera esta ayuda a fondo perdido.</div>
+  </div>
+</div></section>
 
 6. CÓMO TRABAJAMOS — section.bloque > div.wrap > h2.bloque-titulo + ul.lista.
 
@@ -658,7 +693,7 @@ Estructura HTML obligatoria (en este orden):
   <a class="btn btn-outline" href="#contacto">Cuéntanos tu situación</a>
 </section>
 
-9. FORMULARIO — usa EXACTAMENTE esta estructura (es Web3Forms, funciona sin JS al desplegarse). Sustituye NOMBRE_CONVOCATORIA por el nombre real y el texto del botón por la frase del CTA primario:
+9. FORMULARIO — usa EXACTAMENTE esta estructura (es Web3Forms, funciona sin JS al desplegarse). Sustituye NOMBRE_CONVOCATORIA por el nombre base y el texto del botón por la frase del CTA primario:
 <section class="bloque" id="contacto"><div class="wrap">
   <h2 class="bloque-titulo">Quiero que revisen mi caso</h2>
   <form class="form-landing" action="https://api.web3forms.com/submit" method="POST">
@@ -675,9 +710,9 @@ Estructura HTML obligatoria (en este orden):
   </form>
 </div></section>
 
-Clases CSS disponibles (no inventes otras): hero, hero-sub, hero-body, bloque, wrap, bloque-titulo, lista, grid, card, destacado, destacado-cifra, destacado-detalle, cta, cta-primary, cta-secondary, btn, btn-cta, btn-light, btn-outline, form-landing, field, form-nota.
+Clases CSS disponibles (no inventes otras): hero, hero-gancho, hero-sub, hero-body, bloque, wrap, bloque-titulo, lista, grid, card, destacado, destacado-cifra, destacado-detalle, cta, cta-primary, cta-secondary, btn, btn-cta, btn-light, btn-outline, form-landing, field, form-nota.
 
-Todos los enlaces de CTA y botones apuntan a href="#contacto" para llevar al formulario.""",
+Debe haber un único <h1> en toda la landing (el del hero). Cada sección lleva su <h2>. Todos los enlaces de CTA y botones apuntan a href="#contacto".""",
 
     # ------------------------------------------------------------------
     # Salida 4 — Set de prompts para la memoria (alta exigencia)

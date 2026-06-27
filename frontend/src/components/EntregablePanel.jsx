@@ -126,11 +126,167 @@ function PendingSalidaRow({
 }
 
 // ---------------------------------------------------------------------------
+// Panel de confirmación / edición de SEO (solo landing, salida 3)
+// ---------------------------------------------------------------------------
+
+function parseSeo(seoRaw) {
+  if (!seoRaw) return null;
+  try {
+    const s = typeof seoRaw === "string" ? JSON.parse(seoRaw) : seoRaw;
+    return {
+      seo_title: s.seo_title || "",
+      meta_description: s.meta_description || "",
+      slug: s.slug || "",
+      confirmed: !!s.confirmed,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function SeoPanel({ seoRaw, convocatoriaId }) {
+  const { API, openConvocatoria } = useApp();
+  const initial = parseSeo(seoRaw);
+
+  const [title, setTitle] = useState(initial?.seo_title || "");
+  const [meta, setMeta] = useState(initial?.meta_description || "");
+  const [slug, setSlug] = useState(initial?.slug || "");
+  const [confirmed, setConfirmed] = useState(initial?.confirmed || false);
+  const [saving, setSaving] = useState(false);
+  const [savedFlash, setSavedFlash] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Re-sincronizar si cambia el SEO de origen (p. ej. tras regenerar la landing).
+  useEffect(() => {
+    const s = parseSeo(seoRaw);
+    if (s) {
+      setTitle(s.seo_title);
+      setMeta(s.meta_description);
+      setSlug(s.slug);
+      setConfirmed(s.confirmed);
+    }
+  }, [seoRaw]);
+
+  if (!initial) return null;
+
+  async function handleConfirm() {
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API}/convocatorias/${convocatoriaId}/landing/seo`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ seo_title: title, meta_description: meta, slug }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail ?? "No se pudo guardar el SEO.");
+      }
+      const data = await res.json();
+      setConfirmed(true);
+      setSavedFlash(true);
+      setTimeout(() => setSavedFlash(false), 2500);
+      if (data.seo?.slug != null) setSlug(data.seo.slug);
+      await openConvocatoria(convocatoriaId); // refresca el HTML/iframe con el nuevo título y meta
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const titleLen = title.length;
+  const metaLen = meta.length;
+  const inputCls =
+    "w-full border text-sm px-3 py-2 bg-white text-gray-800 focus:outline-none focus:border-brand-blue";
+  const inputStyle = { borderRadius: 0, borderColor: "var(--color-navy-20)" };
+
+  return (
+    <div
+      className="mb-4 p-4"
+      style={{
+        border: confirmed ? "1px solid var(--color-navy-20)" : "2px solid var(--color-red)",
+        background: confirmed ? "#f9fafb" : "#fff7f8",
+      }}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs font-semibold text-brand-blue uppercase tracking-wide">
+          Campos SEO {confirmed ? "(confirmados)" : "— revisa y confirma"}
+        </span>
+        {confirmed ? (
+          <span className="text-xs text-green-700 font-medium">✓ Confirmado</span>
+        ) : (
+          <span className="text-xs text-brand-red font-medium">Pendiente de confirmar</span>
+        )}
+      </div>
+
+      <p className="text-xs text-gray-500 mb-3">
+        Estos valores se copian manualmente en Yoast (WordPress) al publicar. El título y la meta
+        description se incrustan en el HTML; el <strong>slug</strong> es independiente y no se inserta en el HTML.
+      </p>
+
+      <div className="space-y-3">
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            Título SEO <span className="text-gray-400">({titleLen}/60 aprox.)</span>
+          </label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className={inputCls}
+            style={inputStyle}
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            Meta description <span className="text-gray-400">({metaLen}/155 aprox.)</span>
+          </label>
+          <textarea
+            value={meta}
+            onChange={(e) => setMeta(e.target.value)}
+            rows={2}
+            className={inputCls}
+            style={inputStyle}
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            Slug <span className="text-gray-400">(URL en WordPress — no va en el HTML)</span>
+          </label>
+          <input
+            type="text"
+            value={slug}
+            onChange={(e) => setSlug(e.target.value)}
+            className={inputCls}
+            style={inputStyle}
+          />
+        </div>
+      </div>
+
+      {error && <p className="text-xs text-brand-red mt-2">{error}</p>}
+
+      <div className="flex items-center gap-3 mt-3">
+        <button
+          onClick={handleConfirm}
+          disabled={saving}
+          className="text-xs px-4 py-2 bg-brand-blue text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+          style={{ borderRadius: 0 }}
+        >
+          {saving ? "Guardando…" : confirmed ? "Guardar cambios" : "Confirmar SEO"}
+        </button>
+        {savedFlash && <span className="text-xs text-green-700">Guardado y aplicado al HTML.</span>}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Ítem de acordeón para entregables ya generados
 // ---------------------------------------------------------------------------
 
 function EntregableItem({
-  salida, texto, instruccionPrevia, hasJsonData, convocatoriaId, isOpen, onToggle,
+  salida, texto, instruccionPrevia, hasJsonData, seoRaw, convocatoriaId, isOpen, onToggle,
   onRegenerate, outputStatus, output4Progress, costEur,
 }) {
   const { API } = useApp();
@@ -325,6 +481,9 @@ function EntregableItem({
         <div className="px-5 py-5" style={{ borderTop: "1px solid var(--color-navy-20)" }}>
           {salida.isHtml ? (
             <div className="space-y-3">
+              {salida.num === 3 && seoRaw && (
+                <SeoPanel seoRaw={seoRaw} convocatoriaId={convocatoriaId} />
+              )}
               <iframe
                 srcDoc={texto}
                 title={salida.label}
@@ -518,6 +677,7 @@ export default function EntregablePanel({ convocatoria, onUpdate: _onUpdate }) {
                   texto={entregables[String(s.num)]}
                   instruccionPrevia={entregables[`${s.num}_instruccion`] || ""}
                   hasJsonData={!!entregables[`${s.num}_json`]}
+                  seoRaw={entregables[`${s.num}_seo`] || ""}
                   convocatoriaId={convocatoria.id}
                   isOpen={openNum === s.num}
                   onToggle={() => toggleAccordion(s.num)}

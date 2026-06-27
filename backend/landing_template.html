@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>{{TITULO}}</title>
+<title>{{SEO_TITLE}}</title>
+<meta name="description" content="{{META_DESCRIPTION}}" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -83,9 +84,19 @@
     padding: 72px 24px;
     text-align: center;
   }
-  .hero h1 { color: var(--white); font-size: 2.6rem; margin-bottom: 18px; max-width: 800px; margin-left: auto; margin-right: auto; }
-  .hero .hero-sub { font-size: 1.25rem; font-weight: 500; color: var(--white); margin-bottom: 18px; max-width: 720px; margin-left: auto; margin-right: auto; }
-  .hero .hero-body { font-size: 1rem; color: rgba(255,255,255,0.85); margin-bottom: 32px; max-width: 640px; margin-left: auto; margin-right: auto; }
+  .hero .hero-gancho {
+    display: inline-block;
+    font-family: 'Roboto Slab', serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--white);
+    background: var(--red);
+    padding: 7px 18px;
+    margin-bottom: 22px;
+  }
+  .hero h1 { color: var(--white); font-size: 3.2rem; margin-bottom: 16px; max-width: 840px; margin-left: auto; margin-right: auto; }
+  .hero .hero-sub { font-size: 1.2rem; font-weight: 500; color: rgba(255,255,255,0.9); margin-bottom: 18px; max-width: 720px; margin-left: auto; margin-right: auto; }
+  .hero .hero-body { font-size: 1rem; color: rgba(255,255,255,0.8); margin-bottom: 32px; max-width: 640px; margin-left: auto; margin-right: auto; }
 
   /* ── Listas ── */
   .lista { list-style: none; max-width: 760px; }
@@ -214,7 +225,8 @@
 
   @media (max-width: 600px) {
     .hero { padding: 48px 20px; }
-    .hero h1 { font-size: 1.9rem; }
+    .hero h1 { font-size: 2.2rem; }
+    .hero .hero-gancho { font-size: 0.95rem; }
     .hero .hero-sub { font-size: 1.05rem; }
     .bloque { padding: 40px 0; }
     .bloque-titulo { font-size: 1.4rem; }

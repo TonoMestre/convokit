@@ -20,7 +20,7 @@ MODEL_PER_OUTPUT: dict[int, str] = {
     1: MODELS["sonnet"],
     2: MODELS["haiku"],
     3: MODELS["haiku"],
-    4: MODELS["haiku"],
+    4: MODELS["sonnet"],
     5: MODELS["haiku"],
 }
 

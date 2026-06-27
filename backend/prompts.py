@@ -24,7 +24,7 @@ MAX_TOKENS: dict[int, int] = {
     3: 4096,
     4: 8192,
     5: 4096,
-    6: 3000,  # solo JSON de CFG, no HTML completo
+    6: 5000,  # JSON de CFG — suficiente para baremos extensos
 }
 
 # ---------------------------------------------------------------------------

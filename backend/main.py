@@ -237,10 +237,19 @@ def _generate_output_6(
         model=model,
         _track=_track,
     )
-
+    # Try strict parse first, then fall back to extracting the outermost { ... }
+    config = None
     try:
         config = _parse_json(raw)
     except Exception:
+        match = re.search(r'\{.*\}', raw.strip(), re.DOTALL)
+        if match:
+            try:
+                config = json.loads(match.group(0))
+            except Exception:
+                pass
+
+    if config is None:
         raise HTTPException(
             status_code=502,
             detail="El evaluador no se generó correctamente (JSON inválido). Por favor, regenera la salida.",

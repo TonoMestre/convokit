@@ -227,14 +227,14 @@ def _generate_output_4(
 
     markdown = "\n\n---\n\n".join(markdown_parts)
 
-    # Paso 3: extracción JSON del markdown completo en una sola llamada
+    # Paso 3: extracción JSON del markdown completo en una sola llamada (siempre Haiku)
     time.sleep(2)
     raw_json = _claude(
         client,
         system=p.OUTPUT_4_JSON_EXTRACTOR,
         user=markdown,
         max_tokens=8192,
-        model=model,
+        model=pricing.MODELS["haiku"],
         _track=_track,
     )
     try:
@@ -750,7 +750,7 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
                     time.sleep(2)
                     raw_json_4 = _claude(
                         client, system=p.OUTPUT_4_JSON_EXTRACTOR, user=markdown_4,
-                        max_tokens=8192, model=model, _track=track,
+                        max_tokens=8192, model=pricing.MODELS["haiku"], _track=track,
                     )
                     try:
                         json_sections = _parse_json(raw_json_4)

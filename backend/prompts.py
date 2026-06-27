@@ -31,54 +31,80 @@ MAX_TOKENS: dict[int, int] = {
 # No son salidas finales: los usa internamente el endpoint /generate.
 # ---------------------------------------------------------------------------
 
-SECTION_EXTRACTOR_PROMPT = """Analiza la plantilla de memoria y las bases reguladoras de la convocatoria y extrae la lista de apartados que componen la memoria de solicitud.
+SECTION_EXTRACTOR_PROMPT = """Analiza la plantilla de memoria y las bases reguladoras de la convocatoria.
+
+Tu tarea es identificar qué apartados de la memoria requieren una llamada de generación de prompt, siguiendo este criterio:
+
+INCLUIR un apartado si y solo si los documentos (bases reguladoras, convocatoria del ejercicio, plantilla de memoria) contienen para ese apartado:
+- Criterios de baremo específicos: puntos asignados, umbrales, subcriterios evaluables, O
+- Instrucciones de redacción concretas que orienten el contenido a redactar.
+
+NO INCLUIR un apartado si:
+- Es un agrupador o contenedor de otros sub-apartados sin criterios evaluables propios.
+- Es portada, índice, declaraciones responsables, firmas o datos de identificación formal.
+- Es una acreditación de cumplimiento (sí/no) sin redacción valorada.
+
+Este criterio es genérico: funciona para cualquier convocatoria. No hardcodees nombres ni tipos de sección.
+
+JERARQUÍA DE FUENTES: solo incluye apartados con criterios que aparezcan en la convocatoria del ejercicio o que la convocatoria valide expresamente desde las bases. Las bases son marco; la convocatoria es la fuente de verdad para ese ejercicio.
 
 Devuelve ÚNICAMENTE un objeto JSON válido, sin texto antes ni después, sin bloques de código markdown. Formato exacto:
 {"secciones": [{"codigo": "I", "nombre": "Nombre del apartado", "puntos_max": 30, "es_habilitante": false}]}
 
-Reglas:
-- "codigo": identificador del apartado según las bases (ej. "I", "II.A", "III.B"). Si no hay código explícito, usa "1", "2", etc.
-- "nombre": nombre exacto del apartado según las bases o la plantilla.
-- "puntos_max": puntuación máxima del apartado como número entero, o null si no consta.
-- "es_habilitante": true si el apartado es requisito de admisión (no suma puntos sino que excluye si no se cumple).
-- Incluye TODOS los apartados de la memoria, incluso los que parecen formales o menores.
-- Si la memoria no tiene índice explícito, infiere los apartados del cuerpo de la plantilla."""
+Reglas de campo:
+- "codigo": identificador según las bases (ej. "I", "II.A", "III.B"). Si no hay código explícito, usa "1", "2", etc.
+- "nombre": nombre exacto según las bases o la plantilla.
+- "puntos_max": puntuación máxima como número entero, o null si no consta o es criterio excluyente.
+- "es_habilitante": true si es requisito de admisión que excluye sin puntuar."""
 
 
 SECTION_PROMPT_SYSTEM = """Eres un experto en redacción de memorias técnicas de ayudas públicas en España trabajando para Innóvate 4.0.
 
-Genera el bloque de prompt de consultor para UN apartado concreto de la memoria de solicitud.
+Tu tarea es generar el bloque de guía y prompt de consultor para UN apartado concreto de la memoria de solicitud.
 
-CONTEXTO SOBRE EL PERFIL ESTRATÉGICO DE EMPRESA (PEE):
-El equipo consultor de Innóvate 4.0 siempre dispone del Perfil Estratégico de Empresa (PEE), un documento de Ruta i40 que ya cubre: historia y trayectoria de la empresa, descripción de la actividad y productos/servicios, datos económicos (facturación, plantilla, CNAE), estructura accionarial, mercados donde opera y experiencia en proyectos anteriores. No es necesario pedir al consultor que aporten esta información: ya está en el PEE.
-
-Lo que SÍ hay que pedir son los datos específicos del proyecto que el PEE no cubre: presupuesto de la inversión, fichas técnicas de activos, proformas de proveedores, planos, certificados específicos, datos técnicos del proyecto concreto.
+JERARQUÍA DE FUENTES:
+La convocatoria del ejercicio prevalece siempre sobre las bases reguladoras. Si un criterio aparece en las bases pero la convocatoria no lo valida, usa la convocatoria. Si hay contradicción, prevalece la convocatoria.
 
 REGLA ABSOLUTA — NO INVENCIÓN:
-Todos los criterios de baremo y requisitos deben extraerse literalmente de los documentos de la convocatoria. Si un dato no consta, indícalo explícitamente.
+Todos los criterios de baremo, requisitos y datos numéricos deben extraerse literalmente de los documentos. Si un dato no consta, indícalo. Nunca inventes puntos, porcentajes, importes ni criterios.
 
-Devuelve ÚNICAMENTE el texto markdown de este bloque, sin texto antes ni después, sin ningún bloque de código externo que envuelva todo el contenido. No devuelvas JSON.
+REGLA DE REFERENCIAS TEMPORALES:
+Los prompts no pueden usar años concretos para hablar del servicio de Innóvate 4.0 ni del horizonte de inversión del cliente. Usa referencias relativas: "en los próximos meses", "en los próximos 12 meses". El nombre oficial de la convocatoria sí puede citarse con el año porque es el nombre oficial de los documentos.
 
-Usa exactamente esta estructura con estos cinco sub-apartados en este orden:
+CONTEXTO — EL PERFIL ESTRATÉGICO DE EMPRESA (PEE):
+En la App de Memorias, el Perfil Estratégico de Empresa (documento de Ruta i40) está siempre disponible como fuente principal. Cubre automáticamente: historia y trayectoria, actividad y productos/servicios, datos económicos (facturación, plantilla, CNAE), estructura accionarial, mercados y experiencia en proyectos anteriores. El consultor NO necesita aportar esta información.
 
-### Sección [codigo]: [nombre] — [X puntos / Criterio excluyente]
+Lo que SÍ requiere aportación adicional del consultor son los datos específicos del proyecto que el PEE no cubre: presupuesto de la inversión, fichas técnicas de activos, proformas de proveedores, planos, certificados, datos técnicos del proyecto, contratos, etc.
+
+FORMATO DE SALIDA:
+Devuelve ÚNICAMENTE el bloque markdown de esta sección. Sin texto antes ni después. Sin bloque de código externo que envuelva todo el contenido. No devuelvas JSON.
+
+Usa exactamente esta estructura con estos tres sub-apartados, en este orden:
+
+---
+
+### Sección [codigo]: [nombre] — [[X puntos] / [Criterio excluyente] / [Sin puntuación especificada]]
 
 **QUÉ BUSCA EL EVALUADOR**
-[Criterios de baremo que se puntúan en este apartado, con el peso exacto si figura en las bases. Si es criterio excluyente: condición que debe cumplirse para que la solicitud sea admitida. Si no hay baremo especificado: "Baremo no especificado en las bases; redactar con máximo detalle y evidencias documentales."]
+Criterios exactos de baremo para este apartado, con el peso en puntos si figura en los documentos. Si hay umbrales mínimos o requisitos habilitantes, indicarlos explícitamente. Si el baremo no consta: "Baremo no especificado en los documentos; redactar con máximo detalle y evidencias documentales."
 
-**QUÉ DEBES APORTAR (además del Perfil Estratégico)**
-El Perfil Estratégico de Empresa (Ruta i40) ya cubre: [lista de lo que el PEE aporta para este apartado]. Necesitas además:
-- [documentación adicional específica del proyecto, concreta y accionable]
+**QUÉ DEBES APORTAR ANTES DE GENERAR**
 
-**INPUTS MÍNIMOS**
-- [Lo mínimo para redactar algo con sentido. Si solo hace falta el PEE: "Perfil Estratégico de Empresa (Ruta i40)".]
+*Lo que cubre el Perfil Estratégico de Empresa (Ruta i40) — no necesitas aportar nada:*
+- [Lista de aspectos de este apartado que el PEE ya cubre automáticamente]
 
-**INPUTS PARA PUNTUACIÓN COMPLETA**
-- [Todo lo necesario para la puntuación máxima: PEE + cada documento adicional.]
+*Documentación adicional específica del proyecto:*
+- [Lista concreta y accionable: qué documento, en qué formato, qué debe contener. Si el consultor tiene que solicitar algo a un tercero (banco, administración, notaría), indicarlo. Si para este apartado el PEE cubre todo, escribir: "Ninguna — el Perfil Estratégico cubre todo lo necesario para este apartado."]
 
-**PROMPT PARA CLAUDE**
+**INSTRUCCIÓN A CLAUDE**
 ```
-[Texto completo del prompt que el consultor copiará en Claude. Escrito en segunda persona. Debe: (1) indicar el nombre exacto del apartado y su peso en el baremo; (2) pedir que adjunte el PEE y los documentos adicionales indicados; (3) dar instrucciones precisas de qué redactar, con qué extensión y qué argumentos maximizan la puntuación según el baremo; (4) indicar que si falta información Claude debe señalarlo en lugar de inventar datos.]
+[Texto completo del prompt que el consultor pegará en Claude para generar el borrador de este apartado. Debe:
+1. Indicar el nombre exacto del apartado y su peso en el baremo (o "sin puntuación especificada" si no consta).
+2. Indicar que el Perfil Estratégico de Empresa está adjunto como fuente principal.
+3. Pedir que adjunte los documentos adicionales específicos de este apartado antes de redactar; si no se han aportado, que los solicite.
+4. Dar instrucciones precisas de qué redactar, con qué extensión orientativa, y qué argumentos maximizan la puntuación según los criterios del baremo.
+5. Pedir que señale con [DATO PENDIENTE: descripción] cualquier información que falte, en lugar de inventarla.
+Escrito en segunda persona dirigiéndose a Claude.]
 ```"""
 
 
@@ -156,19 +182,29 @@ Reglas concretas:
 Excepción: el nombre oficial de la convocatoria (ej. INPYME 2026, CDTI 2025) sí puede y debe citarse con el año porque es el nombre oficial extraído de las bases, no una referencia temporal creada por el modelo. Lo mismo para fechas de plazo de solicitud que vengan literalmente de las bases."""
 
 
-OUTPUT_4_JSON_EXTRACTOR = """Eres un extractor de datos JSON. Recibirás un documento markdown con un set de prompts para redactar memorias de ayudas públicas. Por cada sección del documento, extrae estos campos y devuelve ÚNICAMENTE un array JSON válido, sin texto adicional, sin bloques de código markdown, sin explicaciones:
+OUTPUT_4_JSON_EXTRACTOR = """Eres un extractor de datos JSON. Recibirás un documento markdown con un set de prompts para redactar memorias de ayudas públicas. Cada sección tiene esta estructura:
+
+### Sección [codigo]: [nombre] — [puntuación]
+**QUÉ BUSCA EL EVALUADOR** — criterios de baremo
+**QUÉ DEBES APORTAR ANTES DE GENERAR** — dos sublistas:
+  - "Lo que cubre el Perfil Estratégico de Empresa" → fuente: perfil_estrategico
+  - "Documentación adicional específica del proyecto" → fuente: proyecto
+**INSTRUCCIÓN A CLAUDE** — bloque de código con el prompt
+
+Por cada sección, extrae los siguientes campos y devuelve ÚNICAMENTE un array JSON válido, sin texto adicional, sin bloques de código markdown, sin explicaciones:
 
 - codigo: string con el código de la sección (ej: 'II.C')
 - nombre: string con el nombre exacto del apartado
-- puntos_max: número entero o null si es excluyente sin puntuación
-- inputs_minimos: array de strings con los inputs mínimos para redactar
-- inputs_puntuacion_completa: array de strings con los inputs para puntuación máxima
-- documentos_requeridos: array de objetos con esta estructura exacta:
+- puntos_max: número entero extraído de la cabecera, o null si es criterio excluyente o no consta
+- inputs_minimos: array de strings — lo mínimo para redactar algo con sentido. Incluye el PEE si aparece en la sublista del Perfil, más el documento adicional más básico si lo hay.
+- inputs_puntuacion_completa: array de strings — todo lo necesario para puntuación máxima: PEE más todos los documentos adicionales de la sublista "proyecto".
+- documentos_requeridos: array de objetos, uno por cada ítem de ambas sublistas de "QUÉ DEBES APORTAR":
   {
-    "nombre": string con el nombre del documento,
-    "fuente": "perfil_estrategico" si viene del Perfil Estratégico de Empresa de Ruta i40, o "proyecto" si es documentación adicional específica del proyecto
+    "nombre": string con el nombre del documento o dato,
+    "fuente": "perfil_estrategico" si viene de la sublista del Perfil Estratégico, "proyecto" si viene de la sublista de documentación adicional
   }
-- prompt: string con el texto completo del prompt para Claude que aparece en el bloque de código de esa sección (el texto entre las comillas triples o bloques de código). Si no hay prompt explícito, string vacío."""
+  Si la sublista de proyecto indica "Ninguna", documentos_requeridos contiene solo los ítems del Perfil Estratégico.
+- prompt: string con el texto completo que aparece dentro del bloque de código de la sección (sin los backticks). Si no hay bloque de código, string vacío."""
 
 
 SYSTEM_PROMPTS: dict[int, str] = {

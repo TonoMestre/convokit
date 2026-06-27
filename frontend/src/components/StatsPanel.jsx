@@ -3,7 +3,7 @@ import { useApp } from "../context/AppContext";
 
 function StatCard({ label, value, sub }) {
   return (
-    <div className="border border-gray-200 px-5 py-4">
+    <div className="px-5 py-4" style={{ border: "1px solid var(--color-navy-20)" }}>
       <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">{label}</div>
       <div className="text-2xl font-slab font-bold text-brand-blue">{value}</div>
       {sub && <div className="text-xs text-gray-400 mt-0.5">{sub}</div>}
@@ -83,9 +83,9 @@ export default function StatsPanel() {
           <h3 className="text-sm font-semibold text-brand-blue uppercase tracking-wide mb-3">
             Gasto por salida
           </h3>
-          <div className="border border-gray-200 divide-y divide-gray-100">
+          <div style={{ border: "1px solid var(--color-navy-20)" }}>
             {stats.by_output.map((row) => (
-              <div key={row.salida} className="flex items-center justify-between px-4 py-3">
+              <div key={row.salida} className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--color-navy-20)" }}>
                 <div>
                   <span className="font-semibold text-brand-red text-sm mr-2">{row.salida}.</span>
                   <span className="text-sm text-gray-700">
@@ -112,9 +112,9 @@ export default function StatsPanel() {
           <h3 className="text-sm font-semibold text-brand-blue uppercase tracking-wide mb-3">
             Gasto por modelo
           </h3>
-          <div className="border border-gray-200 divide-y divide-gray-100">
+          <div style={{ border: "1px solid var(--color-navy-20)" }}>
             {stats.by_model.map((row) => (
-              <div key={row.modelo} className="px-4 py-3">
+              <div key={row.modelo} className="px-4 py-3" style={{ borderBottom: "1px solid var(--color-navy-20)" }}>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-medium text-gray-700">{row.modelo}</span>
                   <span className="text-sm font-semibold text-brand-blue">

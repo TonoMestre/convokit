@@ -53,9 +53,9 @@ export default function DetalleConvocatoria() {
         ) : (
           <ul className="space-y-1">
             {docs.map((d, i) => (
-              <li key={i} className="flex items-center gap-3 text-sm border-b border-gray-100 py-1.5">
+              <li key={i} className="flex items-center gap-3 text-sm py-1.5" style={{ borderBottom: "1px solid var(--color-navy-20)" }}>
                 <span className="font-medium text-gray-700 flex-1 truncate">{d.nombre_archivo}</span>
-                <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5">{d.etiqueta}</span>
+                <span className="text-xs text-brand-blue/60 px-2 py-0.5" style={{ background: "var(--color-navy-20)" }}>{d.etiqueta}</span>
               </li>
             ))}
           </ul>

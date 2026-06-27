@@ -2,11 +2,11 @@ import { useState, useEffect, useRef } from "react";
 import { useApp } from "../context/AppContext";
 
 const SALIDAS = [
-  { num: 1, label: "Guía interna del consultor", ext: "md" },
-  { num: 2, label: "Ficha comercial para el cliente", ext: "md" },
-  { num: 3, label: "Landing page", ext: "md", hasJson: false, hasMode: true },
-  { num: 4, label: "Set de prompts para la memoria", ext: "md", hasJson: true },
-  { num: 5, label: "Lista de documentación + correo al cliente", ext: "md", hasJson: true },
+  { num: 1, label: "Guía interna del consultor",                  ext: "md" },
+  { num: 2, label: "Ficha comercial para el cliente",             ext: "md" },
+  { num: 3, label: "Landing page",                                ext: "md", hasMode: true },
+  { num: 4, label: "Set de prompts para la memoria",              ext: "md", hasJson: true },
+  { num: 5, label: "Lista de documentación + correo al cliente",  ext: "md", hasJson: true },
 ];
 
 function Spinner({ className = "" }) {
@@ -35,7 +35,7 @@ function InstruccionesField({ num, instructions, setInstructions, placeholder })
       onChange={(e) => setInstructions((prev) => ({ ...prev, [num]: e.target.value }))}
       placeholder={placeholder}
       rows={2}
-      className="mt-1 w-full text-xs border border-gray-200 px-2 py-1.5 text-gray-700 resize-none focus:outline-none focus:border-brand-blue"
+      className="textarea-brand mt-1"
     />
   );
 }
@@ -75,14 +75,15 @@ function PendingSalidaRow({
   }
 
   return (
-    <div className="py-1.5">
+    <div className="py-2">
       <label className="flex items-center gap-3 cursor-pointer group">
         <input
           type="checkbox"
           checked={isChecked}
           onChange={onToggle}
           disabled={isRunning}
-          className="accent-brand-red w-4 h-4 shrink-0"
+          className="w-4 h-4 shrink-0"
+          style={{ accentColor: "var(--color-navy)" }}
         />
         <span className="text-sm text-gray-700 group-hover:text-brand-blue transition-colors flex-1">
           <span className="font-semibold text-brand-red mr-1">{salida.num}.</span>
@@ -101,10 +102,12 @@ function PendingSalidaRow({
           {salida.hasMode ? (
             <>
               <div className="flex flex-col gap-1.5">
-                <span className="text-xs text-gray-500 font-medium">Modo de generación</span>
+                <span className="text-xs font-semibold text-brand-blue uppercase tracking-wide">
+                  Modo de generación
+                </span>
                 <div className="flex flex-col gap-1">
                   {[
-                    { value: "ABIERTA", label: "Convocatoria abierta o inminente" },
+                    { value: "ABIERTA",    label: "Convocatoria abierta o inminente" },
                     { value: "ANTICIPADA", label: "Posicionamiento anticipado (edición futura)" },
                   ].map((opt) => (
                     <label key={opt.value} className="flex items-center gap-2 cursor-pointer text-xs text-gray-700">
@@ -114,7 +117,7 @@ function PendingSalidaRow({
                         value={opt.value}
                         checked={mode3 === opt.value}
                         onChange={() => setMode3(opt.value)}
-                        className="accent-brand-red"
+                        style={{ accentColor: "var(--color-navy)" }}
                       />
                       {opt.label}
                     </label>
@@ -122,8 +125,9 @@ function PendingSalidaRow({
                 </div>
               </div>
               <div>
-                <label className="text-xs text-gray-500 font-medium">
-                  Instrucciones adicionales <span className="font-normal">(opcional)</span>
+                <label className="text-xs font-semibold text-brand-blue uppercase tracking-wide">
+                  Instrucciones adicionales{" "}
+                  <span className="font-normal normal-case text-gray-400">(opcional)</span>
                 </label>
                 <InstruccionesField
                   num={salida.num}
@@ -139,7 +143,7 @@ function PendingSalidaRow({
                 type="button"
                 onClick={toggleInstructions}
                 className={`text-xs transition-colors ${
-                  hasInstr ? "text-brand-blue font-medium" : "text-gray-400 hover:text-brand-blue"
+                  hasInstr ? "text-brand-blue font-semibold" : "text-gray-400 hover:text-brand-blue"
                 }`}
               >
                 {instrOpen
@@ -185,7 +189,10 @@ function EntregableItem({
 
   function handleDownload(e) {
     e.stopPropagation();
-    downloadFile(texto, `salida_${salida.num}_${salida.label.replace(/\s+/g, "_")}.${salida.ext}`);
+    downloadFile(
+      texto,
+      `salida_${salida.num}_${salida.label.replace(/\s+/g, "_")}.${salida.ext}`
+    );
   }
 
   async function handleDownloadJson(e) {
@@ -199,7 +206,9 @@ function EntregableItem({
         return;
       }
       const data = await res.json();
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json;charset=utf-8" });
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: "application/json;charset=utf-8",
+      });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -212,73 +221,83 @@ function EntregableItem({
   }
 
   const isRegenerating = outputStatus === "queued" || outputStatus === "running";
-  const open = isOpen;
-  const btnBase = "text-xs px-2.5 py-1 border transition-colors";
-  const btnDark = "border-white/40 text-white hover:bg-white hover:text-brand-blue";
-  const btnLight = "border-gray-300 text-gray-600 hover:border-brand-blue hover:text-brand-blue";
 
   let loadingMsg = "Generando...";
-  if (outputStatus === "queued") {
-    loadingMsg = "En cola...";
-  } else if (outputStatus === "running" && salida.num === 4 && output4Progress) {
+  if (outputStatus === "queued") loadingMsg = "En cola...";
+  else if (outputStatus === "running" && salida.num === 4 && output4Progress) {
     loadingMsg = output4Progress.actual === 0
       ? "Identificando apartados..."
       : `Apartado ${output4Progress.actual} de ${output4Progress.total}`;
   }
 
+  // Button base
+  const btnBase = "text-xs px-2.5 py-1 border transition-colors font-medium";
+  // When accordion is open (navy bg) — white outline buttons
+  const btnOpen   = "border-white/40 text-white hover:bg-white hover:text-brand-blue";
+  // When accordion is closed — navy outline per brand spec (secondary buttons)
+  const btnClosed = "border-brand-blue text-brand-blue bg-transparent hover:bg-brand-blue hover:text-white";
+
   return (
-    <div className={`border-b border-gray-200 last:border-b-0 ${open ? "bg-white" : ""}`}>
+    <div className={`border-b border-gray-100 last:border-b-0 ${isOpen ? "bg-white" : ""}`}>
       <div
         onClick={onToggle}
         className={`flex items-center gap-3 px-4 py-3 cursor-pointer select-none transition-colors ${
-          open ? "bg-brand-blue" : "bg-white hover:bg-gray-50"
+          isOpen ? "bg-brand-blue" : "bg-white hover:bg-gray-50"
         }`}
       >
-        <span className={`font-slab font-bold text-sm w-5 shrink-0 ${open ? "text-white" : "text-brand-red"}`}>
+        {/* Número */}
+        <span
+          className={`font-slab font-bold text-sm w-5 shrink-0 ${
+            isOpen ? "text-brand-red" : "text-brand-red"
+          }`}
+        >
           {salida.num}
         </span>
-        <span className={`font-slab font-semibold text-sm flex-1 ${open ? "text-white" : "text-brand-blue"}`}>
+
+        {/* Título */}
+        <span
+          className={`font-slab font-semibold text-sm flex-1 ${
+            isOpen ? "text-white" : "text-brand-blue"
+          }`}
+        >
           {salida.label}
         </span>
 
+        {/* Acciones */}
         <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-          {/* Coste de la última generación */}
+          {/* Coste */}
           {costEur != null && !isRegenerating && (
-            <span className={`text-xs ${open ? "text-white/50" : "text-gray-400"}`}>
-              {costEur < 0.01
-                ? `<0.01 €`
-                : `${costEur.toFixed(3)} €`}
+            <span className={`text-xs ${isOpen ? "text-white/40" : "text-gray-400"}`}>
+              {costEur < 0.01 ? "<0.01 €" : `${costEur.toFixed(3)} €`}
             </span>
           )}
 
-          <button onClick={handleCopy} className={`${btnBase} ${open ? btnDark : btnLight}`}>
+          <button onClick={handleCopy} className={`${btnBase} ${isOpen ? btnOpen : btnClosed}`}>
             {copied ? "¡Copiado!" : "Copiar"}
           </button>
-          <button onClick={handleDownload} className={`${btnBase} ${open ? btnDark : btnLight}`}>
+          <button onClick={handleDownload} className={`${btnBase} ${isOpen ? btnOpen : btnClosed}`}>
             .{salida.ext}
           </button>
           {salida.hasJson && hasJsonData && (
             <button
               onClick={handleDownloadJson}
               disabled={downloadingJson}
-              className={`${btnBase} disabled:opacity-40 ${open ? btnDark : btnLight}`}
+              className={`${btnBase} disabled:opacity-40 ${isOpen ? btnOpen : btnClosed}`}
             >
               {downloadingJson ? <Spinner className="w-3 h-3" /> : ".json"}
             </button>
           )}
 
           {isRegenerating ? (
-            <span className={`flex items-center gap-1.5 text-xs ${open ? "text-white" : "text-brand-red"}`}>
+            <span className={`flex items-center gap-1.5 text-xs ${isOpen ? "text-white" : "text-brand-red"}`}>
               <Spinner className="w-3 h-3" />
               <span className="whitespace-nowrap">{loadingMsg}</span>
             </span>
           ) : (
             <button
               onClick={(e) => { e.stopPropagation(); onRegenerate(); }}
-              className={`${btnBase} ${
-                open
-                  ? "border-brand-red bg-brand-red text-white hover:opacity-80"
-                  : "border-brand-red text-brand-red hover:bg-brand-red hover:text-white"
+              className={`${btnBase} border-brand-red text-brand-red hover:bg-brand-red hover:text-white ${
+                isOpen ? "border-brand-red/70 text-white/80 hover:bg-brand-red hover:border-brand-red hover:text-white" : ""
               }`}
             >
               Regenerar
@@ -286,13 +305,13 @@ function EntregableItem({
           )}
         </div>
 
-        <span className={`text-xs shrink-0 ml-1 ${open ? "text-white" : "text-gray-400"}`}>
-          {open ? "▲" : "▼"}
+        <span className={`text-xs shrink-0 ml-1 ${isOpen ? "text-white/60" : "text-gray-400"}`}>
+          {isOpen ? "▲" : "▼"}
         </span>
       </div>
 
-      {open && (
-        <div className="px-5 py-5 border-t border-gray-100">
+      {isOpen && (
+        <div className="px-5 py-5" style={{ borderTop: "1px solid var(--color-navy-20)" }}>
           <pre className="whitespace-pre-wrap text-sm text-gray-800 font-sans leading-relaxed">
             {texto}
           </pre>
@@ -312,7 +331,6 @@ export default function EntregablePanel({ convocatoria, onUpdate: _onUpdate }) {
 
   const [openNum, setOpenNum] = useState(null);
   const [selected, setSelected] = useState([]);
-  // { "1": {status: "queued"|"running"|"completed"|"error", cost_eur?: number} }
   const [outputStatuses, setOutputStatuses] = useState({});
   const [output4Progress, setOutput4Progress] = useState(null);
   const [error, setError] = useState(null);
@@ -355,25 +373,18 @@ export default function EntregablePanel({ convocatoria, onUpdate: _onUpdate }) {
       const job = await res.json();
       const { status, progress } = job;
 
-      const outputs = progress?.outputs || {};
-      setOutputStatuses(outputs);
-
-      const p4 = progress?.output4_progress;
-      setOutput4Progress(p4 || null);
+      setOutputStatuses(progress?.outputs || {});
+      setOutput4Progress(progress?.output4_progress || null);
 
       if (status === "completed" || status === "error") {
         stopPolling();
         setSelected([]);
-        if (types.length === 1 && status === "completed") {
-          setOpenNum(types[0]);
-        }
-        if (status === "error" && !Object.values(outputs).some((o) => o.status === "completed")) {
-          setError("Ha ocurrido un error durante la generación.");
-        }
+        if (types.length === 1 && status === "completed") setOpenNum(types[0]);
+        if (status === "error") setError("Ha ocurrido un error durante la generación.");
         await openConvocatoria(convocatoria.id);
       }
     } catch {
-      // transient network error, keep polling
+      // transient network error — keep polling
     }
   }
 
@@ -383,7 +394,6 @@ export default function EntregablePanel({ convocatoria, onUpdate: _onUpdate }) {
     setOutput4Progress(null);
 
     const instrMap = overrideInstructions ?? instructions;
-
     const initialStatuses = {};
     types.forEach((t) => { initialStatuses[String(t)] = { status: "queued" }; });
     setOutputStatuses(initialStatuses);
@@ -400,15 +410,11 @@ export default function EntregablePanel({ convocatoria, onUpdate: _onUpdate }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ salidas }),
       });
-
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.detail ?? "Error al iniciar la generación.");
       }
-
       const { job_id } = await res.json();
-
-      // Primera consulta inmediata, luego cada 2s
       await pollJob(job_id, types);
       pollRef.current = setInterval(() => pollJob(job_id, types), 2000);
     } catch (err) {
@@ -418,7 +424,7 @@ export default function EntregablePanel({ convocatoria, onUpdate: _onUpdate }) {
   }
 
   const pendientes = SALIDAS.filter((s) => !entregables[String(s.num)]);
-  const generadas = SALIDAS.filter((s) => entregables[String(s.num)]);
+  const generadas  = SALIDAS.filter((s) =>  entregables[String(s.num)]);
 
   return (
     <div>
@@ -426,13 +432,16 @@ export default function EntregablePanel({ convocatoria, onUpdate: _onUpdate }) {
         <div className="bg-brand-red text-white text-sm px-4 py-3 mb-4">{error}</div>
       )}
 
-      {/* Selector de entregables pendientes */}
+      {/* Pendientes */}
       {pendientes.length > 0 && (
         <section className="mb-8">
-          <h3 className="text-sm font-semibold text-brand-blue uppercase tracking-wide mb-3">
+          <h3 className="text-xs font-semibold text-brand-blue uppercase tracking-wide mb-4">
             Generar entregables
           </h3>
-          <div className="mb-4 divide-y divide-gray-100">
+          <div
+            className="mb-5 divide-y"
+            style={{ borderColor: "var(--color-navy-20)" }}
+          >
             {pendientes.map((s) => (
               <PendingSalidaRow
                 key={s.num}
@@ -453,20 +462,20 @@ export default function EntregablePanel({ convocatoria, onUpdate: _onUpdate }) {
           <button
             onClick={() => generate(selected)}
             disabled={selected.length === 0 || isAnyRunning()}
-            className="bg-brand-blue text-white text-sm font-semibold px-5 py-2 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+            className="btn-primary bg-brand-blue text-white text-sm font-semibold px-5 py-2 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Generar seleccionados
           </button>
         </section>
       )}
 
-      {/* Acordeón de entregables generados */}
+      {/* Generadas */}
       {generadas.length > 0 && (
         <section>
-          <h3 className="text-sm font-semibold text-brand-blue uppercase tracking-wide mb-3">
+          <h3 className="text-xs font-semibold text-brand-blue uppercase tracking-wide mb-4">
             Entregables generados
           </h3>
-          <div className="border border-gray-200">
+          <div style={{ border: "1px solid var(--color-navy-20)" }}>
             {generadas.map((s) => {
               const salStatus = outputStatuses[String(s.num)];
               return (

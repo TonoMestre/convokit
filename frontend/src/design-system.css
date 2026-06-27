@@ -1,0 +1,97 @@
+/* Innóvate 4.0 — Design System Tokens */
+
+:root {
+  --color-navy:    #1d254c;
+  --color-red:     #c50339;
+  --color-white:   #ffffff;
+  --color-black:   #000000;
+  --color-navy-20: rgba(29, 37, 76, 0.2);
+  --color-navy-40: rgba(29, 37, 76, 0.4);
+  --font-titles:   'Roboto Slab', serif;
+  --font-body:     'Inter', sans-serif;
+  --radius:        0px;
+}
+
+/* Global border-radius reset — brand requires 0px everywhere.
+   Tailwind utility classes (.rounded-full etc.) have higher specificity
+   and override this reset where functionally needed (e.g. spinners). */
+*,
+*::before,
+*::after {
+  border-radius: var(--radius);
+}
+
+/* Inputs — bottom border only, no box */
+.input-brand {
+  border: none;
+  border-bottom: 1.5px solid var(--color-navy);
+  background: transparent;
+  outline: none;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--color-black);
+  padding: 6px 0;
+  width: 100%;
+  transition: border-color 0.15s ease;
+}
+.input-brand::placeholder {
+  color: var(--color-navy-40);
+}
+.input-brand:focus {
+  border-bottom-color: var(--color-red);
+}
+
+/* Selects — bottom border only */
+.select-brand {
+  border: none;
+  border-bottom: 1.5px solid var(--color-navy);
+  background: transparent;
+  outline: none;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--color-black);
+  padding: 4px 2px;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.select-brand:focus {
+  border-bottom-color: var(--color-red);
+}
+
+/* Primary button — red bottom accent on hover */
+.btn-primary {
+  position: relative;
+  overflow: hidden;
+}
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--color-red);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.2s ease;
+}
+.btn-primary:not(:disabled):hover::after {
+  transform: scaleX(1);
+}
+
+/* Textarea — subtle full border, red on focus */
+.textarea-brand {
+  border: 1.5px solid var(--color-navy-20);
+  background: transparent;
+  outline: none;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--color-black);
+  padding: 6px 8px;
+  width: 100%;
+  resize: none;
+  transition: border-color 0.15s ease;
+}
+.textarea-brand:focus {
+  border-color: var(--color-red);
+}

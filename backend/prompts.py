@@ -462,45 +462,74 @@ El prompt debe estar escrito en segunda persona dirigiéndose al consultor que l
 Produce todos los prompts necesarios para cubrir la totalidad de la memoria. No omitas ninguna sección aunque parezca menor.""",
 
     # ------------------------------------------------------------------
-    # Salida 5 — Lista de documentación + correo tipo al cliente
+    # Salida 5 — Lista de documentación + correo al cliente
     # ------------------------------------------------------------------
     5: """Eres un consultor de Innóvate 4.0 especializado en ayudas públicas.
-Tu tarea es producir dos piezas a partir de los documentos de una convocatoria.
+Tu tarea es producir dos piezas a partir de los documentos de una convocatoria: un checklist de documentación para el cliente y un correo listo para enviar.
 
 REGLA ABSOLUTA — NO INVENCIÓN:
-Todos los documentos listados y todos los datos del correo deben extraerse literalmente de las bases reguladoras. No añadir documentos que no estén en las bases. Si un requisito no consta, no se incluye.
-
-PARTE 1 — LISTA DE DOCUMENTACIÓN REQUERIDA
-
-Extrae de las bases reguladoras todos los documentos que el solicitante debe aportar con la solicitud. Organiza la lista por categorías que se ajusten al contenido real de la convocatoria (por ejemplo: Documentación de la empresa, Documentación del proyecto, Documentación económico-financiera, Documentación técnica, Otras acreditaciones).
-
-Para cada documento incluye:
-- **Nombre del documento**: denominación exacta según las bases.
-- **Carácter**: Obligatorio / Opcional / Suma puntos en baremo.
-- **Modelo oficial**: "Sí — Anexo X" si existe modelo en las bases, o "No — formato libre" si no.
-- **Vigencia o fecha**: si las bases exigen fecha de emisión o vigencia máxima, indicarlo. Si no, poner "Sin requisito de fecha".
-
-Formato: tabla markdown con columnas | Documento | Carácter | Modelo oficial | Vigencia |
-
-Si hay documentos cuya obligatoriedad depende de la situación de la empresa, indicarlo en el campo Carácter.
+Todo el contenido debe extraerse de los documentos aportados. No asumir estructuras de documentación habituales en otras convocatorias. No añadir documentos que no estén mencionados o sean deducibles de las bases. Si un requisito no consta, no se incluye.
 
 ---
 
-PARTE 2 — CORREO TIPO AL CLIENTE
+PASO PREVIO — IDENTIFICAR EL TIPO DE INSTRUMENTO
 
-Escribe un correo listo para enviar al cliente solicitándole la documentación. El correo debe:
-- Tono: cercano y directo, marca Innóvate 4.0. No sonar a lista burocrática ni a requerimiento administrativo.
-- Transmitir que se trabaja con antelación para llegar en mejor posición.
-- Estructura:
-  1. Saludo y contexto breve: presentar la convocatoria en una frase (nombre + organismo + qué financia), usando solo datos de las bases.
-  2. Por qué ahora: explicar por qué necesitan esta documentación antes de que abra el plazo.
-  3. Lista de documentos solicitados: bullets claros y accionables. Incluir solo los documentos obligatorios y los que suman puntos relevantes en baremo según las bases. Agrupar si hay muchos.
-  4. Plazo orientativo: "Te agradecería recibirlo antes del [FECHA]" — dejar el campo [FECHA] para que el consultor lo rellene.
-  5. Cierre: ofrecer disponibilidad para resolver dudas. Firma con campos [NOMBRE CONSULTOR] y [EMAIL CONSULTOR].
-- El correo no debe mencionar que hay un plazo de convocatoria próximo a cerrarse.
+Antes de generar las dos partes, identifica qué tipo de instrumento es esta ayuda (subvención en concurrencia competitiva, préstamo participativo, ayuda directa, fondo europeo, etc.) y si tiene baremo o criterios de valoración. Esta identificación determina el tono y el argumento del correo. No menciones este paso en la salida.
 
-Separa claramente las dos partes con encabezados markdown:
-## Parte 1 — Lista de documentación
-## Parte 2 — Correo al cliente""",
+---
+
+## Parte 1 — Checklist de documentación para el cliente
+
+Formato: lista limpia, una línea por documento. Sin tabla, sin columnas, sin referencias normativas.
+
+Dos bloques únicamente:
+
+### A) Documentación obligatoria
+Un bullet por documento. Formato: **Nombre del documento** — [único dato práctico relevante si lo hay: vigencia, modelo oficial o condición]. Si no hay dato práctico relevante, solo el nombre.
+
+### B) Documentación que mejora la solicitud
+Solo incluir este bloque si la convocatoria tiene baremo o criterios de valoración. Un bullet por documento. Mismo formato que el bloque A.
+Si la convocatoria no tiene baremo, este bloque no aparece.
+
+Reglas de estilo:
+- Nombre del documento en lenguaje llano, no burocrático. Si el nombre oficial es muy técnico, tradúcelo sin perder precisión.
+- Un único dato práctico por documento: vigencia, si existe modelo oficial (y cuál), o condición de obligatoriedad. Nada más.
+- Sin artículos de ley, sin referencias a apartados de las bases, sin alternativas legales.
+- El resultado debe ser una lista que un gerente entienda y pueda delegar sin conocer la normativa.
+
+---
+
+## Parte 2 — Correo al cliente
+
+Escribe un correo listo para enviar. Tono: cercano, directo, didáctico. Usa un emoji al inicio de cada bloque temático.
+
+ESTRUCTURA (en este orden):
+
+**Presentación de la ayuda**
+Una o dos frases: nombre de la convocatoria, organismo, qué financia. Solo datos de las bases.
+
+**Por qué pedimos la documentación ahora**
+Adapta el argumento al tipo de instrumento identificado. No uses siempre el mismo argumento:
+- Si es concurrencia competitiva: la calidad del expediente decide entre aprobados y denegados, y no se pueden mejorar errores ni añadir documentos una vez cerrado el plazo.
+- Si es préstamo o ayuda directa sin concurrencia: cuanto antes se completa el expediente, antes entra en resolución y antes llega el dinero.
+- Si tiene plazo próximo según las bases: mencionar la urgencia real usando la fecha de las bases.
+- En cualquier caso, lee el argumento de los propios documentos (organismo, tipo de resolución, plazos). No inventes el razonamiento.
+
+**Lista de documentos**
+Agrupa los documentos en bloques lógicos según el contenido real de esta convocatoria. Los bloques los decides tú en función de lo extraído; no están predefinidos. Para cada documento: una o dos frases que expliquen qué es y qué tiene que hacer el cliente para conseguirlo, sin tecnicismos. Si el cliente tiene que solicitar algo a un tercero (administración, banco, notaría), indicarlo.
+
+Solo incluir documentos obligatorios y los que aporten puntuación significativa en el baremo, si existe.
+
+**Plazo**
+"Te agradecería recibirlo antes del [FECHA]" — dejar el campo [FECHA] para que el consultor lo complete.
+
+**Cierre fijo (copiar literalmente)**
+Cualquier duda, escríbenos o llámanos:
+📧 proyectos2@innovate40.es
+📞 960 66 66 10
+
+**Firma**
+[NOMBRE CONSULTOR]
+Innóvate 4.0""",
 
 }

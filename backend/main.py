@@ -386,6 +386,7 @@ def _generate_output_4(
         "ADICIONAL específica del proyecto que el Perfil no cubre.\n\n---"
     )
     markdown_parts = [header]
+    json_sections: list[dict] = []
     section_context = _slice_context_for_section(documents_json)
 
     for i, seccion in enumerate(secciones):
@@ -411,28 +412,28 @@ def _generate_output_4(
         )
         markdown_parts.append(raw_section)
 
+        # Extraer JSON de esta sección individualmente (evita truncar con el markdown completo)
+        try:
+            raw_json_sec = _claude(
+                client,
+                system=p.OUTPUT_4_JSON_EXTRACTOR,
+                user=raw_section,
+                max_tokens=4096,
+                model=pricing.MODELS["haiku"],
+                _track=_track,
+            )
+            parsed = _parse_json(raw_json_sec)
+            if isinstance(parsed, list):
+                json_sections.extend(parsed)
+            elif isinstance(parsed, dict):
+                json_sections.append(parsed)
+        except Exception:
+            pass  # sección sin JSON válido: se omite, el markdown queda intacto
+
         if _progress_cb:
             _progress_cb(i + 1, len(secciones))
 
     markdown = "\n\n---\n\n".join(markdown_parts)
-
-    # Paso 3: extracción JSON del markdown completo en una sola llamada (siempre Haiku)
-    time.sleep(2)
-    raw_json = _claude(
-        client,
-        system=p.OUTPUT_4_JSON_EXTRACTOR,
-        user=markdown,
-        max_tokens=8192,
-        model=pricing.MODELS["haiku"],
-        _track=_track,
-    )
-    try:
-        json_sections = _parse_json(raw_json)
-        if not isinstance(json_sections, list):
-            json_sections = []
-    except Exception:
-        json_sections = []
-
     return markdown, json_sections
 
 

@@ -633,16 +633,17 @@ async def upload_documents(
     files: Annotated[list[UploadFile], File(description="Archivos a subir (PDF, DOCX, XLSX, TXT)")],
     etiquetas: Annotated[list[str], Form(description="Etiqueta por cada archivo en el mismo orden")],
 ):
+    from datetime import datetime, timezone as tz
     if db.get_convocatoria(convocatoria_id) is None:
         raise HTTPException(status_code=404, detail="Convocatoria no encontrada.")
     if len(files) != len(etiquetas):
         raise HTTPException(status_code=422, detail="El número de archivos y etiquetas debe coincidir.")
 
-    valid_labels = set(extractors.LABEL_HEADERS.keys())
+    now = datetime.now(tz.utc).isoformat()
     documents, errors = [], []
 
     for file, etiqueta in zip(files, etiquetas):
-        if etiqueta not in valid_labels:
+        if etiqueta not in extractors.ORIGINAL_LABELS:
             errors.append(f"'{file.filename}': etiqueta '{etiqueta}' no válida.")
             continue
         content = await file.read()
@@ -651,7 +652,13 @@ async def upload_documents(
         except ValueError as exc:
             errors.append(f"'{file.filename}': {exc}")
             continue
-        documents.append({"etiqueta": etiqueta, "nombre_archivo": file.filename, "texto": texto})
+        documents.append({
+            "etiqueta": etiqueta,
+            "nombre_archivo": file.filename,
+            "texto": texto,
+            "es_adicional": False,
+            "fecha_subida": now,
+        })
 
     if errors and not documents:
         raise HTTPException(status_code=422, detail=errors)
@@ -663,6 +670,55 @@ async def upload_documents(
         "convocatoria_id": convocatoria_id,
         "documentos_procesados": len(documents),
         "palabras_en_contexto": len(context.split()),
+        "documentos": [{"nombre_archivo": d["nombre_archivo"], "etiqueta": d["etiqueta"]} for d in documents],
+    }
+    if errors:
+        response["advertencias"] = errors
+    return response
+
+
+@app.post("/convocatorias/{convocatoria_id}/documentos/add")
+async def add_additional_documents(
+    convocatoria_id: int,
+    files: Annotated[list[UploadFile], File(description="Documentos adicionales a añadir")],
+    etiquetas: Annotated[list[str], Form(description="Etiqueta por cada archivo")],
+):
+    """Añade documentos adicionales a una convocatoria existente sin reemplazar los originales."""
+    from datetime import datetime, timezone as tz
+    if db.get_convocatoria(convocatoria_id) is None:
+        raise HTTPException(status_code=404, detail="Convocatoria no encontrada.")
+    if len(files) != len(etiquetas):
+        raise HTTPException(status_code=422, detail="El número de archivos y etiquetas debe coincidir.")
+
+    now = datetime.now(tz.utc).isoformat()
+    documents, errors = [], []
+
+    for file, etiqueta in zip(files, etiquetas):
+        if not etiqueta.strip():
+            errors.append(f"'{file.filename}': la etiqueta no puede estar vacía.")
+            continue
+        content = await file.read()
+        try:
+            texto = extractors.extract_text(content, file.filename)
+        except ValueError as exc:
+            errors.append(f"'{file.filename}': {exc}")
+            continue
+        documents.append({
+            "etiqueta": etiqueta.strip(),
+            "nombre_archivo": file.filename,
+            "texto": texto,
+            "es_adicional": True,
+            "fecha_subida": now,
+        })
+
+    if errors and not documents:
+        raise HTTPException(status_code=422, detail=errors)
+
+    db.append_documentos(convocatoria_id, documents)
+
+    response: dict = {
+        "convocatoria_id": convocatoria_id,
+        "documentos_añadidos": len(documents),
         "documentos": [{"nombre_archivo": d["nombre_archivo"], "etiqueta": d["etiqueta"]} for d in documents],
     }
     if errors:

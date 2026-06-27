@@ -134,6 +134,23 @@ def update_documentos(convocatoria_id: int, documentos: list[dict]) -> None:
         conn.commit()
 
 
+def append_documentos(convocatoria_id: int, new_docs: list[dict]) -> None:
+    """Añade documentos adicionales a la convocatoria sin reemplazar los existentes."""
+    with _get_connection() as conn:
+        row = conn.execute(
+            "SELECT documentos_json FROM convocatorias WHERE id = ?", (convocatoria_id,)
+        ).fetchone()
+        if row is None:
+            return
+        existing = json.loads(row["documentos_json"])
+        existing.extend(new_docs)
+        conn.execute(
+            "UPDATE convocatorias SET documentos_json = ? WHERE id = ?",
+            (json.dumps(existing, ensure_ascii=False), convocatoria_id),
+        )
+        conn.commit()
+
+
 def update_entregables(convocatoria_id: int, entregables: dict) -> None:
     with _get_connection() as conn:
         row = conn.execute(

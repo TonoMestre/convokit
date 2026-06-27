@@ -22,7 +22,14 @@ LABEL_HEADERS = {
     "plantilla_memoria":   "PLANTILLA DE MEMORIA / SOLICITUD",
     "resolucion_anterior": "RESOLUCIÓN DE EJERCICIO ANTERIOR",
     "anexo":               "ANEXO O DOCUMENTO COMPLEMENTARIO",
+    # Tipos de documentos adicionales (añadidos tras la creación)
+    "correccion":          "CORRECCIÓN / RECTIFICACIÓN",
+    "guia_convocante":     "GUÍA DEL CONVOCANTE",
+    "adenda":              "ADENDA",
 }
+
+# Etiquetas válidas para la subida inicial
+ORIGINAL_LABELS = {"bases_reguladoras", "convocatoria", "plantilla_memoria", "resolucion_anterior", "anexo"}
 
 
 def extract_text(content: bytes, filename: str) -> str:
@@ -53,9 +60,9 @@ def build_context(documents: list[dict]) -> str:
     Combina el texto extraído de todos los documentos en un único contexto
     compuesto, prefijando cada bloque con su etiqueta.
 
-    Si el contexto total supera 150.000 palabras, trunca por orden de
-    prioridad: bases_reguladoras → convocatoria → plantilla_memoria →
-    resolucion_anterior → anexo.
+    Orden: primero documentos originales ordenados por prioridad; después
+    documentos adicionales (es_adicional=True) ordenados por fecha_subida.
+    Si el contexto total supera 150.000 palabras, trunca progresivamente.
     """
     PRIORITY = [
         "bases_reguladoras",
@@ -66,22 +73,27 @@ def build_context(documents: list[dict]) -> str:
     ]
     MAX_WORDS = 150_000
 
-    # Ordenar por prioridad para aplicar el límite correctamente.
-    sorted_docs = sorted(
-        documents,
+    originals = [d for d in documents if not d.get("es_adicional")]
+    adicionales = [d for d in documents if d.get("es_adicional")]
+
+    sorted_originals = sorted(
+        originals,
         key=lambda d: PRIORITY.index(d["etiqueta"]) if d["etiqueta"] in PRIORITY else 99,
+    )
+    sorted_adicionales = sorted(
+        adicionales,
+        key=lambda d: d.get("fecha_subida") or "",
     )
 
     parts = []
     total_words = 0
 
-    for doc in sorted_docs:
+    for doc in sorted_originals + sorted_adicionales:
         header = LABEL_HEADERS.get(doc["etiqueta"], doc["etiqueta"].upper())
         block = f"=== {header} ===\n{doc['texto']}"
         words = len(block.split())
 
         if total_words + words > MAX_WORDS:
-            # Incluir solo la parte que cabe.
             remaining = MAX_WORDS - total_words
             truncated = " ".join(block.split()[:remaining])
             parts.append(truncated + "\n[... documento truncado por límite de contexto ...]")

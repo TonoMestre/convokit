@@ -664,6 +664,13 @@ El NOMBRE BASE de la convocatoria es su nombre propio SIN el año. El año ident
 - Separa el año únicamente cuando es CLARAMENTE una edición anual. Ejemplo: "INPYME 2026" → base "INPYME", año "2026".
 - Si NO está claro si un número forma parte del nombre propio o es el año de la edición, MANTENLO en el nombre base por defecto. No recortes nombres oficiales. Ej: "Industria 4.0" → el "4.0" se queda en el nombre base (no es un año).
 
+CASO ESPECIAL — MODO ANTICIPADA CON AÑO PREVISTO:
+Si el usuario especifica en su instrucción un año previsto (ej. "2027") diferente al año que figura en los documentos (ej. "2025"):
+- El H2 de la sección de importe debe ser "Convocatoria [año previsto]*" (ej. "Convocatoria 2027*").
+- El asterisco introduce una nota al pie que debe decir EXACTAMENTE lo que el usuario indique (ej. "*Basada en datos de 2025. Pdte convocatoria.").
+- Los datos numéricos (porcentajes, importes) se mantienen igual porque provienen de la edición anterior de referencia.
+- NO uses el año de los documentos para el H2 cuando el usuario ha especificado otro año.
+
 ---
 
 ## SEO

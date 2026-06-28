@@ -130,9 +130,17 @@ def _instr_block(instrucciones: str) -> str:
     return (
         "\n\n=== INSTRUCCIÓN PRIORITARIA DEL USUARIO ===\n"
         f"{text}\n"
-        "Esta instrucción es OBLIGATORIA y tiene PRIORIDAD sobre cualquier indicación "
-        "anterior del system prompt y sobre los datos de los documentos si hay conflicto. "
-        "Aplícala literalmente en el resultado."
+        "\n"
+        "ESTA INSTRUCCIÓN ES OBLIGATORIA. Tiene PRIORIDAD ABSOLUTA sobre el system prompt "
+        "y sobre los datos de los documentos. Aplícala de forma literal. En particular:\n"
+        "- Si indica un año concreto (ej. '2027'), ese año debe aparecer en el H2 de la "
+        "sección de importe y donde corresponda, INDEPENDIENTEMENTE del año que figuren en "
+        "los documentos. NO uses el año de los documentos cuando el usuario ha especificado otro.\n"
+        "- Si indica texto de asterisco o nota al pie (ej. '*Basada en datos de 2025. Pdte "
+        "convocatoria.'), inclúyelo EXACTAMENTE como lo escribe el usuario.\n"
+        "- Si dice que NO menciones algo (ej. 'no menciones el periodo de ejecución'), "
+        "NO lo menciones bajo ningún concepto.\n"
+        "=== FIN INSTRUCCIÓN PRIORITARIA ==="
     )
 
 

@@ -140,10 +140,10 @@ def build_result_email_html(
                     </p>
                     <table cellpadding="0" cellspacing="0" role="presentation">
                       <tr>
-                        <td style="background:{RED};">
+                        <td style="background:{WHITE};">
                           <a href="mailto:hola@innovate40.es"
-                             style="display:inline-block;color:{WHITE};font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;padding:14px 30px;text-decoration:none;">
-                            Contactar con Innóvate 4.0
+                             style="display:inline-block;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;padding:14px 30px;text-decoration:none;">
+                            <span style="color:{NAVY};text-decoration:none;">Contactar con Innóvate 4.0</span>
                           </a>
                         </td>
                       </tr>
@@ -158,14 +158,14 @@ def build_result_email_html(
           <!-- Footer -->
           <tr>
             <td style="background:{NAVY};padding:28px 36px;">
-              <p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:rgba(255,255,255,0.5);margin:0;line-height:2;text-align:center;">
+              <p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:rgba(255,255,255,0.55);margin:0;line-height:2;text-align:center;">
                 Innóvate 4.0 Estrategia Empresarial, S.L. &nbsp;·&nbsp; NIF B-01.734.813<br />
                 C/ Almirante Cadarso 13-8ª, 46005 València<br />
-                <a href="mailto:hola@innovate40.es" style="color:rgba(255,255,255,0.5);text-decoration:underline;">hola@innovate40.es</a>
+                <a href="mailto:hola@innovate40.es" style="color:#ffffff;text-decoration:underline;"><span style="color:#ffffff;">hola@innovate40.es</span></a>
                 &nbsp;·&nbsp; 960 66 66 10<br />
-                <a href="https://innovate40.es/aviso-legal/" style="color:rgba(255,255,255,0.5);text-decoration:underline;">Aviso legal</a>
+                <a href="https://innovate40.es/aviso-legal/" style="color:#ffffff;text-decoration:underline;"><span style="color:#ffffff;">Aviso legal</span></a>
                 &nbsp;·&nbsp;
-                <a href="https://innovate40.es/politica-de-privacidad/" style="color:rgba(255,255,255,0.5);text-decoration:underline;">Política de privacidad</a>
+                <a href="https://innovate40.es/politica-de-privacidad/" style="color:#ffffff;text-decoration:underline;"><span style="color:#ffffff;">Política de privacidad</span></a>
               </p>
             </td>
           </tr>

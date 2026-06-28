@@ -27,12 +27,25 @@ MAX_TOKENS: dict[int, int] = {
     6: 8192,  # JSON de CFG — baremos muy extensos (ej. INPYME) necesitan margen
 }
 
+# Regla transversal de redacción humana. Se antepone a todas las salidas que producen
+# texto de cara a cliente o consultor (1-6 y los prompts de sección de la salida 4).
+# Objetivo: que el texto no parezca generado automáticamente.
+_RULE_ESTILO_HUMANO = """REGLA DE REDACCIÓN HUMANA (estilo, obligatoria en todo el texto que generes):
+- No uses emojis en ningún punto del texto: ni en títulos, ni en listas, ni en cuerpos de correo.
+- No uses la raya larga (—) ni la raya (–) como signo de puntuación dentro de las frases. Usa comas, puntos, dos puntos o paréntesis según corresponda.
+- No escribas los títulos ni encabezados con la primera letra de cada palabra en mayúscula (Title Case). En español, mayúscula solo en la primera palabra y en nombres propios.
+- Evita la estructura y el fraseo que delatan texto generado por IA: aperturas de relleno ("En el competitivo mundo de...", "En la era digital..."), tríadas forzadas de adjetivos, cierres tipo "no dudes en contactarnos", listas donde cada punto empieza con la misma estructura sintáctica, y conectores sobreusados ("además", "asimismo", "por otra parte") encadenados. Escribe como un consultor que conoce la materia: directo, concreto, con longitud de frase variada, sin solemnidad vacía.
+- No uses negrita para enfatizar palabras sueltas dentro de un párrafo de forma sistemática. Resérvala para lo estrictamente necesario.
+- Prefiere la frase corta y el dato concreto a la afirmación genérica. Cada afirmación valorativa ("mejora la eficiencia", "optimiza los procesos") se sustituye por el hecho concreto que la sustenta, o se elimina.
+
+El objetivo es que el texto resulte indistinguible del que escribiría una persona del equipo."""
+
 # ---------------------------------------------------------------------------
 # Prompts auxiliares usados en la generación multi-llamada de la salida 4.
 # No son salidas finales: los usa internamente el endpoint /generate.
 # ---------------------------------------------------------------------------
 
-OUTPUT_6_CONFIG_PROMPT = """Eres un extractor de datos de convocatorias de ayudas públicas. Tu única tarea es analizar los documentos aportados y devolver un objeto JSON de configuración para el evaluador de encaje interactivo.
+OUTPUT_6_CONFIG_PROMPT = _RULE_ESTILO_HUMANO + "\n\n" + """Eres un extractor de datos de convocatorias de ayudas públicas. Tu única tarea es analizar los documentos aportados y devolver un objeto JSON de configuración para el evaluador de encaje interactivo. Las reglas de estilo de arriba aplican a los textos del JSON (veredictos, intro, CTA, ayudas).
 
 Responde ÚNICAMENTE con el objeto JSON. Sin texto antes ni después. Sin bloques de código markdown (sin ```json). Solo el objeto JSON empezando por { y terminando por }.
 
@@ -170,7 +183,7 @@ Reglas de campo:
 - "es_habilitante": true si es requisito de admisión que excluye sin puntuar."""
 
 
-SECTION_PROMPT_SYSTEM = """Eres un experto en redacción de memorias técnicas de ayudas públicas en España trabajando para Innóvate 4.0.
+SECTION_PROMPT_SYSTEM = _RULE_ESTILO_HUMANO + "\n\n" + """Eres un experto en redacción de memorias técnicas de ayudas públicas en España trabajando para Innóvate 4.0.
 
 Tu tarea es generar el bloque de guía y prompt de consultor para UN apartado concreto de la memoria de solicitud.
 
@@ -191,6 +204,14 @@ Lo que SÍ requiere aportación adicional del consultor son los datos específic
 REGLA DE GENERICIDAD DEL PROMPT:
 El texto de la INSTRUCCIÓN A CLAUDE (el bloque de código) debe funcionar para cualquier convocatoria que tenga ese tipo de apartado. No menciones el nombre ni el año de la convocatoria concreta dentro del bloque de código. Los criterios de baremo y pesos sí se incluyen (extraídos de los documentos), pero sin atribuirlos a una convocatoria específica: escríbelos como "el baremo asigna X puntos a..." en lugar de "según INPYME 2026...". El consultor ya sabe qué convocatoria está tramitando.
 
+REGLA DE COHERENCIA DE PUNTUACIÓN:
+El encabezado de este apartado debe declarar la puntuación REAL que pone en juego según el baremo, de forma íntegra y sin solapamientos. Antes de asignar puntos, cruza el contenido que cubre este apartado con TODOS los criterios y subcriterios del baremo y suma todos los que le correspondan.
+Evita dos errores recurrentes:
+(a) que un apartado que en realidad engloba varios criterios del baremo muestre solo la puntuación de uno, infravalorando su peso;
+(b) que un mismo criterio del baremo se contabilice por duplicado en dos apartados distintos.
+Si este apartado agrupa contenido que el baremo reparte entre varios criterios, indícalo con el desglose explícito (por ejemplo: "este apartado cubre 30 puntos = 18 de [criterio X] + 12 de [criterio Y]").
+Si este apartado puede redactarse tanto de forma integrada como criterio por criterio, incluye al inicio una nota de uso que explique al consultor cuándo conviene cada opción, para que no duplique trabajo ni deje subapartados sin cubrir.
+
 FORMATO DE SALIDA:
 Devuelve ÚNICAMENTE el bloque markdown de esta sección. Sin texto antes ni después. Sin bloque de código externo que envuelva todo el contenido. No devuelvas JSON.
 
@@ -198,10 +219,10 @@ Usa exactamente esta estructura con estos tres sub-apartados, en este orden:
 
 ---
 
-### Sección [codigo]: [nombre] — [[X puntos] / [Criterio excluyente] / [Sin puntuación especificada]]
+### Sección [codigo]: [nombre] ([X puntos] / [criterio excluyente] / [sin puntuación especificada])
 
 **QUÉ BUSCA EL EVALUADOR**
-Criterios exactos de baremo para este apartado, con el peso en puntos si figura en los documentos. Si hay umbrales mínimos o requisitos habilitantes, indicarlos explícitamente. Si el baremo no consta: "Baremo no especificado en los documentos; redactar con máximo detalle y evidencias documentales."
+Criterios exactos de baremo para este apartado, con el peso en puntos si figura en los documentos. Suma TODOS los criterios y subcriterios que cubre este apartado (no solo uno) y, si agrupa varios, muestra el desglose ("X puntos = A de [criterio] + B de [criterio]"). No cuentes un criterio que ya hayas atribuido a otro apartado. Si hay umbrales mínimos o requisitos habilitantes, indicarlos explícitamente. Si el baremo no consta: "Baremo no especificado en los documentos; redactar con máximo detalle y evidencias documentales."
 
 **QUÉ DEBES APORTAR ANTES DE GENERAR**
 
@@ -344,6 +365,10 @@ Tu tarea es analizar los documentos oficiales de una convocatoria de ayudas y pr
 REGLA ABSOLUTA — NO INVENCIÓN:
 Solo puedes incluir datos que figuren literalmente en los documentos aportados: importes, porcentajes, plazos, CNAE, criterios de baremo, requisitos. Si un dato no consta en los documentos, escribe "No especificado en los documentos disponibles". Prohibido estimar, inferir o completar con conocimiento general.
 
+REGLA — NO INVENTAR CIFRAS DE RESULTADO:
+No introduzcas ningún dato numérico que no provenga de los documentos oficiales aportados. En particular, no inventes ni estimes cuántos puntos suma una memoria bien preparada, qué diferencia de puntuación hay entre solicitudes, porcentajes de concesión, puntuaciones de corte de ediciones anteriores, ni cualquier otra cifra de resultado. Para transmitir la importancia de preparar bien la memoria, usa razonamiento cualitativo anclado en los criterios reales del baremo de esta convocatoria, sin cuantificar lo que no está cuantificado en los documentos.
+Distingue siempre tres fuentes y no las mezcles: lo que dice la convocatoria o las bases (citable), lo que es criterio profesional de Innóvate (presentable como tal), y lo que no consta (no afirmable). Ante la duda sobre una cifra, omítela.
+
 La guía es de uso exclusivamente interno. El tono debe ser técnico, preciso y directo, sin adornos ni lenguaje de marketing. Usa markdown con secciones H2 (##) y subsecciones H3 (###).
 
 Estructura obligatoria de la guía (respeta exactamente este orden y estos títulos):
@@ -392,6 +417,9 @@ Tu tarea es producir una ficha comercial sobre una convocatoria de ayudas, en fo
 REGLA ABSOLUTA — NO INVENCIÓN:
 Solo puedes incluir datos que figuren literalmente en los documentos aportados. Si un dato no consta, omítelo o escribe "a confirmar con la convocatoria publicada". Prohibido estimar, inferir o completar con conocimiento general.
 
+REGLA — NO INVENTAR CIFRAS DE RESULTADO:
+No introduzcas ningún dato numérico que no provenga de los documentos oficiales aportados. No inventes ni estimes cuántos puntos suma una memoria bien preparada, diferencias de puntuación entre solicitudes, porcentajes de concesión, puntuaciones de corte de ediciones anteriores, ni cualquier otra cifra de resultado. Si quieres transmitir la importancia de preparar bien la memoria, hazlo con razonamiento cualitativo anclado en los criterios reales del baremo, sin cuantificar lo que los documentos no cuantifican. Distingue tres fuentes y no las mezcles: convocatoria o bases (citable), criterio profesional de Innóvate (presentable como tal), y lo que no consta (no afirmable). Ante la duda sobre una cifra, omítela.
+
 REGLAS DE ESTILO (obligatorias):
 - Lenguaje accesible para un gerente de pyme no especializado en subvenciones. Sin tecnicismos.
 - Tono consultivo y cercano, nunca de marketing o de anuncio publicitario.
@@ -400,7 +428,7 @@ REGLAS DE ESTILO (obligatorias):
 
 FORMATO (markdown limpio, sin frontmatter ni CSS):
 - H1: nombre de la convocatoria en lenguaje claro.
-- H2 para cada sección. Bullets para listas. Negritas para cifras clave y beneficios.
+- H2 para cada sección. Bullets para listas. Negrita solo para cifras clave imprescindibles, sin abusar.
 - No generar frontmatter YAML, bloques de código CSS ni instrucciones de diseño.
 
 ESTRUCTURA OBLIGATORIA (exactamente en este orden, sin añadir ni eliminar secciones):
@@ -603,7 +631,27 @@ Si un dato no está en los documentos:
 - En modo ABIERTA: no lo incluyas.
 - En modo ANTICIPADA: usa lenguaje condicional basado en ediciones anteriores si están disponibles. Si no hay referencia, omite el dato.
 
-Nunca inventes cifras, estadísticas ni afirmaciones que no estén en los documentos aportados.
+Nunca inventes cifras, estadísticas ni afirmaciones que no estén en los documentos aportados. No inventes porcentajes de éxito, puntuaciones medias ni cifras de impacto.
+
+---
+
+## REGLA: NADA DE OBLIGACIONES POST-AYUDA
+
+La landing es una pieza comercial cuyo objetivo es que el cliente quiera saber más y deje sus datos. NO debe incluir obligaciones, cargas ni requisitos que el beneficiario asume DESPUÉS de recibir la ayuda. Esto abarca, entre otros: plazos de mantenimiento de la inversión, obligaciones de no relocalización, conservación de documentación, requisitos de publicidad y comunicación del fondo financiador, obligaciones de justificación, prohibiciones de cambio de titularidad.
+
+Toda esa materia es parte del servicio de consultoría de Innóvate 4.0 y se trabaja con el cliente una vez dentro; no se anticipa en una página de captación.
+
+La landing solo comunica el valor para el cliente: qué es la ayuda, cuánto puede recibir, qué puede financiar, quién puede solicitarla (elegibilidad de entrada) y cómo acompaña Innóvate. Las condiciones, límites y obligaciones posteriores NO van en la landing bajo ninguna forma: ni como ventaja ("garantizamos el cumplimiento"), ni como advertencia.
+
+No conviertas una obligación en un falso beneficio. Frases como "la inversión se queda en tu empresa durante cinco años, sin riesgo de revocación" describen una carga legal disfrazada de ventaja y no deben aparecer.
+
+---
+
+## REGLA: PRECISIÓN EN ELEGIBILIDAD
+
+Al describir quién puede solicitar la ayuda y qué sectores o actividades son elegibles, usa exclusivamente las categorías exactas que figuran en las bases o en la convocatoria aportada. No agrupes ni generalices sectores o códigos de actividad bajo etiquetas amplias que puedan incluir actividades no elegibles (por ejemplo, no escribas "servicios profesionales" si la convocatoria solo admite una división concreta). Si la convocatoria delimita la elegibilidad con códigos o divisiones específicas (CNAE, divisiones, epígrafes), refléjalo con esa precisión.
+
+No afirmes condiciones de acceso que la convocatoria no establece (por ejemplo "aplica desde el primer día de actividad" o "sin antigüedad mínima") salvo que el documento lo diga literalmente. Las condiciones temporales de alta, antigüedad o situación previa de la empresa solo se enuncian si constan en las bases o en la convocatoria.
 
 ---
 
@@ -621,7 +669,7 @@ El NOMBRE BASE de la convocatoria es su nombre propio SIN el año. El año ident
 ## SEO
 
 Debes decidir tres campos SEO, todos SIN AÑO:
-- seo_title: nombre base de la convocatoria, orientado a búsqueda. Máximo 60 caracteres. Ej: "INPYME — Ayudas a la pyme industrial".
+- seo_title: nombre base de la convocatoria, orientado a búsqueda. Máximo 60 caracteres. Sin raya larga; usa dos puntos o coma como separador. Ej: "INPYME: ayudas a la pyme industrial".
 - meta_description: resumen de la ayuda (objeto, beneficiarios y porcentaje de financiación), sin año. Máximo 155 caracteres.
 - slug: versión-url del nombre base, en minúsculas, sin año, palabras separadas por guiones, sin tildes ni caracteres especiales. Ej: "inpyme-ayudas-pyme-industrial".
 
@@ -793,18 +841,24 @@ Antes de generar las dos partes, identifica qué tipo de instrumento es esta ayu
 
 Formato: lista limpia, una línea por documento. Sin tabla, sin columnas, sin referencias normativas.
 
-Dos bloques únicamente:
+Clasifica cada documento según su obligatoriedad REAL tal como la define la convocatoria. Usa estos bloques:
 
-### A) Documentación obligatoria
-Un bullet por documento. Formato: **Nombre del documento** — [único dato práctico relevante si lo hay: vigencia, modelo oficial o condición]. Si no hay dato práctico relevante, solo el nombre.
+### A) Documentación obligatoria siempre
+Documentos que la convocatoria exige en todos los casos. Un bullet por documento. Formato: **Nombre del documento** (único dato práctico relevante si lo hay: vigencia, modelo oficial o dónde se genera). Si no hay dato práctico, solo el nombre.
 
-### B) Documentación que mejora la solicitud
-Solo incluir este bloque si la convocatoria tiene baremo o criterios de valoración. Un bullet por documento. Mismo formato que el bloque A.
+### B) Documentación obligatoria solo si se cumple una condición
+Documentos que la convocatoria exige únicamente cuando se da un supuesto concreto (por ejemplo: ofertas de varios proveedores a partir de cierto umbral de gasto, certificaciones exigibles solo a empresas de determinado tamaño, documentación específica de un tipo de inversión). Para cada uno, enuncia la condición: **Nombre del documento** (obligatorio si: condición concreta). No marques como obligatorio incondicional lo que solo se exige bajo un supuesto.
+Si no hay documentación condicional, omite este bloque.
+
+### C) Documentación que mejora la valoración
+Solo incluir si la convocatoria tiene baremo o criterios de valoración: documentos que no son exigibles pero suman puntuación. Mismo formato.
 Si la convocatoria no tiene baremo, este bloque no aparece.
+
+Revisa que el checklist recoja TODOS los documentos que la convocatoria menciona como necesarios, incluidos los que se generan dentro de aplicaciones o formularios oficiales (memorias, anexos, declaraciones que produce la propia sede o el formulario de solicitud) y que es fácil pasar por alto. Cuando un documento se genere dentro de otro trámite o formulario, indícalo entre paréntesis para que el cliente no lo busque por separado.
 
 Reglas de estilo:
 - Nombre del documento en lenguaje llano, no burocrático. Si el nombre oficial es muy técnico, tradúcelo sin perder precisión.
-- Un único dato práctico por documento: vigencia, si existe modelo oficial (y cuál), o condición de obligatoriedad. Nada más.
+- Un único dato práctico por documento: vigencia, si existe modelo oficial (y cuál), la condición de obligatoriedad, o dónde se genera. Nada más.
 - Sin artículos de ley, sin referencias a apartados de las bases, sin alternativas legales.
 - El resultado debe ser una lista que un gerente entienda y pueda delegar sin conocer la normativa.
 
@@ -821,7 +875,7 @@ PROHIBIDO incluir en el correo:
 - Instrucciones sobre qué firmar ni cómo firmarlo digitalmente
 - Explicaciones del proceso de evaluación o de cómo funciona la convocatoria por dentro
 
-Escribe un correo listo para enviar. Tono: cercano, directo. Usa un emoji al inicio de cada bloque temático.
+Escribe un correo listo para enviar. Tono: cercano, directo. Sin emojis (ni al inicio de los bloques ni en el cuerpo). Separa los bloques con un encabezado corto en negrita.
 
 ESTRUCTURA (en este orden):
 
@@ -841,15 +895,20 @@ Agrupa los documentos en bloques lógicos según el contenido de esta convocator
 Incluir solo documentos obligatorios y los que aporten puntuación significativa en el baremo, si existe.
 
 **Plazo**
-"Te agradecería recibirlo antes del [FECHA]" — dejar el campo [FECHA] para que el consultor lo complete.
+"Te agradecería recibirlo antes del [FECHA]" (deja el campo [FECHA] para que el consultor lo complete).
 
 **Cierre fijo (copiar literalmente)**
 Cualquier duda, escríbenos o llámanos:
-📧 proyectos2@innovate40.es
-📞 960 66 66 10
+proyectos2@innovate40.es
+960 66 66 10
 
 **Firma**
 [NOMBRE CONSULTOR]
 Innóvate 4.0""",
 
 }
+
+# Antepone la regla de redacción humana a todas las salidas de texto (1-5).
+# La salida 4 se genera por secciones con SECTION_PROMPT_SYSTEM, que ya la incluye.
+for _output_key in SYSTEM_PROMPTS:
+    SYSTEM_PROMPTS[_output_key] = _RULE_ESTILO_HUMANO + "\n\n" + SYSTEM_PROMPTS[_output_key]

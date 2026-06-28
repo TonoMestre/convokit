@@ -150,8 +150,6 @@
     flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center;
   }
   .opcion.selected .opcion-radio::after { content: ''; width: 8px; height: 8px; background: var(--white); display: block; }
-  .puntos-badge { margin-left: auto; font-size: 0.75rem; font-weight: 600; color: var(--red); white-space: nowrap; flex-shrink: 0; }
-  .opcion.selected .puntos-badge { color: rgba(255,255,255,0.8); }
 
   /* ── Section header ── */
   .section-header {
@@ -476,12 +474,13 @@ function renderGrupo(groupIdx) {
     var saved = STATE.respuestas[preg.id];
     var optsHtml = preg.opciones.map(function(opt, opIdx) {
       var sel = (saved && saved.opIdx === opIdx) ? " selected" : "";
+      // Los puntos por opción NO se muestran al cliente: siguen en los datos (opt.puntos),
+      // en el cálculo (calcularScore) y en la notificación interna (buildMensaje).
       return '<button class="opcion' + sel + '" id="bo-' + escHtml(preg.id) + '-' + opIdx + '" ' +
         'data-pregid="' + escHtml(preg.id) + '" data-opidx="' + opIdx + '" ' +
         'onclick="onBaremoOpt(this.dataset.pregid,+this.dataset.opidx)" type="button">' +
         '<span class="opcion-radio"></span>' +
         '<span>' + escHtml(opt.label) + '</span>' +
-        (opt.puntos !== undefined ? '<span class="puntos-badge">' + opt.puntos + ' pt</span>' : '') +
         '</button>';
     }).join('');
     return '<div class="pregunta-block">' +
@@ -556,11 +555,44 @@ function renderContacto() {
   );
 }
 
+// ── Validación de formato ─────────────────────────
+function isValidEmail(v) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+}
+function isValidTel(v) {
+  // Quita espacios y separadores; admite 9 dígitos, con prefijo +34/0034 opcional.
+  var s = String(v || "").replace(/[\s.\-()]/g, "");
+  return /^(?:\+34|0034)?\d{9}$/.test(s);
+}
+
 function onContactoSubmit() {
-  var email = document.getElementById("f-email").value.trim();
-  var tel   = document.getElementById("f-tel").value.trim();
+  var emailEl = document.getElementById("f-email");
+  var telEl   = document.getElementById("f-tel");
+  var email = emailEl.value.trim();
+  var tel   = telEl.value.trim();
   var errEl = document.getElementById("e-contacto");
-  if (!email || !tel) { errEl.style.display = "block"; return; }
+
+  emailEl.classList.remove("error");
+  telEl.classList.remove("error");
+
+  if (!email || !isValidEmail(email)) {
+    emailEl.classList.add("error");
+    errEl.textContent = email
+      ? "El email no tiene un formato válido (ejemplo: nombre@empresa.com)."
+      : "Indica tu email para ver el resultado.";
+    errEl.style.display = "block";
+    emailEl.focus();
+    return;
+  }
+  if (!tel || !isValidTel(tel)) {
+    telEl.classList.add("error");
+    errEl.textContent = tel
+      ? "El teléfono debe tener 9 dígitos (puedes incluir el prefijo +34)."
+      : "Indica tu teléfono para ver el resultado.";
+    errEl.style.display = "block";
+    telEl.focus();
+    return;
+  }
   errEl.style.display = "none";
   STATE.email = email;
   STATE.tel   = tel;
@@ -599,6 +631,7 @@ function renderBloqueo() {
     '<div class="field"><label for="b-tel">Teléfono</label>' +
     '<input type="tel" id="b-tel" placeholder="Número de contacto" /></div>' +
     '<button class="btn btn-red" onclick="enviarLeadBloqueo()">Recibir información de otras ayudas</button>' +
+    '<div class="form-error" id="e-bloqueo">Revisa los datos de contacto.</div>' +
     '</div>' +
     '<div id="bloqueo-confirm" style="display:none">' +
     '<p class="bloqueo-confirm-msg">✓ Gracias. Nos pondremos en contacto contigo para orientarte hacia las ayudas que mejor se adapten a tu empresa.</p>' +
@@ -610,11 +643,35 @@ function renderBloqueo() {
 
 function enviarLeadBloqueo() {
   var emailEl = document.getElementById("b-email");
-  if (!emailEl || !emailEl.value.trim()) {
-    if (emailEl) emailEl.classList.add("error");
+  var telEl   = document.getElementById("b-tel");
+  var errEl   = document.getElementById("e-bloqueo");
+  var email = emailEl ? emailEl.value.trim() : "";
+  var tel   = telEl ? telEl.value.trim() : "";
+
+  if (emailEl) emailEl.classList.remove("error");
+  if (telEl) telEl.classList.remove("error");
+
+  if (!email || !isValidEmail(email)) {
+    if (emailEl) { emailEl.classList.add("error"); emailEl.focus(); }
+    if (errEl) {
+      errEl.textContent = email
+        ? "El email no tiene un formato válido (ejemplo: nombre@empresa.com)."
+        : "Indica tu email para que podamos contactarte.";
+      errEl.style.display = "block";
+    }
     return;
   }
-  var telEl = document.getElementById("b-tel");
+  // El teléfono es opcional en esta pantalla; si se rellena, debe tener formato válido.
+  if (tel && !isValidTel(tel)) {
+    if (telEl) { telEl.classList.add("error"); telEl.focus(); }
+    if (errEl) {
+      errEl.textContent = "El teléfono debe tener 9 dígitos (puedes incluir el prefijo +34).";
+      errEl.style.display = "block";
+    }
+    return;
+  }
+  if (errEl) errEl.style.display = "none";
+
   enviarWeb3Forms({
     tipo: "bloqueo",
     nombre: STATE.nombre,

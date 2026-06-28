@@ -303,10 +303,23 @@ def update_job(job_id: int, status: str, progress: dict) -> None:
 
 def reset_stuck_jobs() -> None:
     """Marca como 'error' los jobs que quedaron en running/queued tras un reinicio."""
+    msg = "Generación interrumpida por reinicio del servidor. Vuelve a generar."
+    ts = datetime.now(timezone.utc).isoformat()
     with _get_connection() as conn:
-        conn.execute(
-            "UPDATE generation_jobs SET status = 'error' WHERE status IN ('running', 'queued')"
-        )
+        stuck = conn.execute(
+            "SELECT id, progress_json FROM generation_jobs WHERE status IN ('running', 'queued')"
+        ).fetchall()
+        for job_id, prog_raw in stuck:
+            prog = json.loads(prog_raw) if prog_raw else {}
+            prog["error"] = msg
+            for out in prog.get("outputs", {}).values():
+                if out.get("status") in ("running", "queued", None):
+                    out["status"] = "error"
+                    out["error"] = msg
+            conn.execute(
+                "UPDATE generation_jobs SET status = 'error', progress_json = ?, updated_at = ? WHERE id = ?",
+                (json.dumps(prog, ensure_ascii=False), ts, job_id),
+            )
         conn.commit()
 
 

@@ -678,18 +678,6 @@ def health():
     return {"status": "ok"}
 
 
-@app.get("/diag/env")
-def diag_env():
-    """Diagnóstico temporal: indica qué variables ve el proceso, sin exponer valores."""
-    keys = ["RESEND_API_KEY", "BACKEND_URL", "ANTHROPIC_API_KEY", "DB_PATH", "RAILWAY_PUBLIC_DOMAIN"]
-    out = {}
-    for k in keys:
-        v = os.environ.get(k)
-        out[k] = {"present": v is not None, "length": len(v) if v else 0}
-    out["resend_pkg"] = getattr(resend, "__version__", "unknown")
-    return out
-
-
 # ---------------------------------------------------------------------------
 # Convocatorias — CRUD
 # ---------------------------------------------------------------------------

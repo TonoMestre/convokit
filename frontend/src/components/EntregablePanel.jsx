@@ -684,6 +684,8 @@ export default function EntregablePanel({ convocatoria, onUpdate: _onUpdate }) {
           setError(outputErrors || topError || "Ha ocurrido un error durante la generación.");
         }
         await openConvocatoria(convocatoria.id);
+      } else if (status === "running") {
+        await openConvocatoria(convocatoria.id);
       }
     } catch {
       // transient network error — keep polling

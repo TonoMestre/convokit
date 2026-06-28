@@ -14,7 +14,7 @@ import anthropic
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 
 load_dotenv()
@@ -678,6 +678,19 @@ def health():
     return {"status": "ok"}
 
 
+@app.get("/assets/logo.png")
+def asset_logo():
+    """Sirve el logo (versión blanca) para incrustarlo en el email de resultado."""
+    candidates = [
+        os.path.join(os.path.dirname(__file__), "logo-negativo.png"),
+        os.path.join(os.path.dirname(__file__), "..", "frontend", "public", "logo-negativo.png"),
+    ]
+    for path in candidates:
+        if os.path.exists(path):
+            return FileResponse(path, media_type="image/png")
+    raise HTTPException(status_code=404, detail="Logo no encontrado.")
+
+
 # ---------------------------------------------------------------------------
 # Convocatorias — CRUD
 # ---------------------------------------------------------------------------
@@ -1276,6 +1289,9 @@ def send_result_email(req: ResultEmailRequest):
     if not api_key:
         raise HTTPException(status_code=503, detail="Servicio de email no configurado.")
 
+    backend_url = output6_template._get_backend_url()
+    logo_url = f"{backend_url}/assets/logo.png" if backend_url else ""
+
     html = result_email.build_result_email_html(
         nombre=req.nombre,
         empresa=req.empresa,
@@ -1283,6 +1299,7 @@ def send_result_email(req: ResultEmailRequest):
         puntuacion_actual=req.puntuacion_actual,
         puntuacion_max=req.puntuacion_max,
         veredicto=req.veredicto,
+        logo_url=logo_url,
     )
 
     try:

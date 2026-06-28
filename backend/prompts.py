@@ -117,8 +117,16 @@ ESQUEMA EXACTO DEL OBJETO JSON (respeta todos los campos y tipos):
   }
 }
 
-REGLA DE BREVEDAD (IMPORTANTE):
-Los textos de "ayuda" de cada pregunta deben ser de UNA frase corta (máximo 20 palabras). Los "label" de las opciones deben ser concisos (máximo 12 palabras). No redactes párrafos largos ni justificaciones extensas: el evaluador es una herramienta interactiva, no un documento. Textos largos provocan que el JSON se corte y el evaluador falle.
+REGLAS ABSOLUTAS SOBRE LAS OPCIONES (NUNCA VIOLAR):
+
+1. PROHIBIDO incluir puntos, porcentajes ni referencias a la puntuación en ningún "label" de opción. Los puntos existen solo en el campo "puntos" del JSON y nunca son visibles para el usuario. Ejemplos prohibidos: "Sí (3 puntos)", "No, 0 pts", "Parcialmente (1 pto)". Ejemplos correctos: "Sí", "No", "En proceso".
+
+2. PROHIBIDO preguntar si la empresa puede acreditar, documentar, justificar o demostrar algo. Eso es trabajo de consultoría, no del evaluador. Las opciones describen hechos sobre la empresa o el proyecto: si hace algo, si tiene algo, si es algo. Ejemplos prohibidos: "Sí, y podemos acreditarlo", "Sí, pero sin documentación", "No, pero podríamos conseguirlo". Ejemplos correctos: "Sí", "No", "En proceso de implantación".
+
+3. Las opciones deben ser simples y directas. Por defecto usa dos opciones: "Sí" y "No". Solo usa una tercera opción cuando el baremo establezca literalmente niveles distintos de cumplimiento (ej: 0 empleos / 1–5 empleos / más de 5 empleos). Nunca inventes gradaciones que no están en las bases.
+
+REGLA DE BREVEDAD:
+Los textos de "ayuda" de cada pregunta deben ser de UNA frase corta (máximo 20 palabras). Los "label" de las opciones deben ser concisos (máximo 6 palabras). No redactes párrafos largos ni justificaciones extensas: el evaluador es una herramienta interactiva, no un documento. Textos largos provocan que el JSON se corte y el evaluador falle.
 
 REGLAS DE CAMPO:
 
@@ -140,7 +148,7 @@ baremo:
   • "redaccion": el criterio evalúa si la memoria describe, argumenta o detalla algo: "si la memoria justifica", "si aporta documentación técnica", "si describe antecedentes", "si explica el plan de trabajo", "si el proyecto está bien definido", "si detalla las capacidades", etc. NO se pregunta al usuario: Innóvate 4.0 se encarga de la redacción y el criterio se cuenta automáticamente a puntuación máxima.
   Regla práctica: si al transformar la pregunta en lenguaje de evaluador sale "¿Tu empresa/proyecto hace X?" → "objetivo". Si sale "¿La memoria describe/justifica/aporta X?" → "redaccion".
 - "influenciable": aplica solo a criterios "objetivo". true si Innóvate 4.0 puede ayudar a mejorar el criterio antes de presentar. false si es un hecho inmodificable (ubicación actual, CNAE actual, tamaño actual).
-- Las opciones deben cubrir toda la escala de puntuación del criterio, de menor a mayor. Solo son necesarias para criterios "objetivo"; en criterios "redaccion" puedes incluir una sola opción o un array vacío.
+- Las opciones de cada criterio "objetivo" deben cubrir la escala de puntuación del criterio, de menor a mayor, siguiendo las reglas absolutas de opciones indicadas arriba. Para criterios "redaccion" usar array vacío: [].
 - Si la convocatoria no tiene baremo (ayuda directa, préstamo participativo sin concurrencia), devolver "baremo": [] y "puntos_max_total": 0.
 
 inversion:

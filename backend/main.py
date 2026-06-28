@@ -19,6 +19,7 @@ from pydantic import BaseModel
 
 load_dotenv()
 
+import resend
 import database as db
 import exporters
 import extractors
@@ -26,6 +27,7 @@ import output3_template
 import output6_template
 import pricing
 import prompts as p
+import result_email
 
 
 # ---------------------------------------------------------------------------
@@ -652,6 +654,7 @@ def _process_job(job_id: int, conv_id: int, salida_requests: list[dict]) -> None
 async def lifespan(app: FastAPI):
     db.init_db()
     db.reset_stuck_jobs()
+    resend.api_key = os.environ.get("RESEND_API_KEY", "")
     yield
 
 
@@ -1251,3 +1254,45 @@ def get_output_json(convocatoria_id: int, output_num: int):
 @app.get("/stats")
 def get_stats():
     return db.get_api_stats()
+
+
+# ---------------------------------------------------------------------------
+# Send result email (called from evaluador HTML via Resend)
+# ---------------------------------------------------------------------------
+
+class ResultEmailRequest(BaseModel):
+    nombre: str
+    empresa: str
+    email: str
+    convocatoria: str
+    puntuacion_actual: int = 0
+    puntuacion_max: int = 0
+    veredicto: str = ""
+
+
+@app.post("/send-result-email")
+def send_result_email(req: ResultEmailRequest):
+    api_key = os.environ.get("RESEND_API_KEY", "")
+    if not api_key:
+        raise HTTPException(status_code=503, detail="Servicio de email no configurado.")
+
+    html = result_email.build_result_email_html(
+        nombre=req.nombre,
+        empresa=req.empresa,
+        convocatoria=req.convocatoria,
+        puntuacion_actual=req.puntuacion_actual,
+        puntuacion_max=req.puntuacion_max,
+        veredicto=req.veredicto,
+    )
+
+    try:
+        resend.Emails.send({
+            "from": "Innóvate 4.0 <hola@innovate40.es>",
+            "to": [req.email],
+            "subject": f"Tu resultado en {req.convocatoria} — Innóvate 4.0",
+            "html": html,
+        })
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Error al enviar el email: {exc}")
+
+    return {"ok": True}

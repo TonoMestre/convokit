@@ -6,14 +6,16 @@ Flujo de generación:
 2. build_output_6_html(config) inyecta ese JSON en la plantilla estática
    evaluador_template.html, que contiene todo el CSS y JS sin tocar.
 
-Los únicos placeholders del template son:
+Los placeholders del template son:
   {{CFG_JSON}}          — el objeto de configuración serializado
   {{TITULO_EVALUADOR}}  — el título de la página (<title>)
   {{LOGO_SRC}}          — data URI base64 del logo (para compatibilidad con iframe srcDoc)
+  {{BACKEND_URL}}       — URL del backend de ConvoKit (para enviar el email de resultado)
 """
 
 import base64
 import json
+import os
 import pathlib
 
 _TEMPLATE_PATH = pathlib.Path(__file__).parent / "evaluador_template.html"
@@ -34,6 +36,11 @@ def _load_logo_b64() -> str:
     return "/logo-negativo.png"
 
 
+def _get_backend_url() -> str:
+    url = os.environ.get("BACKEND_URL", "").rstrip("/")
+    return url
+
+
 def build_output_6_html(config: dict) -> str:
     """
     Inyecta el objeto CFG en la plantilla estática y devuelve el HTML completo.
@@ -48,4 +55,5 @@ def build_output_6_html(config: dict) -> str:
     html = html.replace("{{CFG_JSON}}", config_json)
     html = html.replace("{{TITULO_EVALUADOR}}", titulo)
     html = html.replace("{{LOGO_SRC}}", _load_logo_b64())
+    html = html.replace("{{BACKEND_URL}}", _get_backend_url())
     return html

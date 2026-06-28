@@ -266,6 +266,7 @@
 const CFG = {{CFG_JSON}};
 const WEB3FORMS_KEY = "9230bf98-4a35-437a-b326-eb6e24e88f2e";
 const BACKUP_EMAIL = "proyectos2@innovate40.es";
+const BACKEND_URL = "{{BACKEND_URL}}";
 
 const STATE = {
   nombre: "", empresa: "", municipio: "",
@@ -626,6 +627,8 @@ function onContactoSubmit() {
     mensaje: buildMensaje(score),
   }).catch(function() {});
 
+  enviarEmailResultado(score).catch(function() {});
+
   renderResultado(score);
 }
 
@@ -924,6 +927,34 @@ function renderResultado(score) {
       });
     }
   }
+}
+
+// ── Email de resultado al cliente (vía backend + Resend) ─────────────────
+async function enviarEmailResultado(score) {
+  if (!BACKEND_URL) return;
+  var pct = score.max > 0 ? score.actual / score.max : 0;
+  var veredicto = pct >= 0.65
+    ? (CFG.textos.veredicto_alto  || "")
+    : pct >= 0.35
+      ? (CFG.textos.veredicto_medio || "")
+      : (CFG.textos.veredicto_bajo  || "");
+  veredicto = veredicto.replace(/\{empresa\}/g, STATE.empresa);
+
+  try {
+    await fetch(BACKEND_URL + "/send-result-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nombre: STATE.nombre,
+        empresa: STATE.empresa,
+        email: STATE.email,
+        convocatoria: CFG.titulo_corto || "",
+        puntuacion_actual: score.actual,
+        puntuacion_max: score.max,
+        veredicto: veredicto,
+      }),
+    });
+  } catch (e) { /* fail silently */ }
 }
 
 // ── Web3Forms ────────────────────────────────────

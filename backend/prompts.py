@@ -119,14 +119,19 @@ ESQUEMA EXACTO DEL OBJETO JSON (respeta todos los campos y tipos):
 
 REGLAS ABSOLUTAS DE CONTENIDO (APLICAN A TODOS LOS CAMPOS DE TEXTO: pregunta, ayuda, label):
 
-1. PROHIBIDO incluir puntos, porcentajes de puntuación ni referencias al baremo en ningún campo visible: ni en "pregunta", ni en "ayuda", ni en "label" de opciones. Los puntos existen solo en el campo numérico "puntos" del JSON. Ejemplos prohibidos en ayuda: "Hasta 4 puntos si...", "Puntuación máxima automática si...", "2 pts por justificación". Ejemplo correcto de ayuda: "La inversión debe realizarse en un enclave tecnológico o área industrial avanzada según la Ley 14/2018."
+1. PROHIBIDO incluir puntos, porcentajes de puntuación ni referencias al baremo en ningún campo visible: ni en "pregunta", ni en "ayuda", ni en "label" de opciones. Los puntos existen solo en el campo numérico "puntos" del JSON. Ejemplos prohibidos en ayuda: "Hasta 4 puntos si...", "Puntuación máxima automática si...", "2 pts por justificación", "obtienen la puntuación máxima de este criterio automáticamente". Ejemplo correcto de ayuda: "La inversión debe realizarse en un enclave tecnológico o área industrial avanzada según la Ley 14/2018."
 
 2. PROHIBIDO usar las palabras acreditar, acreditarse, acreditado, certificar, certificado, documentar, justificar, demostrar o similares en ningún campo. Eso es trabajo de consultoría posterior, no del evaluador. El evaluador solo pregunta si el hecho existe, no si se puede probar.
    Ejemplos prohibidos en pregunta: "¿La inversión mejora la competitividad, o puede acreditarse con datos concretos?", "¿El proyecto supone innovación acreditada?".
    Ejemplos correctos: "¿La inversión se realiza en un enclave tecnológico o área industrial avanzada?", "¿El proyecto incluye patentes, royalties, diseños industriales o modelos de utilidad?", "¿La inversión supone una reducción sustancial del consumo de energía o materias primas?".
    Ejemplos prohibidos en opciones: "Sí, con datos y certificados externos", "Sí, con datos pero sin certificados", "Sí, y podemos acreditarlo". Ejemplos correctos: "Sí", "No", "En proceso".
 
-3. Las opciones deben ser simples y directas. Por defecto usa dos opciones: "Sí" y "No". Solo usa más opciones cuando el baremo establezca literalmente niveles distintos medibles (ej: 0 empleos / 1–5 empleos / más de 5 empleos; o menos de 5 años / 5–10 años / más de 10 años). Nunca inventes gradaciones. Nunca uses más de 4 opciones.
+3. REGLA DE ORO DE LAS OPCIONES: usa exactamente DOS opciones — "Sí" y "No" — para el 95% de los criterios. La única excepción permitida son criterios con umbrales numéricos objetivos que la empresa puede conocer sin consultoría: años de antigüedad, número de empleados, porcentaje de proveedores locales. Fuera de esos casos, siempre Sí/No.
+   PROHIBIDO usar más opciones para reflejar matices del baremo (cómo se documenta, con qué nivel de detalle, con o sin datos, con o sin certificados). Eso es trabajo de consultoría.
+   PROHIBIDO opciones del tipo "No, pero..." o "Sí, aunque..." o "En proceso de...". Solo "Sí" y "No".
+   PROHIBIDO opciones que dividan un mismo hecho según cómo se justifica: "Sí, con datos comparativos" / "Sí, sin datos" es la misma respuesta (Sí) y debe ser una sola opción.
+   Ejemplos incorrectos: ["Sí, incluye patentes", "Sí, innova en proceso o producto", "No"] → incorrecto, son todos variantes de Sí.
+   Ejemplo correcto: ["Sí", "No"].
 
 REGLA DE BREVEDAD:
 Los textos de "ayuda" de cada pregunta deben ser de UNA frase corta (máximo 20 palabras). Los "label" de las opciones deben ser concisos (máximo 6 palabras). No redactes párrafos largos ni justificaciones extensas: el evaluador es una herramienta interactiva, no un documento. Textos largos provocan que el JSON se corte y el evaluador falle.

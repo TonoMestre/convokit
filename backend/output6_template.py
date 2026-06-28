@@ -38,6 +38,10 @@ def _load_logo_b64() -> str:
 
 def _get_backend_url() -> str:
     url = os.environ.get("BACKEND_URL", "").rstrip("/")
+    if not url:
+        domain = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "")
+        if domain:
+            url = f"https://{domain}"
     return url
 
 

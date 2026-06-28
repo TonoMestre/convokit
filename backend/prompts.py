@@ -80,6 +80,7 @@ ESQUEMA EXACTO DEL OBJETO JSON (respeta todos los campos y tipos):
       "pregunta": "Pregunta sobre el criterio de baremo en segunda persona",
       "ayuda": "Breve explicación del criterio y cómo se valora",
       "puntos_max": 20,
+      "tipo": "objetivo",
       "influenciable": true,
       "opciones": [
         {"label": "Descripción de la opción", "puntos": 0},
@@ -134,8 +135,12 @@ elegibilidad:
 baremo:
 - Solo incluir criterios que figuren literalmente en las bases con puntuación asignada.
 - "puntos_max": puntuación máxima del criterio como número entero.
-- "influenciable": true si Innóvate 4.0 puede ayudar a mejorar este criterio antes de presentar (ej: alcance del proyecto, plan de empleo, nivel de innovación, certificaciones obtenibles). false si es objetivo e inmodificable (ej: ubicación de la empresa, CNAE actual, tamaño actual).
-- Las opciones deben cubrir toda la escala de puntuación del criterio, de menor a mayor.
+- "tipo": clasifica cada criterio del baremo como "objetivo" o "redaccion".
+  • "objetivo": el criterio depende de hechos reales de la empresa o del proyecto: su ubicación, sector, si realiza innovación, si tiene patentes o propiedad industrial, si diversifica mercados, si crea empleo, su tamaño, su antigüedad, etc. Se preguntará al usuario en el evaluador.
+  • "redaccion": el criterio evalúa si la memoria describe, argumenta o detalla algo: "si la memoria justifica", "si aporta documentación técnica", "si describe antecedentes", "si explica el plan de trabajo", "si el proyecto está bien definido", "si detalla las capacidades", etc. NO se pregunta al usuario: Innóvate 4.0 se encarga de la redacción y el criterio se cuenta automáticamente a puntuación máxima.
+  Regla práctica: si al transformar la pregunta en lenguaje de evaluador sale "¿Tu empresa/proyecto hace X?" → "objetivo". Si sale "¿La memoria describe/justifica/aporta X?" → "redaccion".
+- "influenciable": aplica solo a criterios "objetivo". true si Innóvate 4.0 puede ayudar a mejorar el criterio antes de presentar. false si es un hecho inmodificable (ubicación actual, CNAE actual, tamaño actual).
+- Las opciones deben cubrir toda la escala de puntuación del criterio, de menor a mayor. Solo son necesarias para criterios "objetivo"; en criterios "redaccion" puedes incluir una sola opción o un array vacío.
 - Si la convocatoria no tiene baremo (ayuda directa, préstamo participativo sin concurrencia), devolver "baremo": [] y "puntos_max_total": 0.
 
 inversion:

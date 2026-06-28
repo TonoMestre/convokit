@@ -278,6 +278,11 @@ const STATE = {
 var SCREENS = [];
 var currentIdx = 0;
 
+// ── Helpers de tipo ──────────────────────────────
+function isObjetivo(preg) {
+  return !preg.tipo || preg.tipo === "objetivo";
+}
+
 // ── Build screen sequence ────────────────────────
 function buildScreens() {
   SCREENS = [{ type: "inicio" }];
@@ -286,8 +291,15 @@ function buildScreens() {
   });
   var grupos = CFG.grupos_baremo || [];
   if (grupos.length > 0) {
-    grupos.forEach(function(_, i) { SCREENS.push({ type: "grupo", idx: i }); });
-  } else if ((CFG.baremo || []).length > 0) {
+    grupos.forEach(function(g, i) {
+      var pregsGrupo = (CFG.baremo || []).filter(function(p) {
+        return (g.ids || []).indexOf(p.id) !== -1;
+      });
+      if (pregsGrupo.some(isObjetivo)) {
+        SCREENS.push({ type: "grupo", idx: i });
+      }
+    });
+  } else if ((CFG.baremo || []).some(isObjetivo)) {
     SCREENS.push({ type: "grupo", idx: -1 });
   }
   SCREENS.push({ type: "contacto" });
@@ -453,14 +465,14 @@ function renderGrupo(groupIdx) {
 
   if (groupIdx === -1) {
     nombre      = "Criterios de valoración";
-    preguntas   = CFG.baremo || [];
+    preguntas   = (CFG.baremo || []).filter(isObjetivo);
     grupoNum    = null;
     totalGrupos = null;
   } else {
     var g = grupos[groupIdx];
     nombre      = g.nombre || ("Bloque " + (groupIdx + 1));
     preguntas   = (CFG.baremo || []).filter(function(p) {
-      return (g.ids || []).indexOf(p.id) !== -1;
+      return (g.ids || []).indexOf(p.id) !== -1 && isObjetivo(p);
     });
     grupoNum    = groupIdx + 1;
     totalGrupos = grupos.length;
@@ -597,6 +609,7 @@ function onContactoSubmit() {
   STATE.email = email;
   STATE.tel   = tel;
 
+  autoFillRedaccion();
   var score = calcularScore();
 
   enviarWeb3Forms({
@@ -686,6 +699,27 @@ function enviarLeadBloqueo() {
   document.getElementById("bloqueo-confirm").style.display = "block";
 }
 
+// ── Auto-relleno de criterios de redacción ───────
+// Los criterios tipo "redaccion" no se preguntan al usuario: Innóvate 4.0
+// se encarga de la memoria y se asume puntuación máxima en todos ellos.
+function autoFillRedaccion() {
+  (CFG.baremo || []).forEach(function(preg) {
+    if (preg.tipo === "redaccion" && !STATE.respuestas[preg.id]) {
+      STATE.respuestas[preg.id] = {
+        opIdx: -1,
+        puntos: preg.puntos_max || 0,
+        label: "Redacción a cargo de Innóvate 4.0",
+        esBloqueo: false,
+        bloquea: false,
+        preguntaLabel: preg.pregunta,
+        puntosMax: preg.puntos_max || 0,
+        influenciable: false,
+        autoRedaccion: true,
+      };
+    }
+  });
+}
+
 // ── Score ────────────────────────────────────────
 function calcularScore() {
   var actual = 0, ganancia = 0;
@@ -721,15 +755,26 @@ function buildMensaje(score) {
   }
 
   if ((CFG.baremo || []).length > 0) {
-    lines.push("--- BAREMO ---");
-    CFG.baremo.forEach(function(p) {
-      var r   = STATE.respuestas[p.id];
-      var pts = r ? (r.puntos || 0) : 0;
-      var mx  = p.puntos_max || 0;
-      lines.push(p.pregunta);
-      lines.push("→ " + (r ? r.label : "(sin responder)") + " [" + pts + "/" + mx + " pts]");
+    var baremoObjetivo = (CFG.baremo || []).filter(isObjetivo);
+    var baremoRedaccion = (CFG.baremo || []).filter(function(p) { return p.tipo === "redaccion"; });
+    if (baremoObjetivo.length > 0) {
+      lines.push("--- BAREMO (respondido por el usuario) ---");
+      baremoObjetivo.forEach(function(p) {
+        var r   = STATE.respuestas[p.id];
+        var pts = r ? (r.puntos || 0) : 0;
+        var mx  = p.puntos_max || 0;
+        lines.push(p.pregunta);
+        lines.push("→ " + (r ? r.label : "(sin responder)") + " [" + pts + "/" + mx + " pts]");
+        lines.push("");
+      });
+    }
+    if (baremoRedaccion.length > 0) {
+      lines.push("--- BAREMO (redacción Innóvate 4.0 — puntuación máxima asumida) ---");
+      baremoRedaccion.forEach(function(p) {
+        lines.push(p.pregunta + " [" + (p.puntos_max || 0) + "/" + (p.puntos_max || 0) + " pts]");
+      });
       lines.push("");
-    });
+    }
   }
 
   if (score.mejoras && score.mejoras.length > 0) {

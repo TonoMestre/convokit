@@ -722,22 +722,33 @@ function autoFillRedaccion() {
 
 // ── Score ────────────────────────────────────────
 function calcularScore() {
-  var actual = 0, ganancia = 0;
-  var max    = CFG.puntos_max_total || 0;
-  var mejoras = [];
+  var objetivo = 0, redaccion = 0, ganancia = 0;
+  var max      = CFG.puntos_max_total || 0;
+  var mejoras  = [];
 
   Object.keys(STATE.respuestas).forEach(function(id) {
     var r = STATE.respuestas[id];
     if (r.esBloqueo) return;
-    actual += r.puntos || 0;
-    if (r.influenciable && r.puntosMax > (r.puntos || 0)) {
-      var g = r.puntosMax - (r.puntos || 0);
-      ganancia += g;
-      mejoras.push({ pregunta: r.preguntaLabel, puntos_ganables: g });
+    if (r.autoRedaccion) {
+      redaccion += r.puntos || 0;
+    } else {
+      objetivo += r.puntos || 0;
+      if (r.influenciable && r.puntosMax > (r.puntos || 0)) {
+        var g = r.puntosMax - (r.puntos || 0);
+        ganancia += g;
+        mejoras.push({ pregunta: r.preguntaLabel, puntos_ganables: g });
+      }
     }
   });
 
-  return { actual: actual, potencial: actual + ganancia, max: max, mejoras: mejoras };
+  return {
+    objetivo:   objetivo,
+    redaccion:  redaccion,
+    actual:     objetivo + redaccion,
+    potencial:  objetivo + redaccion + ganancia,
+    max:        max,
+    mejoras:    mejoras,
+  };
 }
 
 // ── Web3Forms mensaje estructurado ───────────────
@@ -786,8 +797,14 @@ function buildMensaje(score) {
   }
 
   lines.push("--- RESULTADO ---");
-  lines.push("Puntuación actual: " + score.actual + " / " + (CFG.puntos_max_total || 0));
-  lines.push("Puntuación potencial con Innóvate: " + score.potencial + " / " + (CFG.puntos_max_total || 0));
+  lines.push("Pts objetivos (usuario): " + score.objetivo + " / " + (CFG.puntos_max_total || 0));
+  if (score.redaccion > 0) {
+    lines.push("Pts redacción (Innóvate 4.0): +" + score.redaccion);
+  }
+  lines.push("Puntuación total estimada: " + score.actual + " / " + (CFG.puntos_max_total || 0));
+  if (score.potencial > score.actual) {
+    lines.push("Puntuación potencial con Innóvate: " + score.potencial + " / " + (CFG.puntos_max_total || 0));
+  }
 
   return lines.join("\n");
 }
@@ -817,8 +834,15 @@ function renderResultado(score) {
   if (score.max > 0) {
     var margenBox = margen > 0
       ? '<div class="score-box potencial">' +
-        '<div class="score-num">' + margen + '</div>' +
-        '<div class="score-label">Puntos de margen de mejora</div>' +
+        '<div class="score-num">+' + margen + '</div>' +
+        '<div class="score-label">Puntos adicionales mejorables</div>' +
+        '</div>'
+      : '';
+
+    var redaccionBox = score.redaccion > 0
+      ? '<div class="score-box" style="background:var(--navy);color:var(--white);">' +
+        '<div class="score-num" style="color:var(--white);">+' + score.redaccion + '</div>' +
+        '<div class="score-label" style="color:rgba(255,255,255,0.7);">Pts con Innóvate 4.0</div>' +
         '</div>'
       : '';
 
@@ -828,11 +852,15 @@ function renderResultado(score) {
       elegBadge +
       '<p class="veredicto-texto">' + escHtml(veredicto) + '</p>' +
       '<div class="score-display">' +
-      '<div class="score-box"><div class="score-num">' + score.actual + '</div>' +
-      '<div class="score-label">Puntuación estimada</div></div>' +
+      '<div class="score-box"><div class="score-num">' + score.objetivo + '</div>' +
+      '<div class="score-label">Pts objetivos</div></div>' +
+      redaccionBox +
       margenBox + '</div>' +
       '<div class="score-bar-wrap"><div class="score-bar-inner" id="bar-act"></div></div>' +
-      '<p style="font-size:0.75rem;color:rgba(29,37,76,0.55);margin-top:6px;">Puntuación estimada sobre ' + score.max + ' puntos totales</p>' +
+      '<p style="font-size:0.75rem;color:rgba(29,37,76,0.55);margin-top:6px;">' +
+      'Total estimado: <strong>' + score.actual + ' de ' + score.max + ' pts</strong>' +
+      (score.redaccion > 0 ? ' (' + score.objetivo + ' pts objetivos + ' + score.redaccion + ' pts de redacción con Innóvate 4.0)' : '') +
+      '</p>' +
       '</div>';
   } else {
     html +=

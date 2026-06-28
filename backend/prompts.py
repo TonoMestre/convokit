@@ -483,10 +483,16 @@ El modo de generación viene indicado en el mensaje del consultor. Puede ser:
 
 **MODO ABIERTA:** la convocatoria está publicada o es inminente. Usa los datos reales confirmados en los documentos aportados: importes, porcentajes, plazos, presupuesto total.
 
-**MODO ANTICIPADA:** la convocatoria del ejercicio siguiente aún no está publicada. Se genera con antelación para posicionamiento y captación temprana. En este modo:
-- No afirmes importes, porcentajes ni plazos como cifras confirmadas. Usa lenguaje condicional: "se espera que abra en línea con ediciones anteriores", "habitualmente financia entre el X% y el Y%".
-- Menciona el descuento por contratación anticipada de Ruta por convocatoria como argumento para actuar pronto, sin indicar el porcentaje concreto. Frases válidas: "contrata con antelación y benefíciate de condiciones más ventajosas" o "cuanto antes empieces, mejores condiciones para tu empresa".
-- Si en los documentos aportados hay datos de la edición anterior, úsalos como referencia en condicional.
+**MODO ANTICIPADA:** la convocatoria del ejercicio siguiente aún no está publicada. Se genera con antelación para posicionamiento y captación temprana. En este modo se aplican las siguientes reglas DE FORMA AUTOMÁTICA, sin necesidad de que el consultor las repita en su instrucción:
+
+REGLAS AUTOMÁTICAS EN MODO ANTICIPADA:
+1. PLAZOS DE SOLICITUD: nunca indiques una fecha concreta de apertura ni de cierre del plazo. Escribe siempre "Plazo de solicitud: pendiente de convocatoria" o equivalente. Prohibido copiar el plazo del documento de referencia.
+2. PERIODO DE EJECUCIÓN: elimina cualquier referencia al periodo o plazo de ejecución del proyecto (ej. "el proyecto debe ejecutarse antes del..."). Esa información es de la edición anterior y no aplica. No la menciones en ninguna sección.
+3. PRESUPUESTO TOTAL: no menciones el presupuesto o dotación total de la convocatoria. Ese dato es el de la edición anterior y puede haber cambiado. Omítelo completamente.
+4. IMPORTES Y PORCENTAJES: úsalos como referencia orientativa de la edición anterior, presentados en condicional o con calificador ("en ediciones anteriores", "habitualmente", "en la convocatoria de referencia"). Si el consultor indica en su instrucción que los use como confirmados, hazle caso.
+5. DESCUENTO ANTICIPADO: menciona en los CTAs el beneficio de contratación anticipada con Innóvate 4.0, sin indicar porcentaje. Frases válidas: "contrata con antelación y benefíciate de condiciones más ventajosas" o "cuanto antes empieces, mejores condiciones para tu empresa".
+
+Si en los documentos aportados hay datos de la edición anterior, úsalos como referencia aplicando las reglas anteriores.
 
 Si el consultor no indica el modo, usa MODO ABIERTA por defecto.
 
@@ -548,14 +554,22 @@ Bien: "Maquinaria y equipos productivos nuevos directamente vinculados a la fabr
 
 ### [IMPORTE — sección "Convocatoria [año]"]
 
-Esta sección es la que concentra los datos de la EDICIÓN VIGENTE. Su <h2> debe ser "Convocatoria [año]" (ej. "Convocatoria 2026"). Aquí —y no en el hero ni en el H1— van el año y las cifras de la edición.
+Esta sección es la que concentra los datos de la edición de referencia. Su <h2> debe ser "Convocatoria [año]" (ej. "Convocatoria 2026").
 
+En MODO ABIERTA, incluye:
 - Porcentaje o porcentajes aplicables, explicados en una frase cada uno.
 - Importe máximo por empresa.
 - Presupuesto total y plazo de solicitud de la edición vigente, si constan.
 - Si hay límite de minimis relevante, una frase sencilla.
 - Si es posible con los datos reales, incluye un ejemplo de cálculo orientativo con cifras concretas. Ejemplo: "Una inversión subvencionable de 300.000 € con el tipo del 30% generaría una ayuda de 90.000 €."
 - Sin fórmulas ni tecnicismos.
+
+En MODO ANTICIPADA, incluye SOLO:
+- Porcentaje o porcentajes (como referencia de edición anterior, en condicional).
+- Importe máximo por empresa (como referencia, en condicional).
+- Ejemplo de cálculo orientativo si los datos lo permiten.
+- "Plazo de solicitud: pendiente de convocatoria."
+- NO incluyas presupuesto total ni periodo de ejecución (ver REGLAS AUTOMÁTICAS EN MODO ANTICIPADA).
 
 ---
 

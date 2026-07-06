@@ -112,6 +112,22 @@ ESQUEMA EXACTO DEL OBJETO JSON (respeta todos los campos y tipos):
     "pct_max": 40,
     "tope_euros": 200000
   },
+  "datos_proyecto": [
+    {
+      "id": "tipo-actuacion",
+      "pregunta": "¿Qué tipo de inversión o actuación vas a realizar?",
+      "ayuda": "Breve aclaración de qué se pregunta, opcional",
+      "tipo": "seleccion",
+      "opciones": ["Opción A", "Opción B", "Otro"]
+    },
+    {
+      "id": "situacion-proyecto",
+      "pregunta": "¿En qué situación se encuentra el proyecto?",
+      "ayuda": "",
+      "tipo": "seleccion",
+      "opciones": ["Aún por definir", "Ya iniciado sin ejecutar gasto", "Con gasto ya iniciado"]
+    }
+  ],
   "textos": {
     "titulo_evaluador": "Evaluador [nombre convocatoria]",
     "intro_titulo": "¿Tu empresa encaja en [nombre convocatoria]?",
@@ -174,6 +190,14 @@ inversion:
 - Si pct_min === pct_max (porcentaje único), igualar ambos campos.
 - Si la convocatoria tiene un importe fijo por empresa (sin depender de la inversión del solicitante): "tiene_campo": false, añadir campo "importe_fijo": número en euros.
 - "tope_euros": importe máximo de ayuda por empresa/proyecto según las bases.
+
+datos_proyecto:
+- Estas preguntas NO bloquean, NO puntúan y NUNCA aparecen en "elegibilidad" ni en "baremo": son datos de cualificación comercial que se recogen para que el equipo de Innóvate 4.0 entienda el proyecto al recibir el lead, no para calcular el resultado.
+- Cubre únicamente lo que NO esté ya cubierto por otro bloque del CFG: tipo de inversión o actuación, situación actual del proyecto, fechas previstas de ejecución, y principales gastos o partidas previstas. NO repitas aquí el importe de la inversión (ya lo cubre "inversion"), ni ningún dato que ya exista como pregunta de "elegibilidad" o de "baremo".
+- Si un dato de esta lista no aplica a este tipo de convocatoria (ej. una ayuda a la contratación no tiene "situación del proyecto" de obra), omite esa entrada en vez de forzarla.
+- "tipo": uno de "seleccion" (con "opciones": lista cerrada de 2 a 5 alternativas, siempre incluye una opción "Otro" si la lista no es exhaustiva), "texto_libre" (respuesta abierta corta, para gastos principales o descripciones), "numero", o "fecha" (para fechas previstas de inicio o ejecución). No uses "seleccion" sin "opciones".
+- "ayuda": opcional, una frase corta o cadena vacía.
+- Si ninguna de estas preguntas aporta valor para esta convocatoria, devuelve "datos_proyecto": [].
 
 grupos_baremo:
 - Agrupa los criterios del baremo en bloques según la estructura del documento. Si el baremo tiene secciones o bloques (ej. "Calidad del proyecto", "Viabilidad técnica"), crear un grupo por bloque con los IDs correspondientes de la lista "baremo".
@@ -612,6 +636,19 @@ Si el consultor no indica el modo, usa MODO ABIERTA por defecto.
 
 ---
 
+## EVALUADOR EMBEBIDO
+
+El mensaje del consultor indica si esta landing debe incluir el evaluador de encaje embebido, con una línea literal `INCLUIR_EVALUADOR: SI` o `INCLUIR_EVALUADOR: NO`. Si no aparece esa línea, trátalo como NO.
+
+**Cuando es SI:**
+1. Añade un segundo botón en el HERO (además del CTA de contacto habitual), con `href="#evaluador-embebido"` y texto en segunda persona que invite a usar el evaluador. Ejemplos válidos: "Descubre si tu empresa encaja →", "Comprueba tu encaje en 2 minutos". Nunca el mismo texto que el CTA de contacto.
+2. Añade el bloque `[EVALUADOR EMBEBIDO]` descrito en ESTRUCTURA FIJA, colocado justo antes del formulario de contacto final (no antes: el objetivo es que no reste espacio al resto de la landing).
+3. NO escribas tú el contenido interno de ese bloque (preguntas, textos del evaluador): eso lo inyecta el backend a partir de la configuración del evaluador ya generada para esta misma convocatoria. Tu única responsabilidad es dejar el marcador literal exacto indicado en FORMATO DE SALIDA, dentro del contenedor con el id correcto.
+
+**Cuando es NO:** no generes el segundo botón del hero ni el bloque `[EVALUADOR EMBEBIDO]`. La landing queda exactamente igual que si el evaluador no existiera.
+
+---
+
 ## ESTRUCTURA FIJA
 
 Genera siempre estos bloques en este orden. Cada bloque debe caber en media pantalla como máximo. Si un bloque supera 4 bullets o 80 palabras de texto corrido, está demasiado largo: recorta.
@@ -726,6 +763,12 @@ Estructura:
 
 ---
 
+### [EVALUADOR EMBEBIDO] — SOLO si INCLUIR_EVALUADOR: SI
+
+Bloque contenedor únicamente. No escribas título, texto de introducción ni preguntas: eso lo aporta el backend a partir de la configuración del evaluador. Tu única tarea es emitir el contenedor con el marcador exacto indicado en FORMATO DE SALIDA, en la posición justo anterior al formulario de contacto.
+
+---
+
 ### [FORMULARIO]
 
 Campos fijos:
@@ -803,10 +846,15 @@ Si el usuario especifica en su instrucción un año previsto (ej. "2027") difere
 
 ## SEO
 
-Debes decidir tres campos SEO, todos SIN AÑO:
+La landing se inserta directamente en WordPress, sin generar metadatos en un `<head>` propio: por eso el SEO se devuelve como un objeto JSON aparte, para que el consultor lo configure a mano en Yoast/RankMath. Todos los campos van SIN AÑO — la URL debe poder reutilizarse edición tras edición sin rehacerse.
+
+Debes decidir estos campos:
 - seo_title: nombre base de la convocatoria, orientado a búsqueda. Máximo 60 caracteres. Sin raya larga; usa dos puntos o coma como separador. Ej: "INPYME: ayudas a la pyme industrial".
 - meta_description: resumen de la ayuda (objeto, beneficiarios y porcentaje de financiación), sin año. Máximo 155 caracteres.
 - slug: versión-url del nombre base, en minúsculas, sin año, palabras separadas por guiones, sin tildes ni caracteres especiales. Ej: "inpyme-ayudas-pyme-industrial".
+- h1_recomendado: el mismo texto que uses como `<h1>` en el HERO (nombre base, sin año). Se devuelve aparte porque el tema de WordPress puede usar su propio título de página en vez del `<h1>` del bloque insertado.
+- keywords_principales: array de 4 a 8 keywords o frases cortas de búsqueda, en minúsculas, derivadas del objeto de la ayuda y del perfil de beneficiario (nunca inventadas ni genéricas de otro sector).
+- faqs_sugeridas: array de 3 a 5 objetos `{"pregunta": "...", "respuesta": "..."}` con preguntas frecuentes reales sobre esta ayuda (quién puede pedirla, qué financia, plazos, cuantía). Cada respuesta debe basarse ÚNICAMENTE en los documentos aportados, con las mismas reglas de no invención que el resto de la landing; si en modo ANTICIPADA una respuesta usa datos de la edición anterior, aplica la misma regla condicional que en el resto del cuerpo.
 
 ---
 
@@ -816,16 +864,16 @@ Devuelve la respuesta en DOS partes separadas por marcadores literales. Sin text
 
 Primero el bloque SEO, exactamente así:
 ===SEO_JSON===
-{"seo_title": "...", "meta_description": "...", "slug": "..."}
+{"seo_title": "...", "meta_description": "...", "slug": "...", "h1_recomendado": "...", "keywords_principales": ["...", "..."], "faqs_sugeridas": [{"pregunta": "...", "respuesta": "..."}]}
 ===LANDING_HTML===
 
 Y a continuación, el cuerpo HTML de la landing (las secciones de contenido).
 
-Para el cuerpo HTML: NO incluyas <!DOCTYPE>, <html>, <head>, <title>, <meta>, <style>, <body>, <header> ni <footer>. Esos elementos, el CSS de marca, la cabecera con logo y el pie ya los aporta la plantilla. Tú generas solo las secciones de contenido.
+Para el cuerpo HTML: NO incluyas <!DOCTYPE>, <html>, <head>, <title>, <meta>, <style>, <body>, <header> ni <footer>. Esos elementos se insertan directamente en una página de WordPress ya existente (bloque HTML personalizado / Elementor / Gutenberg): tú generas solo las secciones de contenido, que el backend envuelve en un wrapper propio con CSS scoped. No asumas que existe un `<head>` ni estilos globales de página.
 NO escribas CSS, atributos style="..." ni clases de color/fondo. Usa exclusivamente las clases documentadas al final.
 Si incluyes alguna <img>, añade siempre un atributo alt descriptivo.
 
-Estructura HTML obligatoria (9 bloques, en este orden):
+Estructura HTML obligatoria (9 bloques si INCLUIR_EVALUADOR: NO, 10 bloques si INCLUIR_EVALUADOR: SI, siempre en este orden):
 
 1. HERO — sección de apertura.
    REGLA ESTRUCTURAL: el H1 contiene SOLO el nombre base de la convocatoria. El descriptor
@@ -837,6 +885,8 @@ Estructura HTML obligatoria (9 bloques, en este orden):
   <p class="hero-sub">Descriptor: qué tipo de ayuda es, en una frase</p>
   <p class="hero-body">Opcional: presupuesto total o plazo si están confirmados.</p>
   <a class="btn btn-light" href="#contacto">Quiero saber si puedo solicitarla</a>
+  <a class="btn btn-outline" href="#evaluador-embebido">Descubre si tu empresa encaja →</a>
+  <!-- El segundo botón (href="#evaluador-embebido") SOLO si INCLUIR_EVALUADOR: SI -->
 </section>
 
 2. BENEFICIOS — qué gana la empresa:
@@ -883,7 +933,12 @@ Estructura HTML obligatoria (9 bloques, en este orden):
   <a class="btn btn-outline" href="#contacto">Cuéntanos tu situación</a>
 </section>
 
-9. FORMULARIO — usa EXACTAMENTE esta estructura (es Web3Forms, funciona sin JS al desplegarse). Sustituye NOMBRE_CONVOCATORIA por el nombre base y el texto del botón por la frase del CTA primario:
+9. EVALUADOR EMBEBIDO — SOLO si INCLUIR_EVALUADOR: SI. Usa EXACTAMENTE este contenedor, con el marcador literal `<!--EVALUADOR_EMBED-->` como único contenido (el backend lo sustituye por el evaluador completo; no escribas nada más dentro):
+<section class="bloque bloque-evaluador" id="evaluador-embebido"><div class="wrap">
+<!--EVALUADOR_EMBED-->
+</div></section>
+
+10. FORMULARIO — usa EXACTAMENTE esta estructura (es Web3Forms, funciona sin JS al desplegarse). Sustituye NOMBRE_CONVOCATORIA por el nombre base y el texto del botón por la frase del CTA primario:
 <section class="bloque" id="contacto"><div class="wrap">
   <h2 class="bloque-titulo">Quiero que revisen mi caso</h2>
   <form class="form-landing" action="https://api.web3forms.com/submit" method="POST">
@@ -900,7 +955,7 @@ Estructura HTML obligatoria (9 bloques, en este orden):
   </form>
 </div></section>
 
-Clases CSS disponibles (no inventes otras): hero, hero-gancho, hero-sub, hero-body, bloque, wrap, bloque-titulo, lista, grid, card, destacado, destacado-cifra, destacado-detalle, cta, cta-primary, cta-secondary, btn, btn-cta, btn-light, btn-outline, form-landing, field, form-nota.
+Clases CSS disponibles (no inventes otras): hero, hero-gancho, hero-sub, hero-body, bloque, wrap, bloque-titulo, bloque-evaluador, lista, grid, card, destacado, destacado-cifra, destacado-detalle, cta, cta-primary, cta-secondary, btn, btn-cta, btn-light, btn-outline, form-landing, field, form-nota.
 
 Debe haber un único <h1> en toda la landing (el del hero). Cada sección lleva su <h2>. Todos los enlaces de CTA y botones apuntan a href="#contacto".""",
 

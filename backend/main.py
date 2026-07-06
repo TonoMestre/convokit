@@ -15,7 +15,7 @@ import anthropic
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
 load_dotenv()
@@ -818,6 +818,21 @@ def asset_logo():
     raise HTTPException(status_code=404, detail="Logo no encontrado.")
 
 
+@app.get("/demo/inpyme-evaluador")
+def demo_inpyme_evaluador():
+    """
+    Sirve el HTML standalone del autoevaluador INPYME como fichero estático.
+    Se referencia por src del iframe en vez de incrustarlo en un <template> del
+    HTML de WordPress: WordPress normaliza entidades sueltas ("&&" -> "&#038;&#038;")
+    dentro de contenido no reconocido como <script> real, lo que rompía la
+    sintaxis del evaluador. Sirviéndolo aquí, ese HTML nunca pasa por WordPress.
+    """
+    path = os.path.join(os.path.dirname(__file__), "static_demo", "inpyme-evaluador.html")
+    if not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="No encontrado.")
+    return FileResponse(path, media_type="text/html; charset=utf-8")
+
+
 # ---------------------------------------------------------------------------
 # Convocatorias — CRUD
 # ---------------------------------------------------------------------------
@@ -1383,3 +1398,135 @@ def send_result_email(req: ResultEmailRequest):
         raise HTTPException(status_code=502, detail=f"Error al enviar el email: {exc}")
 
     return {"ok": True}
+
+
+# ---------------------------------------------------------------------------
+# Submit evaluation (evaluador/cualificador embebido o standalone — vía Resend)
+# ---------------------------------------------------------------------------
+
+_EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]{2,}$")
+
+
+def _is_valid_email(value: str) -> bool:
+    return bool(_EMAIL_RE.match((value or "").strip()))
+
+
+class EvaluationLead(BaseModel):
+    nombre: str = ""
+    empresa: str = ""
+    poblacion: str = ""
+    telefono: str = ""
+    email: str = ""
+    website: str = ""  # honeypot oculto: debe llegar siempre vacío
+    privacy: bool = False
+
+
+class SubmitEvaluationRequest(BaseModel):
+    source: str = ""
+    tool: str = ""
+    created_at: str = ""
+    page_url: str = ""
+    lead: EvaluationLead
+    summary: dict = {}
+    answers: dict = {}
+    pending_actions: list = []
+    legal_note: str = ""
+
+
+@app.post("/submit-evaluation")
+def submit_evaluation(req: SubmitEvaluationRequest):
+    """
+    Recibe el envío de un evaluador/cualificador de encaje: datos de contacto,
+    respuestas completas y resultado calculado en el frontend. Envía dos
+    emails por Resend (interno a Innóvate 4.0 + cliente) y devuelve
+    {"success": true} SOLO si el email al cliente se ha enviado correctamente.
+    El frontend no debe mostrar el resultado hasta recibir esa confirmación.
+    """
+    lead = req.lead
+
+    # Honeypot: si el campo oculto viene relleno, es un envío automatizado.
+    # Se responde con éxito sin enviar ningún email, para no delatar el filtro.
+    if lead.website.strip():
+        return {"success": True}
+
+    if (
+        not lead.nombre.strip()
+        or not lead.empresa.strip()
+        or not lead.telefono.strip()
+        or not lead.email.strip()
+        or not lead.privacy
+    ):
+        return JSONResponse(status_code=422, content={
+            "success": False,
+            "message": "Revisa los campos obligatorios antes de continuar.",
+        })
+    if not _is_valid_email(lead.email):
+        return JSONResponse(status_code=422, content={
+            "success": False,
+            "message": "Introduce un correo electrónico válido.",
+        })
+
+    api_key = os.environ.get("RESEND_API_KEY", "")
+    if not api_key:
+        return JSONResponse(status_code=503, content={
+            "success": False,
+            "message": "No hemos podido enviar la evaluación en este momento. "
+                       "Inténtalo de nuevo o contacta directamente con Innóvate 4.0.",
+        })
+
+    from_email = os.environ.get("RESEND_FROM_EMAIL", "Innóvate 4.0 <hola@innovate40.es>")
+    reply_to = os.environ.get("EVALUATOR_REPLY_TO_EMAIL", "")
+    internal_email = os.environ.get("EVALUATOR_INTERNAL_EMAIL", "")
+
+    backend_url = output6_template._get_backend_url()
+    logo_url = f"{backend_url}/assets/logo.png" if backend_url else ""
+
+    tool = req.tool or req.source or "la ayuda"
+    lead_dict = lead.model_dump()
+
+    # Email interno — best effort: si falla, se registra pero no bloquea al usuario.
+    if internal_email:
+        try:
+            resend.Emails.send({
+                "from": from_email,
+                "to": [internal_email],
+                **({"reply_to": [reply_to]} if reply_to else {}),
+                "subject": f"Nuevo resultado de cualificador - {tool} - {lead.empresa}",
+                "html": result_email.build_internal_lead_email_html(
+                    tool=tool,
+                    source=req.source,
+                    page_url=req.page_url,
+                    created_at=req.created_at,
+                    lead=lead_dict,
+                    summary=req.summary,
+                    answers=req.answers,
+                    pending_actions=req.pending_actions,
+                    logo_url=logo_url,
+                ),
+            })
+        except Exception as exc:
+            print(f"[submit-evaluation] Error enviando email interno: {exc}")
+
+    # Email al cliente — este sí debe llegar para poder mostrar el resultado.
+    try:
+        resend.Emails.send({
+            "from": from_email,
+            "to": [lead.email],
+            **({"reply_to": [reply_to]} if reply_to else {}),
+            "subject": f"Resultado de tu evaluación para {tool}",
+            "html": result_email.build_user_lead_email_html(
+                tool=tool,
+                lead=lead_dict,
+                summary=req.summary,
+                logo_url=logo_url,
+            ),
+        })
+    except Exception as exc:
+        print(f"[submit-evaluation] Error enviando email al cliente: {exc}")
+        return JSONResponse(status_code=502, content={
+            "success": False,
+            "message": "No hemos podido enviar la evaluación en este momento. "
+                       "Inténtalo de nuevo o contacta directamente con Innóvate 4.0.",
+        })
+
+    return {"success": True}

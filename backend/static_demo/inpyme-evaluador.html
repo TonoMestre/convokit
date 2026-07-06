@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Autoevaluador INPYME 2027 · basado en datos INPYME 2026</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --paper:#F2EBD8; --paper2:#E9DFC6; --ink:#1D254C; --ink-soft:rgba(29,37,76,.72);
+  --line:rgba(29,37,76,.24); --line-soft:rgba(29,37,76,.14);
+  --accent:#C50339; --accent-d:#A00230;
+  --steel:#1D254C; --steel-soft:rgba(29,37,76,.62);
+  --ok:#2E7A4E; --warn:#C07A1E; --bad:#B2362A;
+  --given:#7A6E55;
+  --shadow:0 1px 0 rgba(22,20,15,.06), 0 10px 30px -18px rgba(22,20,15,.45);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:"Inter",sans-serif;
+  font-size:16px; line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  background-image:
+    radial-gradient(circle at 12% -10%, rgba(216,69,31,.05), transparent 38%),
+    radial-gradient(circle at 100% 0%, rgba(54,71,78,.06), transparent 42%);
+  background-attachment:fixed;
+}
+.mono{font-family:"Inter",sans-serif}
+.wrap{max-width:920px;margin:0 auto;padding:0 22px 90px}
+
+/* HEADER */
+header{border-bottom:2px solid var(--ink);margin-bottom:26px}
+.brandbar{display:flex;justify-content:space-between;align-items:flex-end;padding:26px 0 16px;gap:20px;flex-wrap:wrap}
+.kicker{font-family:"Inter",sans-serif;font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent-d);font-weight:700}
+h1{font-family:"Roboto Slab",serif;font-weight:600;font-size:clamp(30px,5vw,46px);line-height:1.02;margin:6px 0 0;letter-spacing:-.01em}
+.tagline{color:var(--ink-soft);font-size:14.5px;max-width:46ch;margin-top:8px}
+.ruta-badge{font-family:"Inter",sans-serif;font-size:12px;letter-spacing:.14em;text-transform:uppercase;border:1.5px solid var(--ink);border-radius:2px;padding:9px 13px;white-space:nowrap;display:flex;flex-direction:column;gap:2px;align-items:flex-end}
+.ruta-badge b{color:var(--accent-d)}
+.ruta-badge span{font-family:'Inter';font-size:10px;letter-spacing:.04em;text-transform:none;color:var(--steel-soft)}
+
+/* STEPPER */
+.stepper{display:flex;gap:0;margin-bottom:30px;border:1.5px solid var(--line);border-radius:3px;overflow:hidden;background:#fff8ee}
+.step{flex:1;padding:11px 10px;font-size:12.5px;font-weight:600;color:var(--steel-soft);text-align:center;border-right:1.5px solid var(--line);position:relative;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:.15s}
+.step:last-child{border-right:0}
+.step .n{font-family:'Inter';font-size:11px;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line);display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+.step.active{color:var(--ink);background:var(--paper)}
+.step.active .n{background:var(--accent);color:#fff;border-color:var(--accent)}
+.step.done{color:var(--ink)}
+.step.done .n{background:var(--steel);color:#fff;border-color:var(--steel)}
+.step .lab{display:none}
+@media(min-width:640px){.step .lab{display:inline}}
+
+/* PANELS */
+.panel{display:none;animation:rise .4s ease}
+.panel.show{display:block}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.sec-h{font-family:"Roboto Slab",serif;font-size:24px;font-weight:600;letter-spacing:-.01em;margin:0 0 4px;display:flex;align-items:baseline;gap:12px}
+.sec-h .tag{font-family:'Inter';font-size:11px;letter-spacing:.16em;color:var(--accent-d);font-weight:700;text-transform:uppercase}
+.sec-d{color:var(--ink-soft);font-size:14.5px;margin:0 0 22px;max-width:64ch}
+
+/* CARDS / FIELDS */
+.card{background:#FBF8F1;border:1.5px solid var(--line-soft);border-radius:4px;padding:18px 18px;margin-bottom:13px;box-shadow:var(--shadow)}
+.q{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.q .txt{flex:1;min-width:200px}
+.q .txt b{font-weight:600;font-size:15.5px;display:block}
+.q .txt small{color:var(--ink-soft);font-size:13px;display:block;margin-top:3px;line-height:1.4}
+.pts-tag{font-family:'Inter';font-size:11px;font-weight:700;color:var(--steel);background:var(--paper2);border:1px solid var(--line);border-radius:2px;padding:3px 7px;white-space:nowrap}
+.pts-tag.auto{color:#fff;background:var(--accent);border-color:var(--accent)}
+.pts-tag.given{color:#fff;background:var(--given);border-color:var(--given)}
+
+/* TOGGLES */
+.seg{display:inline-flex;border:1.5px solid var(--line);border-radius:3px;overflow:hidden;flex:0 0 auto;background:#fff}
+.seg button{font-family:'Inter';font-size:13px;font-weight:600;border:0;background:transparent;padding:8px 14px;cursor:pointer;color:var(--steel-soft);border-right:1.5px solid var(--line);transition:.12s}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--ink);color:#fff}
+.seg button.on.green{background:var(--ok)}
+.seg button.on.red{background:var(--bad)}
+select,input[type=number]{font-family:'Inter';font-size:14px;border:1.5px solid var(--line);border-radius:3px;padding:9px 11px;background:#fff;color:var(--ink);min-width:180px}
+input[type=number]{width:130px}
+.chk{display:flex;align-items:flex-start;gap:10px;padding:7px 0;cursor:pointer;font-size:14px}
+.chk input{margin-top:3px;width:17px;height:17px;accent-color:var(--accent);flex:0 0 auto;cursor:pointer}
+.chk .ck-pts{font-family:'Inter';font-size:11px;color:var(--steel-soft);margin-left:auto;white-space:nowrap}
+.sub-list{margin-top:6px;border-top:1px dashed var(--line);padding-top:8px}
+.lvl{display:flex;gap:7px;flex-wrap:wrap;margin-top:4px}
+.lvl button{font-family:'Inter';font-size:12.5px;font-weight:500;border:1.5px solid var(--line);background:#fff;border-radius:3px;padding:7px 12px;cursor:pointer;color:var(--steel-soft);transition:.12s}
+.lvl button.on{background:var(--steel);color:#fff;border-color:var(--steel)}
+.field-row{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+
+/* ADMISSION RESULT */
+.gate{display:flex;align-items:center;gap:12px;border-radius:4px;padding:14px 16px;margin:4px 0 20px;font-weight:600;font-size:15px;border:1.5px solid}
+.gate.green{background:#EAF4ED;border-color:#A8CDB6;color:var(--ok)}
+.gate.red{background:#F6E9E7;border-color:#DDB3AD;color:var(--bad)}
+.gate .dot{width:11px;height:11px;border-radius:50%;flex:0 0 auto}
+.gate.green .dot{background:var(--ok)}.gate.red .dot{background:var(--bad)}
+.gate small{display:block;font-weight:400;font-size:13px;color:var(--ink-soft);margin-top:2px}
+
+/* SECTOR / TENSION */
+.tension-box{border:1.5px solid var(--line-soft);border-radius:4px;padding:18px;background:#FBF8F1;margin-top:14px;box-shadow:var(--shadow)}
+.tmeter{height:13px;border-radius:7px;background:linear-gradient(90deg,#3a8a5a 0%,#cf9b2b 52%,#bf3b2c 100%);position:relative;margin:16px 0 8px}
+.tmeter .needle{position:absolute;top:-6px;width:3px;height:25px;background:var(--ink);border-radius:2px;transform:translateX(-50%);transition:left .5s cubic-bezier(.2,.8,.2,1)}
+.tmeter-labels{display:flex;justify-content:space-between;font-family:'Inter';font-size:10.5px;color:var(--steel-soft);letter-spacing:.05em}
+.badge-estado{display:inline-block;font-family:'Inter';font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:4px 9px;border-radius:2px;color:#fff}
+.e-def{background:var(--bad)}.e-eq{background:var(--warn)}.e-exc{background:var(--ok)}
+
+/* RESULT */
+.score-hero{border:2px solid var(--ink);border-radius:5px;padding:26px;text-align:center;background:#FBF8F1;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.score-hero::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% -40%,rgba(216,69,31,.08),transparent 60%);pointer-events:none}
+.score-num{font-family:"Roboto Slab",serif;font-weight:600;font-size:clamp(46px,11vw,82px);line-height:.9;letter-spacing:-.02em}
+.score-num .sep{color:var(--line);font-weight:400}
+.score-cap{font-family:'Inter';font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--steel-soft);margin-top:10px}
+.barrow{margin:22px 0 6px}
+.bar-track{height:30px;background:var(--paper2);border:1.5px solid var(--line);border-radius:4px;position:relative;overflow:hidden}
+.bar-fill{position:absolute;top:0;bottom:0;left:0;background:repeating-linear-gradient(45deg,var(--accent),var(--accent) 9px,var(--accent-d) 9px,var(--accent-d) 18px);transition:width .6s}
+.bar-min{position:absolute;top:0;bottom:0;left:0;background:var(--steel);opacity:.92;transition:width .6s}
+.bar-cut{position:absolute;top:-6px;bottom:-6px;width:2.5px;background:var(--ink);z-index:3}
+.bar-cut::after{content:"mínimo 50";position:absolute;top:-19px;left:50%;transform:translateX(-50%);font-family:'Inter';font-size:10px;white-space:nowrap;color:var(--ink)}
+.verdict{font-size:15px;font-weight:600;margin-top:18px;padding:12px 14px;border-radius:4px;border:1.5px solid}
+.verdict.go{background:#EAF4ED;border-color:#A8CDB6;color:var(--ok)}
+.verdict.mid{background:#FBF1DF;border-color:#E0C58A;color:var(--warn)}
+.verdict.no{background:#F6E9E7;border-color:#DDB3AD;color:var(--bad)}
+.verdict small{display:block;font-weight:400;color:var(--ink-soft);margin-top:4px;font-size:13.5px}
+
+.grid2{display:grid;grid-template-columns:1fr;gap:13px;margin-top:18px}
+@media(min-width:680px){.grid2{grid-template-columns:1fr 1fr}}
+.kpi{border:1.5px solid var(--line-soft);border-radius:4px;padding:15px 16px;background:#FBF8F1}
+.kpi h4{margin:0 0 8px;font-size:12px;font-family:'Inter';letter-spacing:.12em;text-transform:uppercase;color:var(--steel-soft)}
+.kpi .big{font-family:"Roboto Slab",serif;font-size:26px;font-weight:600}
+.kpi .sub{font-size:13px;color:var(--ink-soft);margin-top:3px}
+
+.blocks{margin-top:18px;border:1.5px solid var(--line-soft);border-radius:4px;overflow:hidden}
+.blocks .brow{display:flex;align-items:center;gap:12px;padding:11px 15px;border-bottom:1px solid var(--line-soft);background:#FBF8F1;font-size:14px}
+.blocks .brow:last-child{border-bottom:0}
+.blocks .brow .bl-name{flex:1;font-weight:500}
+.blocks .brow .bl-name small{display:block;color:var(--steel-soft);font-size:11.5px;font-weight:400}
+.mini-track{flex:0 0 130px;height:8px;background:var(--paper2);border-radius:5px;overflow:hidden;position:relative}
+.mini-fill{position:absolute;left:0;top:0;bottom:0;background:var(--accent)}
+.mini-min{position:absolute;left:0;top:0;bottom:0;background:var(--steel)}
+.bl-val{font-family:'Inter';font-size:12.5px;width:74px;text-align:right;flex:0 0 auto}
+.bl-flag{font-size:11px;color:var(--bad);font-weight:600}
+
+.caps{margin-top:18px}
+.cap{display:flex;gap:13px;align-items:flex-start;padding:13px 15px;border:1.5px solid var(--line-soft);border-left:4px solid var(--accent);border-radius:4px;margin-bottom:9px;background:#FBF8F1}
+.cap.given{border-left-color:var(--given)}
+.cap.design{border-left-color:var(--steel)}
+.cap .gain{font-family:'Inter';font-weight:700;font-size:14px;color:var(--accent-d);white-space:nowrap;flex:0 0 auto}
+.cap.given .gain{color:var(--given)}.cap.design .gain{color:var(--steel)}
+.cap .ct b{font-size:14.5px;display:block;font-weight:600}
+.cap .ct small{color:var(--ink-soft);font-size:13px}
+.cap .cclass{font-family:'Inter';font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--steel-soft);display:block;margin-top:4px}
+
+
+
+/* LEAD GATE RESULTADO */
+.lead-gate{background:#FBF8F1;border:2px solid var(--ink);border-radius:5px;padding:24px;box-shadow:var(--shadow);margin:12px 0 22px}
+.lead-gate h3{font-family:'Roboto Slab',serif;font-size:24px;line-height:1.15;margin:0 0 8px;color:var(--ink)}
+.lead-gate p{color:var(--ink-soft);font-size:14.5px;margin:0 0 16px;max-width:68ch}
+.lead-grid{display:grid;grid-template-columns:1fr;gap:13px;margin-top:16px}
+@media(min-width:680px){.lead-grid{grid-template-columns:1fr 1fr}.lead-field.full{grid-column:1/-1}}
+.lead-field label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--steel-soft);margin-bottom:5px}
+.lead-field input{font-family:'Inter',sans-serif;font-size:14px;border:1.5px solid var(--line);border-radius:3px;padding:10px 11px;background:#fff;color:var(--ink);width:100%;min-width:0}
+.lead-field input:focus{outline:none;border-color:var(--ink)}
+.lead-check{display:flex;align-items:flex-start;gap:10px;font-size:12.5px;color:var(--ink-soft);line-height:1.45;margin:14px 0 2px}
+.lead-check input{margin-top:2px;accent-color:var(--accent)}
+.lead-actions{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:18px;align-items:center}
+.lead-alert{font-size:13px;border-radius:4px;padding:11px 13px;margin-top:12px;border:1.5px solid var(--line)}
+.lead-alert.err{background:#F6E9E7;border-color:#DDB3AD;color:var(--bad)}
+.lead-alert.ok{background:#EAF4ED;border-color:#A8CDB6;color:var(--ok)}
+.hp-field{position:absolute!important;left:-9999px!important;opacity:0!important;height:0!important;width:0!important;pointer-events:none!important}
+
+/* NAV */
+.nav{display:flex;justify-content:space-between;gap:12px;margin-top:26px}
+.btn{font-family:'Inter';font-weight:600;font-size:14.5px;border-radius:3px;padding:13px 22px;cursor:pointer;border:1.5px solid var(--ink);transition:.14s;display:inline-flex;align-items:center;gap:8px}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.primary:hover{background:var(--accent-d);border-color:var(--accent-d)}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn.ghost:hover{background:var(--ink);color:#fff}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn.wide{width:100%;justify-content:center}
+
+.note{font-size:12.5px;color:var(--steel-soft);line-height:1.5;border-top:1px solid var(--line);margin-top:34px;padding-top:14px}
+.note b{color:var(--ink-soft)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-family:'Inter';font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--steel-soft);margin:-8px 0 18px}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:11px;height:11px;border-radius:2px;display:inline-block}
+.i-min{background:var(--steel)}.i-max{background:var(--accent)}
+.intro-feat{display:grid;gap:11px;grid-template-columns:1fr;margin:20px 0 24px}
+@media(min-width:640px){.intro-feat{grid-template-columns:repeat(3,1fr)}}
+.feat{border:1.5px solid var(--line-soft);border-radius:4px;padding:15px;background:#FBF8F1}
+.feat .fn{font-family:'Inter';font-size:11px;color:var(--accent-d);font-weight:700;letter-spacing:.1em}
+.feat b{display:block;font-family:'Roboto Slab';font-size:17px;font-weight:600;margin:5px 0 5px}
+.feat small{color:var(--ink-soft);font-size:13px}
+.callout{border:1.5px solid var(--accent);border-left:5px solid var(--accent);border-radius:4px;background:#FBEFE9;padding:16px 18px;margin:8px 0 18px}
+.callout b{color:var(--accent-d)}
+.callout .ct-k{font-family:'Inter';font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-d);font-weight:700;display:block;margin-bottom:6px}
+.mc-ev{border:1.5px solid var(--steel-soft);border-left:4px solid var(--steel);border-radius:4px;padding:10px 13px;margin:9px 0;background:#F1F5F4}
+.mc-ev .ev-badge{font-family:'Inter';font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;background:var(--steel);color:#fff;border-radius:2px;padding:3px 7px;margin-left:auto;white-space:nowrap}
+.mc-ev .ev-why{display:block;color:var(--steel);font-size:12.5px;margin:5px 0 0 27px;font-weight:500}
+.cap.ev{border-left-color:var(--steel)}.cap.ev .gain{color:var(--steel)}
+@media print{.stepper,.nav,.step{display:none!important}.panel{display:block!important}body{background:#fff}.card,.kpi,.tension-box,.score-hero{box-shadow:none}}
+</style>
+<style>
+/* Ajustes de integración dentro de WordPress/iframe */
+html,body{min-height:100%;}
+.wrap{padding-bottom:56px;}
+header{margin-top:0;}
+.btn{border-radius:0;}
+</style></head>
+<body>
+<div class="wrap">
+<header>
+<div class="brandbar">
+<div>
+<div class="kicker">Convocatoria 2027 · basado en datos de INPYME 2026</div>
+<h1>Autoevaluador INPYME 2027</h1>
+<div class="tagline">Prepara con tiempo tu solicitud a la próxima convocatoria. Estima tu puntuación, comprueba si superas el corte y descubre qué puntos puedes capturar durante el año.</div>
+</div>
+<div class="ruta-badge"><b>RUTA i40</b><span>preparación 2027</span></div>
+</div>
+</header>
+<div class="stepper" id="stepper">
+<div class="step active" data-go="0"><span class="n">1</span><span class="lab">Admisión</span></div>
+<div class="step" data-go="1"><span class="n">2</span><span class="lab">Sector</span></div>
+<div class="step" data-go="2"><span class="n">3</span><span class="lab">Puntuación</span></div>
+<div class="step" data-go="3"><span class="n">4</span><span class="lab">Resultado</span></div>
+</div>
+<!-- PANEL 0 — ADMISIÓN -->
+<section class="panel show" id="p0">
+<h2 class="sec-h"><span class="tag">Paso 1</span> Filtro de admisión</h2>
+<p class="sec-d">Requisitos excluyentes de la convocatoria. Si fallas uno, la solicitud puede ser <b>inadmitida</b> antes de evaluar la memoria. Respóndelos con sinceridad: el objetivo es no preparar un expediente inviable.</p>
+<div id="admBox"><div class="card" style="color:var(--steel-soft)">Cargando preguntas del autoevaluador...</div></div>
+<div id="admVerdict"></div>
+<div class="nav"><span></span><button class="btn primary" onclick="go(1)">Continuar al sector →</button></div>
+</section>
+<!-- PANEL 1 — SECTOR -->
+<section class="panel" id="p1">
+<h2 class="sec-h"><span class="tag">Paso 2</span> Sector y tensión</h2>
+<p class="sec-d">El crédito se reparte por sector (≈3,52 M€ cada uno) y se redistribuye hacia los sectores con más demanda. Presentarse a un sector poco solicitado baja la nota de corte real. La tensión se estima con los datos de concesión de 2024 (DOGV-C-2024-9665).</p>
+<div class="card">
+<div class="field-row">
+<div class="q txt"><b>¿A qué sector se vincula tu inversión?</b><small>Debe coincidir con un CNAE del Anexo I que figure en tu nota registral.</small></div>
+<select id="sectorSel" onchange="renderTension()"></select>
+</div>
+</div>
+<div class="tension-box" id="tensionBox"></div>
+<div class="nav"><button class="btn ghost" onclick="go(0)">← Volver</button><button class="btn primary" onclick="go(2)">Evaluar puntuación →</button></div>
+</section>
+<!-- PANEL 2 — PUNTUACIÓN -->
+<section class="panel" id="p2">
+<h2 class="sec-h"><span class="tag">Paso 3</span> Puntuación</h2>
+<p class="sec-d">El baremo suma 100 puntos, pero solo una parte se calcula de forma <b>objetiva</b>: 28 puntos que dependen de hechos verificables. Los otros <b>72 puntos dependen de la memoria</b> y los decide la comisión. Aquí no te damos esos 72 por supuestos: calculamos lo objetivo y te decimos cuántos puntos necesita aportar tu memoria.</p>
+<h3 style="font-family:'Roboto Slab';font-size:21px;font-weight:600;margin:24px 0 4px">A · Factores objetivos <span style="font-family:'Inter';font-size:12px;color:var(--accent-d);letter-spacing:.08em">MÁX 28 PTS</span></h3>
+<p class="sec-d" style="margin-bottom:14px">Hechos comprobables. Estos puntos se calculan en firme.</p>
+<div id="objForm"></div>
+<h3 style="font-family:'Roboto Slab';font-size:21px;font-weight:600;margin:30px 0 4px">B · Memoria <span style="font-family:'Inter';font-size:12px;color:var(--steel-soft);letter-spacing:.08em">72 PTS · NO PUNTUABLE AQUÍ</span></h3>
+<p class="sec-d" style="margin-bottom:14px">Estos son los <b>apartados clave que tu memoria debe contener</b>. No son una lista para marcar: en una memoria competitiva todos deben estar presentes. Lo que marca la diferencia es la <b>exhaustividad y la calidad</b> con que se desarrolla cada uno —ahí es donde se captura la mayor parte de la puntuación.</p>
+<div class="callout"><span class="ct-k">Dónde se gana realmente el expediente</span>Estos 72 puntos no se consiguen rellenando casillas: dependen de una <b>memoria técnica, justificada y bien documentada</b> —tabla de costes individualizada, ingeniería, viabilidad económica, evidencias ambientales—. Es exactamente el trabajo especializado que asume la <b>Ruta i40 de Innóvate 4.0</b>: agotar cada apartado, documentarlo y construir una memoria que compita por encima del mínimo.</div>
+<div id="memForm"></div>
+<div class="nav"><button class="btn ghost" onclick="go(1)">← Volver</button><button class="btn primary" onclick="go(3)">Ver resultado →</button></div>
+</section>
+<!-- PANEL 3 — RESULTADO -->
+<section class="panel" id="p3">
+<h2 class="sec-h"><span class="tag">Paso 4</span> Resultado</h2>
+<div id="leadGateBox"></div>
+<div id="resultBox" style="display:none"></div>
+<div class="nav" id="resultNav" style="display:none">
+<button class="btn ghost" onclick="go(2)">← Ajustar</button>
+<button class="btn primary" onclick="window.print()">Imprimir / Guardar informe</button>
+</div>
+<p class="note"><b>Aviso.</b> Herramienta de <b>preparación para la convocatoria 2027</b>, construida sobre las bases de la convocatoria 2026 (la última publicada); la convocatoria 2027 podría introducir cambios en sectores, importes o criterios. Los 28 puntos objetivos se estiman a partir de hechos que debes poder acreditar documentalmente; la puntuación final la fija la comisión de evaluación. Los 72 puntos de la memoria no se puntúan en esta herramienta porque dependen de la calidad de la redacción y de la documentación aportada. La tensión por sector se basa en la convocatoria 2024 (DOGV-C-2024-9665); en 2026 cambian algunas definiciones de sector, por lo que es un indicador de competencia relativa, no una garantía. Fuente del baremo: Resolución INPYME 2026 (DOGV-C-2026-4406).</p>
+<p class="note" style="border:0;margin-top:6px">Documento de trabajo · <b>Ruta i40</b> — acompañamiento anual para ayudas industriales de la Comunitat Valenciana.</p>
+</section>
+</div>
+<script>
+/* ============ DATA ============ */
+const SECTORS = [
+ {n:"Automoción, defensa y seguridad, espacial, aeronáutica, semiconductores", ratio:0.43, est:"exc", min:20000, note:"«Defensa y seguridad» es nuevo en 2026; podría atraer más demanda."},
+ {n:"Biotecnología, audiovisual y videojuegos; agroalimentario (solo despoblados)", ratio:0.43, est:"exc", min:10000, note:"Agroalimentario nuevo y restringido a municipios del Anexo IV."},
+ {n:"Cerámica, vidrio, construcción industrializada y materiales no metálicos", ratio:1.01, est:"eq", min:20000, note:"En equilibrio en 2024; «construcción industrializada» se añade en 2026."},
+ {n:"Cuero y calzado", ratio:0.65, est:"exc", min:20000, note:""},
+ {n:"Envases y embalajes", ratio:0.85, est:"exc", min:20000, note:""},
+ {n:"Juguete, industria del deporte y otras manufactureras", ratio:0.31, est:"exc", min:10000, note:"El sector más holgado en 2024 (corte ≈ mínimo)."},
+ {n:"Hábitat (madera, muebles, baño/cocina, iluminación)", ratio:1.42, est:"def", min:20000, note:"Antes «Madera, muebles e iluminación»; ampliado a baño y cocina."},
+ {n:"Mármol, piedra natural y áridos", ratio:0.45, est:"exc", min:20000, note:""},
+ {n:"Metal mecánico", ratio:2.16, est:"def", min:20000, note:"El sector más tensionado en 2024 (mayor nota de corte)."},
+ {n:"Papel y artes gráficas", ratio:1.51, est:"def", min:20000, note:""},
+ {n:"Plástico", ratio:1.60, est:"def", min:20000, note:""},
+ {n:"Químico", ratio:1.20, est:"def", min:20000, note:""},
+ {n:"Textil", ratio:1.51, est:"def", min:20000, note:""},
+ {n:"Valorización de materiales", ratio:0.54, est:"exc", min:20000, note:""},
+];
+
+
+const ANEXO4=["Ademuz", "Agres", "Aielo de Rugat", "Aín", "Albocàsser", "Alcoleja", "Alcosser", "Alcublas", "Alcudia de Veo", "Alfafara", "Alfondeguilla", "Algimia de Almonacid", "Almedíjar", "Almiserà", "Almudaina", "Alpuente", "Andilla", "Anna", "Antella", "Arañuel", "Aras de los Olmos", "Ares del Maestrat", "Argelita", "Atzeneta del Maestrat", "Atzúbia, L'", "Ayódar", "Ayora", "Azuébar", "Balones", "Barracas", "Bejís", "Bèlgida", "Benafer", "Benafigos", "Benagéber", "Benasau", "Benassal", "Beniardà", "Beniarrés", "Beniatjar", "Benicolet", "Benifallim", "Benifato", "Benigembla", "Benilloba", "Benillup", "Benimantell", "Benimarfull", "Benimassot", "Benimeli", "Benissuera", "Bicorp", "Bolbaite", "Bolulla", "Bufali", "Bugarra", "Calles", "Camporrobles", "Canet lo Roig", "Carrícola", "Casas Altas", "Casas Bajas", "Castell de Cabres", "Castell de Castells", "Castell de Guadalest, el", "Castellfort", "Castellnovo", "Castellonet de la Conquesta", "Castielfabib", "Castillo de Villamalefa", "Catí", "Caudete de las Fuentes", "Caudiel", "Cervera del Maestre", "Chelva", "Chera", "Chóvar", "Chulilla", "Cinctorres", "Cirat", "Cofrentes", "Confrides", "Cortes de Arenoso", "Cortes de Pallás", "Coves de Vinromà, les", "Culla", "Daya Vieja", "Domeño", "Dos Aguas", "Emperador", "Énova L'", "Eslida", "Espadilla", "Estubeny", "Fageca", "Famorca", "Fanzara", "Figueroles", "Fondó de les Neus, El/Hondón de las Nieves", "Fontanars dels Alforins", "Forcall", "Fuente la Reina", "Fuenterrobles", "Fuentes de Ayódar", "Gaianes", "Gaibiel", "Gátova", "Geldo", "Gestalgar", "Gorga", "Granja de la Costera, La", "Herbers", "Higueras", "Higueruelas", "Jalance", "Jana, La", "Jarafuel", "Llaurí", "Llíber", "Llocnou de la Corona", "Llucena/Lucena del Cid", "Losa del Obispo", "Ludiente", "Mata de Morella, La", "Matet", "Millares", "Millena", "Montán", "Montanejos", "Montitxelvo/Montichelvo", "Morella", "Murla", "Olocau del Rey", "Orxa, L'/Lorcha", "Otos", "Palanques", "Pedralba", "Penàguila", "Pina de Montalgrao", "Pinet", "Planes", "Pobla de Benifassà, La", "Portell de Morella", "Puebla de Arenoso", "Puebla de San Miguel", "Quatretonda", "Quatretondeta", "Quesa", "Ràfol d'Almúnia, El", "Relleu", "Rossell", "Rugat", "Sacañet", "Sagra", "Salem", "Salzadella, La", "San Rafael del Río", "Sanet y Negrals", "Santa Magdalena de Pulpis", "Segart", "Sella", "Sellent", "Sempere", "Serratella, La", "Sierra Engarcerán", "Sinarcas", "Sot de Chera", "Suera/Sueras", "Sumacàrcer", "Tàrbena", "Teresa", "Teresa de Cofrentes", "Terrateig", "Tírig", "Titaguas", "Todolella", "Toga", "Tollos", "Torás", "Tormos", "Toro, El", "Torralba del Pinar", "Torre de les Maçanes, La/Torremanzanas", "Torre d'en Besora, La", "Torre d'en Doménec, La", "Torrebaja", "Torrechiva", "Torrella", "Tuéjar", "Useres, les/Useras", "Vall d'Alcalà, La", "Vall de Almonacid", "Vall de Gallinera, La", "Vall de Laguar, La", "Vall d'Ebo, La", "Vallanca", "Vallat", "Vallés", "Vallibona", "Venta del Moro", "Vilafranca/Villafranca del Cid", "Vilanova d'Alcolea", "Vilar de Canes", "Villahermosa del Río", "Villamalur", "Villanueva de Viver", "Villar del Arzobispo", "Villargordo del Cabriel", "Villores", "Vistabella del Maestrat", "Xert", "Xodos/Chodos", "Yesa, La", "Zarra", "Zorita del Maestrazgo"];
+function normMuni(s){return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();}
+function checkMuni(q){
+  const r=document.getElementById('muniResult'); q=q.trim();
+  if(q.length<2){ r.innerHTML=''; return; }
+  const nq=normMuni(q);
+  const hits=ANEXO4.filter(m=>normMuni(m).includes(nq));
+  const exact=ANEXO4.some(m=>{const p=m.split('/'); return p.some(x=>normMuni(x)===nq);});
+  if(hits.length===0){ r.innerHTML='<span style="color:var(--bad);font-weight:600">«'+q+'» no figura en el Anexo IV.</span> Si la inversión se ubica ahí, no suma los 10 puntos de despoblación.'; }
+  else { r.innerHTML='<span style="color:var(--ok);font-weight:600">'+(exact?'✓ Tu municipio está en el Anexo IV.':'Coincidencias en el Anexo IV:')+'</span> '+hits.slice(0,14).join(' · ')+(exact?' Marca «Sí» arriba para sumar los 10 puntos.':''); }
+}
+
+const S = { adm:{pyme:null,trab:null,cnae:null,muni:null,presu:null,prohib:null,moros:null,minimis:0}, sector:null, v:{}, mem:{}, lead:null, leadSubmitted:false };
+const OBJ_MAX=28, CORTE=50, MEM_MAX=72;
+
+/* ============ ADMISSION ============ */
+const ADM=[
+ {k:"pyme",q:"¿Es una PYME privada con personalidad jurídica propia?",h:"Quedan excluidos autónomos (persona física) y comunidades de bienes. <250 empleados y ≤50 M€ de volumen (o ≤43 M€ de balance)."},
+ {k:"trab",q:"¿Tiene al menos 1 persona trabajadora por cuenta ajena a la fecha de solicitud?",h:"Debe constar de alta como empresa en la Seguridad Social."},
+ {k:"cnae",q:"¿La nota del Registro Mercantil recoge un CNAE del Anexo I del sector elegido?",h:"GATE crítico: su ausencia es inadmisión directa NO subsanable. La nota no puede tener más de 1 mes."},
+ {k:"muni",q:"¿Toda la inversión se ejecuta en un único municipio de la Comunitat Valenciana?",h:"Un solo proyecto y un solo municipio por solicitud."},
+ {k:"prohib",q:"¿Está al corriente y libre de las prohibiciones del art. 13 LGS?",h:"Sin deudas con Hacienda/SS, no en concurso sin convenio aprobado, etc."},
+ {k:"moros",q:"Si la ayuda supera 30.000 €, ¿cumple los plazos de pago a proveedores (Ley 3/2004)?",h:"El incumplimiento de morosidad impide ser beneficiaria por encima de ese importe. Marca «Sí» si no aplica."},
+];
+function renderAdm(){
+  let h="";
+  ADM.forEach(a=>{ h+=`<div class="card"><div class="q"><div class="txt"><b>${a.q}</b><small>${a.h}</small></div>
+    <div class="seg" data-k="${a.k}"><button onclick="setAdm('${a.k}',true,this)">Sí</button><button onclick="setAdm('${a.k}',false,this)">No</button></div></div></div>`; });
+  h+=`<div class="card"><div class="field-row"><div class="q txt"><b>Presupuesto subvencionable estimado (sin IVA)</b><small>Mínimo 20.000 € (10.000 € en deporte, biotecnología, audiovisual y videojuegos).</small></div><div><input type="number" placeholder="€" oninput="S.adm.presu=+this.value;checkAdm()"> €</div></div></div>`;
+  h+=`<div class="card"><div class="field-row"><div class="q txt"><b>Minimis ya consumido por tu «empresa única» en 3 años</b><small>El tope es 300.000 €. Si no has recibido otras ayudas minimis, deja 0.</small></div><div><input type="number" placeholder="0" value="0" oninput="S.adm.minimis=+this.value;checkAdm()"> €</div></div></div>`;
+  document.getElementById("admBox").innerHTML=h;
+  setTimeout(function(){ if(typeof i40SendHeight==='function') i40SendHeight(); }, 80);
+}
+function setAdm(k,val,btn){ S.adm[k]=val; [...btn.parentElement.children].forEach(b=>b.classList.remove("on","green","red")); btn.classList.add("on",val?"green":"red"); checkAdm(); }
+function checkAdm(){
+  const fails=ADM.filter(a=>S.adm[a.k]===false).map(a=>a.k);
+  let budgetWarn=false;
+  if(S.adm.presu!=null){ const min=S.sector!=null?SECTORS[S.sector].min:10000; if(S.adm.presu<min) budgetWarn=true; }
+  const minimisWarn=S.adm.minimis>=300000;
+  const v=document.getElementById("admVerdict");
+  const answered=ADM.every(a=>S.adm[a.k]!==null);
+  if(!answered){ v.innerHTML=`<div class="gate" style="background:#fff8ee;border-color:var(--line);color:var(--steel-soft)"><span class="dot" style="background:var(--steel-soft)"></span>Responde las preguntas para ver tu estado de admisión.</div>`; return; }
+  if(fails.length===0&&!budgetWarn&&!minimisWarn){
+    v.innerHTML=`<div class="gate green"><span class="dot"></span><div>Cumples los requisitos de admisión.<small>Tu expediente puede entrar a evaluación.</small></div></div>`;
+  } else {
+    const msg=[];
+    if(fails.includes("cnae"))msg.push("CNAE del Anexo I ausente en la nota registral (inadmisión NO subsanable)");
+    if(fails.includes("pyme"))msg.push("no es PYME privada con personalidad jurídica");
+    if(fails.includes("trab"))msg.push("sin persona trabajadora por cuenta ajena");
+    if(fails.includes("muni"))msg.push("inversión fuera de un único municipio de la Comunitat");
+    if(fails.includes("prohib"))msg.push("posible prohibición del art. 13 LGS");
+    if(fails.includes("moros"))msg.push("incumplimiento de plazos de pago para ayuda >30.000 €");
+    if(budgetWarn)msg.push("presupuesto por debajo del mínimo del sector");
+    if(minimisWarn)msg.push("minimis agotado (≥300.000 € en 3 años)");
+    v.innerHTML=`<div class="gate red"><span class="dot"></span><div>Riesgo de inadmisión: ${msg.join("; ")}.<small>Resuélvelo antes de presentar. Puedes seguir evaluando para ver el potencial.</small></div></div>`;
+  }
+}
+
+/* ============ SECTOR ============ */
+function renderSectorSelect(){ const s=document.getElementById("sectorSel"); s.innerHTML='<option value="">— Selecciona sector —</option>'+SECTORS.map((x,i)=>`<option value="${i}">${x.n}</option>`).join(""); }
+function renderTension(){
+  const i=document.getElementById("sectorSel").value, box=document.getElementById("tensionBox");
+  if(i===""){ S.sector=null; box.innerHTML=`<div style="color:var(--steel-soft);font-size:14px">Selecciona un sector para ver su tensión de crédito.</div>`; return; }
+  S.sector=+i; const x=SECTORS[+i]; checkAdm();
+  const pos=Math.max(6,Math.min(94,((x.ratio-0.3)/(2.2-0.3))*86+7));
+  const estLabel={exc:"Excedentario",eq:"En equilibrio",def:"Deficitario"}[x.est];
+  const estClass={exc:"e-exc",eq:"e-eq",def:"e-def"}[x.est];
+  const reading=x.est==="exc"?"Sector poco solicitado en 2024: todos los aprobados obtuvieron ayuda, así que la nota de corte real rondó el <b>mínimo de 50 puntos</b>. Margen cómodo.":x.est==="eq"?"Demanda ≈ crédito en 2024. Corte probablemente <b>algo por encima de 50</b>.":"Sector muy solicitado en 2024 (demanda "+x.ratio.toFixed(1)+"× el crédito inicial): la nota de corte fue <b>claramente superior a 50</b>. Aquí cada punto cuenta.";
+  box.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div><span class="badge-estado ${estClass}">${estLabel}</span></div><div class="mono" style="font-size:13px;color:var(--steel-soft)">demanda 2024 = <b style="color:var(--ink)">${x.ratio.toFixed(2)}×</b> crédito inicial</div></div>
+    <div class="tmeter"><div class="needle" style="left:${pos}%"></div></div>
+    <div class="tmeter-labels"><span>Holgado · corte ≈ 50</span><span>Equilibrio</span><span>Saturado · corte alto</span></div>
+    <p style="font-size:14px;margin:14px 0 0;line-height:1.55">${reading}</p>
+    ${x.note?`<p style="font-size:12.5px;color:var(--steel-soft);margin:10px 0 0;border-top:1px dashed var(--line);padding-top:9px">⚠ ${x.note}</p>`:""}`;
+}
+
+/* ============ OBJECTIVE MODEL (28 pts) ============ */
+const OBJ=[
+ {id:"o_exp",bloque:"I",kind:"select",label:"Experiencia en la actividad proyectada",info:"Por antigüedad registral o traspaso documentado.",max:3,
+   opts:[["0","Menos de 5 años",0],["1","Entre 5 y 7 años",1],["2","Entre 7 y 10 años",2],["3","Más de 10 años",3]]},
+ {id:"o_enclave",bloque:"III",kind:"toggle",label:"Inversión en enclave tecnológico o área industrial avanzada (Ley 14/2018)",info:"Otorga automáticamente los 4 puntos de competitividad.",gain:4,given:true},
+ {id:"o_ip",bloque:"III",kind:"toggle",label:"Inversión en patente, modelo de utilidad o diseño industrial registrado",info:"Otorga automáticamente los 4 puntos de innovación. El modelo de utilidad/diseño se registra en pocos meses.",gain:4},
+ {id:"o_huella",bloque:"IV",kind:"select",label:"Huella de carbono · % del proyecto provisto por empresas de la Comunitat",info:"Si no identificas TODAS las ubicaciones de proveedores, el apartado es 0.",max:4,
+   opts:[["0","No identifico todas / menos del 30 %",0],["1","Más del 30 %",1],["2","Más del 50 %",2],["3","Más del 75 %",3],["4","100 % Comunitat Valenciana",4]]},
+ {id:"o_empleo",bloque:"V",kind:"number",unit:"contratos laborales",label:"Nuevas contrataciones laborales de personal",info:"Contratación de personas trabajadoras por cuenta ajena (indefinido, fijo discontinuo, parcial u otro) formalizada o prevista por el proyecto. No son contratos con proveedores ni mercantiles. 1 punto por contrato, máximo 2.",per:1,capPts:2,max:2},
+ {id:"o_desp",bloque:"V",kind:"toggle",label:"Inversión íntegra en municipio del Anexo IV (despoblación)",info:"+10 puntos, eleva la intensidad al 40 % y es el primer criterio de desempate.",gain:10,given:true,muniChecker:true},
+ {id:"o_don",bloque:"V",kind:"toggle",label:"Donación acreditada (>1.000 €) a entidad social (2025-2026)",info:"Requiere certificado de la entidad sin ánimo de lucro.",gain:1},
+];
+function renderObj(){
+  let h="";
+  OBJ.forEach(it=>{
+    const tag=it.given?'<span class="pts-tag given">'+(it.gain||it.max)+' · ubicación</span>':'<span class="pts-tag auto">'+(it.gain!=null?it.gain:('máx '+it.max))+'</span>';
+    let ctrl="";
+    if(it.kind==="select") ctrl=`<select onchange="S.v['${it.id}']=this.value;"><option value="">—</option>`+it.opts.map(o=>`<option value="${o[0]}">${o[1]} · ${o[2]} pts</option>`).join("")+`</select>`;
+    else if(it.kind==="toggle") ctrl=`<div class="seg" data-id="${it.id}"><button onclick="setObjToggle('${it.id}',true,this)">Sí</button><button onclick="setObjToggle('${it.id}',false,this)">No</button></div>`;
+    else if(it.kind==="number") ctrl=`<input type="number" min="0" placeholder="0" oninput="S.v['${it.id}']=+this.value"> ${it.unit||'unidades'}`;
+    let extra="";
+    if(it.muniChecker){
+      extra=`<div style="margin-top:12px;border-top:1px dashed var(--line);padding-top:12px">
+        <b style="font-size:13.5px">¿Tu municipio está en el Anexo IV?</b>
+        <input type="text" placeholder="Escribe el nombre del municipio…" oninput="checkMuni(this.value)" style="width:100%;margin-top:7px;min-width:0">
+        <div id="muniResult" style="margin-top:8px;font-size:13px;line-height:1.5"></div>
+        <details style="margin-top:10px"><summary style="cursor:pointer;font-size:12.5px;color:var(--steel);font-weight:600">Ver los 215 municipios y la fuente oficial</summary>
+        <div style="font-size:12px;color:var(--ink-soft);columns:2;column-gap:24px;margin-top:9px;max-height:230px;overflow:auto;border:1px solid var(--line);border-radius:4px;padding:11px;background:#fff">`+ANEXO4.map(m=>'<div style="break-inside:avoid;padding:1px 0">'+m+'</div>').join('')+`</div>
+        <a href="https://dogv.gva.es/datos/2026/02/12/pdf/2026_4406_es.pdf" target="_blank" rel="noopener" style="font-size:12px;color:var(--accent-d);display:inline-block;margin-top:9px;font-weight:600">Anexo IV · Resolución INPYME 2026 en el DOGV ↗</a>
+        </details></div>`;
+    }
+    h+=`<div class="card"><div class="q"><div class="txt"><b>${it.label}</b><small>${it.info}</small></div>${tag}</div><div style="margin-top:4px">${ctrl}</div>${extra}</div>`;
+  });
+  document.getElementById("objForm").innerHTML=h;
+}
+function setObjToggle(id,v,btn){ S.v[id]=v; [...btn.parentElement.children].forEach(b=>b.classList.remove("on")); btn.classList.add("on"); refreshMem(); }
+function scoreObj(){
+  let s=0, by={I:0,III:0,IV:0,V:0};
+  OBJ.forEach(it=>{ let p=0; const v=S.v[it.id];
+    if(it.kind==="select"){ const o=it.opts.find(o=>o[0]===v); p=o?o[2]:0; }
+    else if(it.kind==="toggle"){ p=v===true?it.gain:0; }
+    else if(it.kind==="number"){ p=Math.min((v||0)*it.per,it.capPts); }
+    s+=p; by[it.bloque]+=p; });
+  return {s:Math.round(s*10)/10, by};
+}
+
+/* ============ MEMORIA CHECKLIST (no puntúa) ============ */
+const MEM=[
+ {g:"Bloque I · Empresa", items:[
+   {id:"m_ante",l:"Antecedentes, propiedad y datos económicos de 5 años (empleo, ventas, beneficios, exportaciones)"},
+   {id:"m_act",l:"Descripción de las actividades actuales"} ]},
+ {g:"Bloque II · Proyecto (55 pts del baremo, el bloque decisivo)", items:[
+   {id:"m_estr",l:"Estrategia y motivos de la inversión y de los activos elegidos"},
+   {id:"m_viab",l:"Viabilidad: ratio de rentabilidad, pay-back y fuentes de financiación"},
+   {id:"m_tabla",l:"Tabla de costes detallada e individualizada",hi:true},
+   {id:"m_docs",l:"Fichas / documentos técnicos de cada activo"},
+   {id:"m_presu",l:"Presupuestos, facturas o documentos de encargo"},
+   {id:"m_diag",l:"Diagrama de bloques/flujo y plano de distribución"},
+   {id:"m_recur",l:"Capacidades de proveedores y medios técnicos/humanos"},
+   {id:"m_plan",l:"Plan de trabajo con etapas y fechas"} ]},
+ {g:"Bloque III · Competitividad", items:[
+   {id:"m_div",l:"Diversificación de productos / apertura de mercados o clientes"},
+   {id:"m_comp",l:"Justificación del impacto en competitividad con datos",dep:"o_enclave",depTxt:"Cubierto por el enclave tecnológico (objetivo)."},
+   {id:"m_innov",l:"Justificación de la innovación de proceso/producto con datos",dep:"o_ip",depTxt:"Cubierto por la patente/modelo de utilidad (objetivo)."} ]},
+ {g:"Bloque IV · Sostenibilidad", items:[
+   {id:"m_ener",l:"Reducción de energía, agua o materias primas",ev:"Auditoría o certificado de eficiencia energética externo. Sin esta evidencia la memoria solo opta a la mitad de estos puntos: no basta con citar porcentajes."},
+   {id:"m_res",l:"Reducción de residuos/emisiones o economía circular",ev:"Informe o certificado de mejora ambiental externo. Sin esta evidencia la memoria solo opta a la mitad de estos puntos."} ]},
+];
+function renderMem(){
+  let h="";
+  MEM.forEach(gr=>{
+    h+=`<div class="card" style="background:var(--paper2);border-color:var(--line);padding:11px 16px"><b style="font-family:'Roboto Slab';font-size:16px">${gr.g}</b></div>`;
+    h+=`<div class="card">`;
+    gr.items.forEach(it=>{
+      const covered = it.dep && S.v[it.dep]===true;
+      const hl = it.hi?' <b style="color:var(--accent-d)">· mayor peso</b>':'';
+      if(it.ev){
+        const on=S.mem[it.id]===true;
+        h+=`<div class="mc-ev"><div style="display:flex;align-items:flex-start;gap:10px"><span style="color:var(--steel);font-weight:700;flex:0 0 auto;margin-top:2px">▸</span><div style="flex:1"><span style="display:flex;align-items:center;flex-wrap:wrap;gap:8px"><b style="font-size:14px">${it.l}</b><span class="ev-badge">Evidencia externa</span></span><div class="ev-why" style="margin-left:0;margin-top:5px">⚙ ${it.ev}</div><label class="chk" style="margin-top:10px;border-top:1px dashed var(--line);padding:9px 0 0;font-size:13px"><input type="checkbox" ${on?'checked':''} onchange="S.mem['${it.id}']=this.checked;refreshMem()"> <span><b>Dispondré de esta evidencia</b> antes de presentar la solicitud</span></label>${on?'<div style=\"font-size:12.5px;color:var(--ok);font-weight:600;margin:6px 0 0 27px\">✓ Con esta evidencia, esos puntos de sostenibilidad pasan a ser alcanzables en la memoria.</div>':''}</div></div></div>`;
+      } else if(covered){
+        h+=`<div style="display:flex;gap:10px;padding:9px 2px;border-bottom:1px dashed var(--line-soft);opacity:.6"><span style="color:var(--ok);font-weight:700;flex:0 0 auto;margin-top:1px">✓</span><div style="flex:1"><b style="font-size:14px;text-decoration:line-through">${it.l}${hl}</b><div style="font-size:12.5px;color:var(--ok);margin-top:3px;text-decoration:none">${it.depTxt}</div></div></div>`;
+      } else {
+        h+=`<div style="display:flex;gap:10px;padding:9px 2px;border-bottom:1px dashed var(--line-soft)"><span style="color:var(--steel);font-weight:700;flex:0 0 auto;margin-top:1px">▸</span><div style="flex:1"><b style="font-size:14px">${it.l}${hl}</b></div></div>`;
+      }
+    });
+    h+=`</div>`;
+  });
+  document.getElementById("memForm").innerHTML=h;
+}
+function refreshMem(){ renderMem(); }
+
+/* ============ RESULT ============ */
+
+let RESULT_ENDPOINT = "https://convokit-production.up.railway.app/submit-evaluation";
+try{
+  if(window.parent && window.parent.INPYME_RESULT_ENDPOINT){ RESULT_ENDPOINT = window.parent.INPYME_RESULT_ENDPOINT; }
+}catch(e){}
+
+function getPageUrl(){
+  try{ if(window.parent && window.parent.location){ return window.parent.location.href; } }catch(e){}
+  return window.location.href;
+}
+
+function esc(v){
+  return String(v==null?"":v).replace(/[&<>'"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;","\"":"&quot;"}[c];});
+}
+function fmtMoney(v){ return Number(v||0).toLocaleString('es-ES',{maximumFractionDigits:0}) + ' €'; }
+function capsData(){
+  const caps=[];
+  if(S.v.o_ip!==true) caps.push({gain:"+4",kind:"cap",class:"CAPTURABLE · preparable",title:"Registrar un modelo de utilidad o diseño industrial",text:"4 puntos automáticos de innovación; se tramita en pocos meses."});
+  const hu=S.v.o_huella?+S.v.o_huella:0; if(hu<4) caps.push({gain:"+"+(4-hu),kind:"design",class:"CAPTURABLE · diseño",title:"Elevar el % de proveedores de la Comunitat",text:"Contrata ingeniería, instalación o suministro a empresas valencianas e identifica todas las ubicaciones."});
+  if(S.v.o_don!==true) caps.push({gain:"+1",kind:"cap",class:"CAPTURABLE · preparable",title:"Donación acreditada (>1.000 €) a entidad social",text:"Requiere certificado de la entidad. Bajo coste, punto seguro."});
+  const emp=S.v.o_empleo||0; if(emp<2) caps.push({gain:"+"+(2-emp),kind:"design",class:"CAPTURABLE · diseño",title:"Vincular contrataciones al proyecto",text:"1 punto por contrato, hasta 2."});
+  if(S.mem.m_ener!==true) caps.push({gain:"certif.",kind:"ev",class:"MEMORIA · evidencia externa",title:"Auditoría o certificado de eficiencia energética",text:"Desbloquea la mitad de los puntos de reducción de consumo (energía/agua/materias). Encargarla con tiempo es la única forma de no perder esos puntos."});
+  if(S.mem.m_res!==true) caps.push({gain:"certif.",kind:"ev",class:"MEMORIA · evidencia externa",title:"Informe o certificado de residuos / economía circular",text:"Desbloquea la mitad de los puntos de reducción de residuos. Sin esta evidencia, los porcentajes en la memoria no bastan."});
+  if(S.v.o_desp!==true) caps.push({gain:"+10",kind:"given",class:"FACTOR DADO · ubicación",title:"Si la inversión se ubicara en un municipio del Anexo IV",text:"Sumaría 10 puntos y subiría la intensidad al 40 %. Solo accionable si planificas dónde implantar."});
+  if(S.v.o_enclave!==true) caps.push({gain:"+4",kind:"given",class:"FACTOR DADO · ubicación",title:"Enclave tecnológico / área industrial avanzada",text:"4 puntos automáticos. Depende de la ubicación del establecimiento."});
+  return caps;
+}
+function getAdmissionSummary(){
+  const fails=ADM.filter(a=>S.adm[a.k]===false).map(a=>a.q);
+  const answered=ADM.every(a=>S.adm[a.k]!==null);
+  const sec=S.sector!=null?SECTORS[S.sector]:null;
+  const min=sec?sec.min:10000;
+  const budgetWarn=(S.adm.presu!=null && S.adm.presu>0 && S.adm.presu<min);
+  const minimisWarn=(S.adm.minimis||0)>=300000;
+  const ok=answered && fails.length===0 && !budgetWarn && !minimisWarn;
+  return {ok, answered, fails, budgetWarn, minimisWarn, min};
+}
+function buildEvaluationPayload(lead){
+  const o=scoreObj();
+  const sec=S.sector!=null?SECTORS[S.sector]:null;
+  const desp=S.v.o_desp===true;
+  const intensity=desp?0.40:0.30;
+  const presu=S.adm.presu||0;
+  const minimisRem=Math.max(0,300000-(S.adm.minimis||0));
+  const ayuda=Math.max(0,Math.min(presu*intensity,200000,minimisRem));
+  const memNeeded=Math.max(0,CORTE-o.s);
+  const adm=getAdmissionSummary();
+  return {
+    source:"Landing INPYME WordPress · Innóvate 4.0",
+    tool:"Autoevaluador INPYME 2027 · basado en datos INPYME 2026",
+    created_at:new Date().toISOString(),
+    page_url:getPageUrl(),
+    lead:lead,
+    summary:{
+      admission_status: adm.ok ? "Cumple los requisitos declarados" : "Riesgo de inadmisión o información pendiente",
+      admission_fails: adm.fails,
+      budget_below_minimum: adm.budgetWarn,
+      minimis_warning: adm.minimisWarn,
+      objective_score:o.s,
+      objective_score_max:28,
+      total_cut:50,
+      memory_points_needed:memNeeded,
+      memory_points_max:72,
+      estimated_aid:Math.round(ayuda),
+      estimated_intensity:Math.round(intensity*100),
+      estimated_budget:presu,
+      minimis_remaining:Math.round(minimisRem),
+      sector:sec?sec.n:"No seleccionado",
+      sector_tension:sec?({exc:"Excedentario",eq:"Equilibrio",def:"Deficitario"}[sec.est]):"No seleccionado",
+      sector_ratio:sec?sec.ratio:null
+    },
+    answers:{admission:S.adm, objective:S.v, memory_evidence:S.mem},
+    pending_actions:capsData(),
+    legal_note:"Resultado orientativo para INPYME 2027 basado en datos de INPYME 2026. La convocatoria 2027 puede cambiar."
+  };
+}
+function renderLeadGate(){
+  const leadBox=document.getElementById("leadGateBox");
+  const resultBox=document.getElementById("resultBox");
+  const resultNav=document.getElementById("resultNav");
+  if(resultBox){ resultBox.style.display="none"; resultBox.innerHTML=""; }
+  if(resultNav){ resultNav.style.display="none"; }
+  if(!leadBox) return;
+  const o=scoreObj();
+  const adm=getAdmissionSummary();
+  const sec=S.sector!=null?SECTORS[S.sector].n:"sector no seleccionado";
+  leadBox.innerHTML=`
+    <div class="lead-gate">
+      <h3>Para ver el resultado, necesitamos tus datos de contacto</h3>
+      <p>Enviaremos el resultado del autoevaluador a Innóvate 4.0 y recibirás una copia orientativa por correo. Después veremos el resultado en pantalla y contactaremos contigo para comentar el proyecto.</p>
+      <div class="callout" style="margin:0 0 16px"><span class="ct-k">Resumen antes del envío</span>Has completado una evaluación con <b>${o.s} puntos objetivos sobre 28</b> y sector <b>${esc(sec)}</b>. ${adm.ok?"No aparecen riesgos de admisión en las respuestas declaradas.":"Aparecen posibles riesgos de admisión o información pendiente."}</div>
+      <form id="leadResultForm" onsubmit="submitEvaluationLead(event)" novalidate>
+        <input class="hp-field" name="website" type="text" tabindex="-1" autocomplete="off">
+        <div class="lead-grid">
+          <div class="lead-field"><label for="lead-nombre">Nombre y apellidos</label><input id="lead-nombre" name="nombre" type="text" autocomplete="name" required value="${esc(S.lead&&S.lead.nombre)}"></div>
+          <div class="lead-field"><label for="lead-empresa">Nombre de la empresa</label><input id="lead-empresa" name="empresa" type="text" autocomplete="organization" required value="${esc(S.lead&&S.lead.empresa)}"></div>
+          <div class="lead-field"><label for="lead-poblacion">Población</label><input id="lead-poblacion" name="poblacion" type="text" autocomplete="address-level2" required value="${esc(S.lead&&S.lead.poblacion)}"></div>
+          <div class="lead-field"><label for="lead-telefono">Teléfono</label><input id="lead-telefono" name="telefono" type="tel" autocomplete="tel" required value="${esc(S.lead&&S.lead.telefono)}"></div>
+          <div class="lead-field full"><label for="lead-email">Correo electrónico</label><input id="lead-email" name="email" type="email" autocomplete="email" required value="${esc(S.lead&&S.lead.email)}"></div>
+        </div>
+        <label class="lead-check"><input name="privacy" type="checkbox" required> <span>Acepto que Innóvate 4.0 trate estos datos para enviarme el resultado orientativo y contactar conmigo sobre la preparación de INPYME 2027. Resultado basado en datos de INPYME 2026.</span></label>
+        <div class="lead-actions"><button class="btn ghost" type="button" onclick="go(2)">← Ajustar respuestas</button><button class="btn primary" type="submit">Enviar y ver resultado</button></div>
+        <div id="leadSubmitStatus" aria-live="polite"></div>
+      </form>
+    </div>`;
+}
+async function submitEvaluationLead(ev){
+  ev.preventDefault();
+  const form=ev.currentTarget;
+  const status=document.getElementById("leadSubmitStatus");
+  const btn=form.querySelector('button[type="submit"]');
+  const fd=new FormData(form);
+  const lead={
+    nombre:String(fd.get("nombre")||"").trim(),
+    empresa:String(fd.get("empresa")||"").trim(),
+    poblacion:String(fd.get("poblacion")||"").trim(),
+    telefono:String(fd.get("telefono")||"").trim(),
+    email:String(fd.get("email")||"").trim(),
+    website:String(fd.get("website")||"").trim(),
+    privacy:fd.get("privacy")?true:false
+  };
+  if(!lead.nombre||!lead.empresa||!lead.poblacion||!lead.telefono||!lead.email||!lead.privacy){
+    status.innerHTML='<div class="lead-alert err">Completa todos los campos y acepta el aviso de contacto para poder ver el resultado.</div>';
+    return;
+  }
+  const payload=buildEvaluationPayload(lead);
+  try{
+    if(btn){ btn.disabled=true; btn.textContent="Enviando resultado..."; }
+    status.innerHTML='<div class="lead-alert">Enviando el resultado. Un momento...</div>';
+    const res=await fetch(RESULT_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+    let data={};
+    try{ data=await res.json(); }catch(e){}
+    if(!res.ok || data.success===false){ throw new Error(data.message||"No se ha podido enviar el resultado."); }
+    S.lead=lead; S.leadSubmitted=true;
+    document.getElementById("leadGateBox").innerHTML='<div class="gate green"><span class="dot"></span><div>Resultado enviado correctamente.<small>Innóvate 4.0 ha recibido la evaluación y contactará contigo para comentar el proyecto. También recibirás una copia orientativa por correo.</small></div></div>';
+    renderResult();
+    const rb=document.getElementById("resultBox");
+    const rn=document.getElementById("resultNav");
+    if(rb){ rb.style.display="block"; setTimeout(()=>rb.scrollIntoView({behavior:"smooth",block:"start"}),80); }
+    if(rn){ rn.style.display="flex"; }
+  }catch(err){
+    status.innerHTML='<div class="lead-alert err">No se ha podido enviar el resultado. Revisa la conexión o la configuración del envío y vuelve a intentarlo. El resultado no se muestra hasta completar el envío.</div>';
+    if(btn){ btn.disabled=false; btn.textContent="Enviar y ver resultado"; }
+  }
+}
+
+function renderResult(){
+  const o=scoreObj();
+  const desp=S.v.o_desp===true, intensity=desp?0.40:0.30;
+  const presu=S.adm.presu||0, minimisRem=300000-(S.adm.minimis||0);
+  const ayuda=Math.max(0,Math.min(presu*intensity,200000,minimisRem));
+  const sec=S.sector!=null?SECTORS[S.sector]:null;
+  const memNeeded=Math.max(0,CORTE-o.s);
+  let dcls,dtxt;
+  if(memNeeded<=22){ dcls="go"; dtxt="Buen punto de partida. Pero los 50 puntos son solo el mínimo legal."; }
+  else if(memNeeded<=36){ dcls="mid"; dtxt="Punto de partida ajustado. La memoria tendrá que ser muy completa y exhaustiva."; }
+  else { dcls="no"; dtxt="Punto de partida bajo. Conviene sumar puntos objetivos antes de presentar."; }
+  let secNote="";
+  if(sec){
+    if(sec.est==="def") secNote=" En un sector deficitario como el tuyo, en 2024 quedaron fuera del crédito expedientes que ya habían superado los 50 puntos.";
+    else if(sec.est==="eq") secNote=" Tu sector estuvo en equilibrio en 2024: presentar lo justo no asegura obtener la ayuda.";
+    else secNote=" Tu sector fue excedentario en 2024, pero la demanda de 2027 es desconocida y puede cambiar.";
+  }
+
+  const objPctOfTotal=Math.round(o.s); // on a /100 scale objScore is itself the %
+  const needPos=CORTE; // corte line at 50%
+
+  document.getElementById("resultBox").innerHTML=`
+    <div class="score-hero">
+      <div class="score-num">${o.s}<span class="sep"> / </span>28</div>
+      <div class="score-cap">puntos objetivos asegurados · sobre 100 totales</div>
+      <div class="barrow"><div class="bar-track">
+        <div class="bar-min" style="width:${o.s}%"></div>
+        <div class="bar-fill" style="left:${o.s}%;width:${Math.max(0,needPos-o.s)}%;opacity:.55"></div>
+        <div class="bar-cut" style="left:${needPos}%"></div>
+      </div></div>
+      <div style="display:flex;justify-content:space-between;font-family:'Inter';font-size:10.5px;color:var(--steel-soft);margin-top:8px">
+        <span>■ objetivo ${o.s}</span><span style="color:var(--accent-d)">▨ memoria para llegar al mínimo: ${memNeeded}</span><span>umbral mínimo 50</span>
+      </div>
+      <div class="verdict ${dcls}">${dtxt}<small>Para superar el <b>umbral mínimo de 50 puntos</b> que exige la convocatoria, tu memoria debe aportar al menos <b>${memNeeded} de los 72 puntos</b> evaluables. Pero el 50 es solo el mínimo legal: el crédito se reparte por orden de puntuación dentro de tu sector hasta agotarse, así que <b>cada punto adicional importa</b>.${secNote}</small></div>
+    </div>
+
+    <div class="grid2">
+      <div class="kpi"><h4>Ayuda estimada</h4><div class="big">${ayuda.toLocaleString('es-ES',{maximumFractionDigits:0})} €</div><div class="sub">${intensity*100}% sobre ${presu.toLocaleString('es-ES')} € ${desp?"(intensidad por despoblación)":""} · tope 200.000 € · minimis ${minimisRem.toLocaleString('es-ES')} € disp.</div></div>
+      <div class="kpi"><h4>Sector y tensión</h4><div class="big" style="font-size:17px;line-height:1.25">${sec?sec.n.split(",")[0]:"—"}</div><div class="sub">${sec?({exc:"Excedentario en 2024 — corte real ≈ 50",eq:"En equilibrio — corte algo > 50",def:"Deficitario — corte alto, cada punto cuenta"}[sec.est]):"Selecciona sector"}</div></div>
+    </div>
+
+    <div class="callout" style="margin-top:16px"><span class="ct-k">Por qué importa agotar cada apartado</span>Cada apartado de los 72 puntos de memoria pesa, y se pierde con facilidad: una tabla de costes genérica, una justificación sin datos o una evidencia ambiental ausente cuestan puntos completos. <b>Quedarse en el umbral mínimo de 50 no basta</b>: en concurrencia competitiva el expediente ganador suele superar el corte con margen, y nunca se sabe con cuánto hasta que se publican las concesiones. Es el trabajo especializado de la <b>Ruta i40 de Innóvate 4.0</b>: agotar cada apartado, documentarlo y construir una memoria que compita.</div>
+
+    <div class="caps">
+      <h3 style="font-family:'Roboto Slab';font-size:20px;font-weight:600;margin:24px 0 6px">Puntos objetivos pendientes de capturar</h3>
+      <p style="font-size:13.5px;color:var(--ink-soft);margin:0 0 12px">Cada punto objetivo que sumas reduce lo que la memoria debe soportar.</p>
+      ${renderCaps()}
+    </div>
+  `;
+}
+function renderCaps(){
+  const caps=[];
+  if(S.v.o_ip!==true) caps.push(["+4","cap","CAPTURABLE · preparable","Registrar un modelo de utilidad o diseño industrial","4 puntos automáticos de innovación; se tramita en pocos meses."]);
+  const hu=S.v.o_huella?+S.v.o_huella:0; if(hu<4) caps.push(["+"+(4-hu),"design","CAPTURABLE · diseño","Elevar el % de proveedores de la Comunitat","Contrata ingeniería, instalación o suministro a empresas valencianas e identifica todas las ubicaciones."]);
+  if(S.v.o_don!==true) caps.push(["+1","cap","CAPTURABLE · preparable","Donación acreditada (>1.000 €) a entidad social","Requiere certificado de la entidad. Bajo coste, punto seguro."]);
+  const emp=S.v.o_empleo||0; if(emp<2) caps.push(["+"+(2-emp),"design","CAPTURABLE · diseño","Vincular contrataciones al proyecto","1 punto por contrato, hasta 2."]);
+  if(S.mem.m_ener!==true) caps.push(["certif.","ev","MEMORIA · evidencia externa","Auditoría o certificado de eficiencia energética","Desbloquea la mitad de los puntos de reducción de consumo (energía/agua/materias). Encargarla con tiempo es la única forma de no perder esos puntos."]);
+  if(S.mem.m_res!==true) caps.push(["certif.","ev","MEMORIA · evidencia externa","Informe o certificado de residuos / economía circular","Desbloquea la mitad de los puntos de reducción de residuos. Sin esta evidencia, los porcentajes en la memoria no bastan."]);
+  if(S.v.o_desp!==true) caps.push(["+10","given","FACTOR DADO · ubicación","Si la inversión se ubicara en un municipio del Anexo IV","Sumaría 10 puntos y subiría la intensidad al 40 %. Solo accionable si planificas dónde implantar."]);
+  if(S.v.o_enclave!==true) caps.push(["+4","given","FACTOR DADO · ubicación","Enclave tecnológico / área industrial avanzada","4 puntos automáticos. Depende de la ubicación del establecimiento."]);
+  return caps.map(c=>`<div class="cap ${c[1]==='given'?'given':(c[1]==='design'?'design':(c[1]==='ev'?'ev':''))}"><div class="gain">${c[0]}</div><div class="ct"><b>${c[3]}</b><small>${c[4]}</small><span class="cclass">${c[2]}</span></div></div>`).join("")||'<div style="color:var(--ok);font-weight:600">Has marcado todas las palancas objetivas disponibles.</div>';
+}
+
+/* ============ NAV ============ */
+function go(i){
+  if(i===3){
+    if(S.leadSubmitted){
+      document.getElementById("leadGateBox").innerHTML='<div class="gate green"><span class="dot"></span><div>Resultado ya enviado.<small>Innóvate 4.0 ha recibido la evaluación y tienes la copia por correo.</small></div></div>';
+      renderResult();
+      const rb=document.getElementById("resultBox");
+      const rn=document.getElementById("resultNav");
+      if(rb) rb.style.display="block";
+      if(rn) rn.style.display="flex";
+    } else {
+      renderLeadGate();
+    }
+  }
+  document.querySelectorAll(".panel").forEach((p,k)=>p.classList.toggle("show",k===i));
+  document.querySelectorAll(".step").forEach((s,k)=>{ s.classList.toggle("active",k===i); s.classList.toggle("done",k<i); });
+  window.scrollTo({top:0,behavior:"smooth"});
+  setTimeout(i40SendHeight,120); setTimeout(i40SendHeight,500);
+}
+document.querySelectorAll(".step").forEach(s=>s.addEventListener("click",()=>go(+s.dataset.go)));
+
+/* ============ INIT ============ */
+function i40SendHeight(){ try{ if(window.parent){ window.parent.postMessage({type:'i40-inpyme-evaluator-height', height:document.documentElement.scrollHeight||document.body.scrollHeight}, '*'); } }catch(e){} }
+renderAdm(); checkAdm(); renderSectorSelect(); renderTension(); renderObj(); renderMem();
+setTimeout(i40SendHeight,80); setTimeout(i40SendHeight,650); window.addEventListener('resize', i40SendHeight);
+</script>
+</body>
+</html>

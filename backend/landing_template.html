@@ -1,15 +1,15 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>{{SEO_TITLE}}</title>
-<meta name="description" content="{{META_DESCRIPTION}}" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
-  :root {
+  /* Todo scoped bajo {{WRAPPER_SELECTOR}} (el id único de esta landing, no un
+     selector compartido): nunca *, html, body o :root. Este bloque se pega
+     directamente en una página de WordPress ya existente, así que no puede
+     tocar nada fuera de su propio wrapper. */
+  {{WRAPPER_SELECTOR}}, {{WRAPPER_SELECTOR}} *, {{WRAPPER_SELECTOR}} *::before, {{WRAPPER_SELECTOR}} *::after {
+    box-sizing: border-box; margin: 0; padding: 0;
+  }
+  {{WRAPPER_SELECTOR}} {
     --navy: #1D254C;
     --red: #C50339;
     --cream: #F2EBD8;
@@ -18,10 +18,6 @@
     --navy-10: rgba(29,37,76,0.10);
     --navy-20: rgba(29,37,76,0.20);
     --navy-60: rgba(29,37,76,0.60);
-  }
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { font-size: 16px; scroll-behavior: smooth; }
-  body {
     font-family: 'Inter', sans-serif;
     background: var(--white);
     color: var(--navy);
@@ -30,19 +26,16 @@
   }
 
   /* ── Header ── */
-  .site-header {
+  {{WRAPPER_SELECTOR}} .site-header {
     background: var(--navy);
     padding: 16px 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     border-bottom: 2px solid var(--red);
-    position: sticky;
-    top: 0;
-    z-index: 10;
   }
-  .site-header img { display: block; height: 30px; object-fit: contain; }
-  .site-header .header-cta {
+  {{WRAPPER_SELECTOR}} .site-header img { display: block; height: 30px; object-fit: contain; }
+  {{WRAPPER_SELECTOR}} .site-header .header-cta {
     font-family: 'Inter', sans-serif;
     font-size: 0.85rem;
     font-weight: 600;
@@ -52,20 +45,20 @@
     padding: 8px 18px;
     transition: background 0.2s, color 0.2s;
   }
-  .site-header .header-cta:hover { background: var(--white); color: var(--navy); }
+  {{WRAPPER_SELECTOR}} .site-header .header-cta:hover { background: var(--white); color: var(--navy); }
 
   /* ── Layout ── */
-  .wrap { max-width: 920px; margin: 0 auto; padding: 0 24px; }
-  .bloque { padding: 56px 0; border-bottom: 1px solid var(--navy-10); }
-  .bloque:last-of-type { border-bottom: none; }
+  {{WRAPPER_SELECTOR}} .wrap { max-width: 920px; margin: 0 auto; padding: 0 24px; }
+  {{WRAPPER_SELECTOR}} .bloque { padding: 56px 0; border-bottom: 1px solid var(--navy-10); }
+  {{WRAPPER_SELECTOR}} .bloque:last-of-type { border-bottom: none; }
 
   /* ── Tipografía ── */
-  h1, h2, h3 { font-family: 'Roboto Slab', serif; font-weight: 700; color: var(--navy); line-height: 1.15; }
-  .bloque-titulo {
+  {{WRAPPER_SELECTOR}} h1, {{WRAPPER_SELECTOR}} h2, {{WRAPPER_SELECTOR}} h3 { font-family: 'Roboto Slab', serif; font-weight: 700; color: var(--navy); line-height: 1.15; }
+  {{WRAPPER_SELECTOR}} .bloque-titulo {
     font-size: 1.7rem;
     margin-bottom: 22px;
   }
-  .bloque-titulo::after {
+  {{WRAPPER_SELECTOR}} .bloque-titulo::after {
     content: '';
     display: block;
     width: 48px;
@@ -73,18 +66,18 @@
     background: var(--red);
     margin-top: 12px;
   }
-  p { margin-bottom: 14px; }
-  p:last-child { margin-bottom: 0; }
-  strong { color: var(--navy); font-weight: 700; }
+  {{WRAPPER_SELECTOR}} p { margin-bottom: 14px; }
+  {{WRAPPER_SELECTOR}} p:last-child { margin-bottom: 0; }
+  {{WRAPPER_SELECTOR}} strong { color: var(--navy); font-weight: 700; }
 
   /* ── Hero ── */
-  .hero {
+  {{WRAPPER_SELECTOR}} .hero {
     background: var(--navy);
     color: var(--white);
     padding: 72px 24px;
     text-align: center;
   }
-  .hero .hero-gancho {
+  {{WRAPPER_SELECTOR}} .hero .hero-gancho {
     display: inline-block;
     font-family: 'Roboto Slab', serif;
     font-weight: 700;
@@ -94,24 +87,25 @@
     padding: 7px 18px;
     margin-bottom: 22px;
   }
-  .hero h1 { color: var(--white); font-size: 3.2rem; margin-bottom: 16px; max-width: 840px; margin-left: auto; margin-right: auto; }
-  .hero .hero-sub { font-size: 1.2rem; font-weight: 500; color: rgba(255,255,255,0.9); margin-bottom: 18px; max-width: 720px; margin-left: auto; margin-right: auto; }
-  .hero .hero-body { font-size: 1rem; color: rgba(255,255,255,0.8); margin-bottom: 32px; max-width: 640px; margin-left: auto; margin-right: auto; }
+  {{WRAPPER_SELECTOR}} .hero h1 { color: var(--white); font-size: 3.2rem; margin-bottom: 16px; max-width: 840px; margin-left: auto; margin-right: auto; }
+  {{WRAPPER_SELECTOR}} .hero .hero-sub { font-size: 1.2rem; font-weight: 500; color: rgba(255,255,255,0.9); margin-bottom: 18px; max-width: 720px; margin-left: auto; margin-right: auto; }
+  {{WRAPPER_SELECTOR}} .hero .hero-body { font-size: 1rem; color: rgba(255,255,255,0.8); margin-bottom: 32px; max-width: 640px; margin-left: auto; margin-right: auto; }
+  {{WRAPPER_SELECTOR}} .hero .btn { margin: 6px; }
 
   /* ── Listas ── */
   /* list-style!important y ::marker vacío: algunos temas de WordPress aplican su
      propio bullet (disc o ::marker) con más especificidad que un simple .lista,
      y sin esto se ve un punto del tema Y el cuadrado rojo a la vez. */
-  .lista { list-style: none !important; max-width: 760px; }
-  .lista li {
+  {{WRAPPER_SELECTOR}} .lista { list-style: none !important; max-width: 760px; }
+  {{WRAPPER_SELECTOR}} .lista li {
     list-style: none !important;
     position: relative;
     padding-left: 30px;
     margin-bottom: 16px;
     font-size: 1.02rem;
   }
-  .lista li::marker { content: '' !important; }
-  .lista li::before {
+  {{WRAPPER_SELECTOR}} .lista li::marker { content: '' !important; }
+  {{WRAPPER_SELECTOR}} .lista li::before {
     content: '';
     position: absolute;
     left: 0;
@@ -120,40 +114,40 @@
     height: 10px;
     background: var(--red);
   }
-  .lista li strong { display: block; margin-bottom: 2px; }
+  {{WRAPPER_SELECTOR}} .lista li strong { display: block; margin-bottom: 2px; }
 
   /* ── Tarjetas de beneficios / qué financia ── */
   /* 2 columnas fijas, no auto-fit: con 4 tarjetas auto-fit suele encajar 3 en la
      primera fila y dejar la 4ª sola abajo. Con 2 columnas fijas, 4 tarjetas caen
      2x2 y 3 tarjetas caen 2+1, nunca 3+1. En móvil colapsa a 1 columna (ver media
      query). */
-  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
-  .card {
+  {{WRAPPER_SELECTOR}} .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+  {{WRAPPER_SELECTOR}} .card {
     background: var(--cream);
     border-left: 3px solid var(--red);
     padding: 22px;
   }
-  .card h3 { font-size: 1.05rem; margin-bottom: 8px; }
-  .card p { font-size: 0.95rem; color: var(--navy-60); margin-bottom: 0; }
+  {{WRAPPER_SELECTOR}} .card h3 { font-size: 1.05rem; margin-bottom: 8px; }
+  {{WRAPPER_SELECTOR}} .card p { font-size: 0.95rem; color: var(--navy-60); margin-bottom: 0; }
 
   /* ── Destacado (ejemplo de importe) ── */
-  .destacado {
+  {{WRAPPER_SELECTOR}} .destacado {
     background: var(--cream);
     padding: 28px;
     margin-top: 24px;
     border-top: 3px solid var(--red);
   }
-  .destacado .destacado-cifra {
+  {{WRAPPER_SELECTOR}} .destacado .destacado-cifra {
     font-family: 'Roboto Slab', serif;
     font-weight: 700;
     font-size: 2rem;
     color: var(--red);
     margin-bottom: 6px;
   }
-  .destacado .destacado-detalle { font-size: 0.95rem; color: var(--navy-60); }
+  {{WRAPPER_SELECTOR}} .destacado .destacado-detalle { font-size: 0.95rem; color: var(--navy-60); }
 
   /* ── Botones ── */
-  .btn {
+  {{WRAPPER_SELECTOR}} .btn {
     display: inline-block;
     font-family: 'Inter', sans-serif;
     font-size: 1rem;
@@ -164,27 +158,34 @@
     cursor: pointer;
     transition: background 0.2s, color 0.2s;
   }
-  .btn-cta { background: var(--red); color: var(--white); }
-  .btn-cta:hover { background: #a00230; }
-  .btn-light { background: var(--white); color: var(--navy); }
-  .btn-light:hover { background: var(--cream); }
-  .btn-outline { background: transparent; color: var(--navy); border: 1.5px solid var(--navy); }
-  .btn-outline:hover { background: var(--navy); color: var(--white); }
+  {{WRAPPER_SELECTOR}} .btn-cta { background: var(--red); color: var(--white); }
+  {{WRAPPER_SELECTOR}} .btn-cta:hover { background: #a00230; }
+  {{WRAPPER_SELECTOR}} .btn-light { background: var(--white); color: var(--navy); }
+  {{WRAPPER_SELECTOR}} .btn-light:hover { background: var(--cream); }
+  {{WRAPPER_SELECTOR}} .btn-outline { background: transparent; color: var(--navy); border: 1.5px solid var(--navy); }
+  {{WRAPPER_SELECTOR}} .btn-outline:hover { background: var(--navy); color: var(--white); }
+  /* Variante para fondos oscuros (hero, cta-primary): .btn-outline usa texto y borde
+     navy, invisible sobre el navy del hero. Esta usa blanco. */
+  {{WRAPPER_SELECTOR}} .btn-outline-light { background: transparent; color: var(--white); border: 1.5px solid rgba(255,255,255,0.6); }
+  {{WRAPPER_SELECTOR}} .btn-outline-light:hover { background: rgba(255,255,255,0.15); border-color: var(--white); }
 
   /* ── Bloques CTA ── */
-  .cta {
+  {{WRAPPER_SELECTOR}} .cta {
     padding: 56px 24px;
     text-align: center;
   }
-  .cta-primary { background: var(--navy); color: var(--white); }
-  .cta-primary h2 { color: var(--white); font-size: 1.9rem; margin-bottom: 14px; }
-  .cta-primary p { color: rgba(255,255,255,0.85); max-width: 600px; margin-left: auto; margin-right: auto; margin-bottom: 28px; }
-  .cta-secondary { background: var(--cream); }
-  .cta-secondary h2 { font-size: 1.5rem; margin-bottom: 12px; }
-  .cta-secondary p { color: var(--navy-60); max-width: 600px; margin-left: auto; margin-right: auto; margin-bottom: 24px; }
+  {{WRAPPER_SELECTOR}} .cta-primary { background: var(--navy); color: var(--white); }
+  {{WRAPPER_SELECTOR}} .cta-primary h2 { color: var(--white); font-size: 1.9rem; margin-bottom: 14px; }
+  {{WRAPPER_SELECTOR}} .cta-primary p { color: rgba(255,255,255,0.85); max-width: 600px; margin-left: auto; margin-right: auto; margin-bottom: 28px; }
+  {{WRAPPER_SELECTOR}} .cta-secondary { background: var(--cream); }
+  {{WRAPPER_SELECTOR}} .cta-secondary h2 { font-size: 1.5rem; margin-bottom: 12px; }
+  {{WRAPPER_SELECTOR}} .cta-secondary p { color: var(--navy-60); max-width: 600px; margin-left: auto; margin-right: auto; margin-bottom: 24px; }
+
+  /* ── Evaluador embebido ── */
+  {{WRAPPER_SELECTOR}} .bloque-evaluador { padding-top: 44px; padding-bottom: 44px; }
 
   /* ── Formulario ── */
-  .form-landing {
+  {{WRAPPER_SELECTOR}} .form-landing {
     max-width: 560px;
     margin: 0 auto;
     text-align: left;
@@ -192,8 +193,8 @@
     padding: 32px;
     border: 1px solid var(--navy-20);
   }
-  .form-landing .field { margin-bottom: 18px; }
-  .form-landing label {
+  {{WRAPPER_SELECTOR}} .form-landing .field { margin-bottom: 18px; }
+  {{WRAPPER_SELECTOR}} .form-landing label {
     display: block;
     font-size: 0.8rem;
     font-weight: 600;
@@ -202,8 +203,8 @@
     color: var(--navy);
     margin-bottom: 6px;
   }
-  .form-landing input,
-  .form-landing textarea {
+  {{WRAPPER_SELECTOR}} .form-landing input,
+  {{WRAPPER_SELECTOR}} .form-landing textarea {
     width: 100%;
     padding: 12px 14px;
     border: 1.5px solid var(--navy-20);
@@ -214,10 +215,10 @@
     outline: none;
     transition: border-color 0.2s;
   }
-  .form-landing input:focus,
-  .form-landing textarea:focus { border-color: var(--navy); }
-  .form-landing textarea { resize: vertical; min-height: 90px; }
-  .field-check {
+  {{WRAPPER_SELECTOR}} .form-landing input:focus,
+  {{WRAPPER_SELECTOR}} .form-landing textarea:focus { border-color: var(--navy); }
+  {{WRAPPER_SELECTOR}} .form-landing textarea { resize: vertical; min-height: 90px; }
+  {{WRAPPER_SELECTOR}} .field-check {
     display: flex;
     align-items: flex-start;
     gap: 10px;
@@ -227,13 +228,13 @@
     margin: 4px 0 18px;
     cursor: pointer;
   }
-  .field-check input { margin-top: 3px; flex: 0 0 auto; cursor: pointer; accent-color: var(--red); }
-  .field-check a { color: var(--navy); text-decoration: underline; }
-  .form-landing .btn { width: 100%; margin-top: 6px; }
-  .form-nota { font-size: 0.8rem; color: var(--navy-60); margin-top: 14px; text-align: center; }
+  {{WRAPPER_SELECTOR}} .field-check input { margin-top: 3px; flex: 0 0 auto; cursor: pointer; accent-color: var(--red); }
+  {{WRAPPER_SELECTOR}} .field-check a { color: var(--navy); text-decoration: underline; }
+  {{WRAPPER_SELECTOR}} .form-landing .btn { width: 100%; margin-top: 6px; }
+  {{WRAPPER_SELECTOR}} .form-nota { font-size: 0.8rem; color: var(--navy-60); margin-top: 14px; text-align: center; }
 
   /* ── Footer ── */
-  .site-footer {
+  {{WRAPPER_SELECTOR}} .site-footer {
     background: var(--navy);
     color: rgba(255,255,255,0.55);
     text-align: center;
@@ -241,49 +242,49 @@
     font-size: 0.8rem;
     line-height: 1.9;
   }
-  .site-footer a { color: rgba(255,255,255,0.55); }
-  .site-footer a:hover { color: var(--white); }
+  {{WRAPPER_SELECTOR}} .site-footer a { color: rgba(255,255,255,0.55); }
+  {{WRAPPER_SELECTOR}} .site-footer a:hover { color: var(--white); }
 
   @media (max-width: 600px) {
-    .hero { padding: 48px 20px; }
-    .hero h1 { font-size: 2.2rem; }
-    .hero .hero-gancho { font-size: 0.95rem; }
-    .hero .hero-sub { font-size: 1.05rem; }
-    .bloque { padding: 40px 0; }
-    .bloque-titulo { font-size: 1.4rem; }
-    .form-landing { padding: 22px; }
-    .grid { grid-template-columns: 1fr; }
+    {{WRAPPER_SELECTOR}} .hero { padding: 48px 20px; }
+    {{WRAPPER_SELECTOR}} .hero h1 { font-size: 2.2rem; }
+    {{WRAPPER_SELECTOR}} .hero .hero-gancho { font-size: 0.95rem; }
+    {{WRAPPER_SELECTOR}} .hero .hero-sub { font-size: 1.05rem; }
+    {{WRAPPER_SELECTOR}} .bloque { padding: 40px 0; }
+    {{WRAPPER_SELECTOR}} .bloque-titulo { font-size: 1.4rem; }
+    {{WRAPPER_SELECTOR}} .form-landing { padding: 22px; }
+    {{WRAPPER_SELECTOR}} .grid { grid-template-columns: 1fr; }
   }
 
   /* ── Variantes (solo background-color; layout, padding y tipografía intactos) ── */
   /* Secciones dentro de .landing son los hijos directos section, en este orden:
      1=hero  2=beneficios  3=elegibilidad  4=qué-financia  5=importe  6=cómo-trabajamos
-     7=cta-primary  8=cta-secondary  9=formulario                                      */
+     7=cta-primary  8=cta-secondary  [9=evaluador embebido, opcional]  último=formulario */
 
   /* Variante A: elegibilidad (3) e importe (5) en crema; el resto hereda su color base */
-  body.variante-a .landing > section:nth-child(3) { background: var(--cream); }
-  body.variante-a .landing > section:nth-child(5) { background: var(--cream); }
+  {{WRAPPER_SELECTOR}}.variante-a .landing > section:nth-child(3) { background: var(--cream); }
+  {{WRAPPER_SELECTOR}}.variante-a .landing > section:nth-child(5) { background: var(--cream); }
 
   /* Variante B: hero crema (texto navy), qué-financia (4) crema, importe (5) navy */
-  body.variante-b .hero { background: var(--cream); }
-  body.variante-b .hero h1 { color: var(--navy); }
-  body.variante-b .hero .hero-sub { color: var(--navy); }
-  body.variante-b .hero .hero-body { color: var(--navy-60); }
+  {{WRAPPER_SELECTOR}}.variante-b .hero { background: var(--cream); }
+  {{WRAPPER_SELECTOR}}.variante-b .hero h1 { color: var(--navy); }
+  {{WRAPPER_SELECTOR}}.variante-b .hero .hero-sub { color: var(--navy); }
+  {{WRAPPER_SELECTOR}}.variante-b .hero .hero-body { color: var(--navy-60); }
 
-  body.variante-b .landing > section:nth-child(4) { background: var(--cream); }
+  {{WRAPPER_SELECTOR}}.variante-b .landing > section:nth-child(4) { background: var(--cream); }
 
-  body.variante-b .landing > section:nth-child(5) { background: var(--navy); color: var(--white); }
-  body.variante-b .landing > section:nth-child(5) h2,
-  body.variante-b .landing > section:nth-child(5) h3 { color: var(--white); }
-  body.variante-b .landing > section:nth-child(5) p,
-  body.variante-b .landing > section:nth-child(5) li { color: rgba(255,255,255,0.9); }
-  body.variante-b .landing > section:nth-child(5) strong { color: var(--white); }
-  body.variante-b .landing > section:nth-child(5) .destacado { background: rgba(255,255,255,0.12); border-top-color: var(--red); }
-  body.variante-b .landing > section:nth-child(5) .destacado-cifra { color: var(--white); }
-  body.variante-b .landing > section:nth-child(5) .destacado-detalle { color: rgba(255,255,255,0.85); }
+  {{WRAPPER_SELECTOR}}.variante-b .landing > section:nth-child(5) { background: var(--navy); color: var(--white); }
+  {{WRAPPER_SELECTOR}}.variante-b .landing > section:nth-child(5) h2,
+  {{WRAPPER_SELECTOR}}.variante-b .landing > section:nth-child(5) h3 { color: var(--white); }
+  {{WRAPPER_SELECTOR}}.variante-b .landing > section:nth-child(5) p,
+  {{WRAPPER_SELECTOR}}.variante-b .landing > section:nth-child(5) li { color: rgba(255,255,255,0.9); }
+  {{WRAPPER_SELECTOR}}.variante-b .landing > section:nth-child(5) strong { color: var(--white); }
+  {{WRAPPER_SELECTOR}}.variante-b .landing > section:nth-child(5) .destacado { background: rgba(255,255,255,0.12); border-top-color: var(--red); }
+  {{WRAPPER_SELECTOR}}.variante-b .landing > section:nth-child(5) .destacado-cifra { color: var(--white); }
+  {{WRAPPER_SELECTOR}}.variante-b .landing > section:nth-child(5) .destacado-detalle { color: rgba(255,255,255,0.85); }
 </style>
-</head>
-<body class="{{VARIANT_CLASS}}">
+
+<div id="{{WRAPPER_ID}}" class="{{VARIANT_CLASS}}">
 
 <header class="site-header">
   <img src="{{LOGO_SRC}}" alt="Innóvate 4.0" />
@@ -302,5 +303,4 @@
   &nbsp;|&nbsp; 960 66 66 10
 </footer>
 
-</body>
-</html>
+</div>

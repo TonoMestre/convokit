@@ -885,8 +885,10 @@ Estructura HTML obligatoria (9 bloques si INCLUIR_EVALUADOR: NO, 10 bloques si I
   <p class="hero-sub">Descriptor: qué tipo de ayuda es, en una frase</p>
   <p class="hero-body">Opcional: presupuesto total o plazo si están confirmados.</p>
   <a class="btn btn-light" href="#contacto">Quiero saber si puedo solicitarla</a>
-  <a class="btn btn-outline" href="#evaluador-embebido">Descubre si tu empresa encaja →</a>
-  <!-- El segundo botón (href="#evaluador-embebido") SOLO si INCLUIR_EVALUADOR: SI -->
+  <a class="btn btn-outline-light" href="#evaluador-embebido">Descubre si tu empresa encaja →</a>
+  <!-- El segundo botón (href="#evaluador-embebido") SOLO si INCLUIR_EVALUADOR: SI. Usa
+       btn-outline-light (no btn-outline): el hero tiene fondo navy, y btn-outline es
+       texto+borde navy (invisible ahí). btn-outline-light es blanco, para fondos oscuros. -->
 </section>
 
 2. BENEFICIOS — qué gana la empresa:
@@ -960,7 +962,9 @@ Estructura HTML obligatoria (9 bloques si INCLUIR_EVALUADOR: NO, 10 bloques si I
 
 Esta casilla de privacidad (con estos dos enlaces exactos y esta razón social exacta) es OBLIGATORIA en el formulario de contacto de toda landing, sin excepción.
 
-Clases CSS disponibles (no inventes otras): hero, hero-gancho, hero-sub, hero-body, bloque, wrap, bloque-titulo, bloque-evaluador, lista, grid, card, destacado, destacado-cifra, destacado-detalle, cta, cta-primary, cta-secondary, btn, btn-cta, btn-light, btn-outline, form-landing, field, field-check, form-nota.
+Clases CSS disponibles (no inventes otras): hero, hero-gancho, hero-sub, hero-body, bloque, wrap, bloque-titulo, bloque-evaluador, lista, grid, card, destacado, destacado-cifra, destacado-detalle, cta, cta-primary, cta-secondary, btn, btn-cta, btn-light, btn-outline, btn-outline-light, form-landing, field, field-check, form-nota.
+
+REGLA DE CONTRASTE DE BOTONES: btn-outline (texto y borde navy) es solo para fondos claros (cta-secondary, cream). btn-outline-light (texto y borde blancos) es para fondos oscuros (hero, cta-primary, navy). Nunca uses btn-outline sobre un fondo navy: el texto quedaría invisible.
 
 Debe haber un único <h1> en toda la landing (el del hero). Cada sección lleva su <h2>. Todos los enlaces de CTA y botones apuntan a href="#contacto".""",
 

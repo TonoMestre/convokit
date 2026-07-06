@@ -44,6 +44,7 @@ class SalidaRequest(BaseModel):
     instrucciones_adicionales: str = ""
     modo: str | None = None  # Solo para salida 3: "ABIERTA" o "ANTICIPADA"
     variante: str | None = None  # Solo para salida 3: "A", "B" o "C" (distribución de fondos)
+    incluir_evaluador: bool = False  # Solo para salida 3: embebe el evaluador de encaje
 
 
 class GenerateRequest(BaseModel):
@@ -119,6 +120,23 @@ def _strip_fences(text: str) -> str:
 
 def _parse_json(text: str) -> object:
     return json.loads(_strip_fences(text))
+
+
+def _get_existing_cfg(entregables: dict) -> dict | None:
+    """
+    Recupera el CFG del evaluador ya generado para esta convocatoria (clave
+    "6_cfg" en entregables_json), si existe, para que la salida 3 (embebido) y
+    la salida 6 (standalone) lo compartan en vez de generarlo cada una por su
+    lado y arriesgar que las preguntas diverjan.
+    """
+    raw = entregables.get("6_cfg")
+    if not raw:
+        return None
+    try:
+        parsed = json.loads(raw)
+        return parsed if isinstance(parsed, dict) else None
+    except (json.JSONDecodeError, TypeError):
+        return None
 
 
 def _instr_block(instrucciones: str) -> str:
@@ -242,61 +260,19 @@ def _generate_output_1(
 # Generación de salida 3 (landing page HTML desplegable)
 # ---------------------------------------------------------------------------
 
-def _generate_output_3(
-    client: anthropic.Anthropic,
-    conv_name: str,
-    context: str,
-    instrucciones: str = "",
-    modo: str = "ABIERTA",
-    variant: str = "A",
-    model: str | None = None,
-    _track: Callable | None = None,
-) -> tuple[str, dict]:
-    """
-    Generación de la salida 3 (landing page).
-    Claude devuelve los campos SEO (seo_title, meta_description, slug) + el cuerpo HTML
-    (8 bloques con clases seccion-N, sin fondos). El backend separa ambas partes, aplica la
-    variante de distribución (fondos por bloque), envuelve el cuerpo en la plantilla estática
-    e inyecta el SEO en el <head>.
-
-    Devuelve (html_completo, seo) donde seo incluye también body_html, variant y el flag
-    confirmed, para poder re-aplicar SEO o cambiar de variante sin regenerar la landing.
-    """
-    model = model or pricing.MODEL_PER_OUTPUT.get(3, pricing.MODELS["haiku"])
-    variant = output3_template.normalize_variant(variant)
-    user_prompt = _build_user_prompt(conv_name, context, 3, instrucciones, modo)
-    raw = _claude(
-        client,
-        system=p.SYSTEM_PROMPTS[3],
-        user=user_prompt,
-        max_tokens=p.MAX_TOKENS[3],
-        model=model,
-        _track=_track,
-    )
-    seo, body = output3_template.parse_landing_response(raw, fallback_name=conv_name)
-    html = output3_template.build_output_3_html(
-        body, seo["seo_title"], seo["meta_description"], variant
-    )
-    seo_full = {**seo, "body_html": body, "variant": variant, "confirmed": False}
-    return html, seo_full
-
-
-# ---------------------------------------------------------------------------
-# Generación de salida 6 (evaluador HTML interactivo)
-# ---------------------------------------------------------------------------
-
-def _generate_output_6(
+def _generate_evaluador_cfg(
     client: anthropic.Anthropic,
     conv_name: str,
     context: str,
     instrucciones: str = "",
     model: str | None = None,
     _track: Callable | None = None,
-) -> str:
+) -> dict:
     """
-    Generación de la salida 6 (evaluador HTML interactivo).
-    Claude genera SOLO el objeto JSON de configuración (CFG).
-    El backend inyecta ese JSON en el fragmento reutilizable evaluador_core.html.
+    Genera el objeto JSON de configuración del evaluador (CFG): elegibilidad,
+    baremo, datos_proyecto, textos. Lo comparten la salida 6 (evaluador
+    standalone) y la salida 3 cuando embebe el evaluador, para que ambos
+    hagan exactamente las mismas preguntas.
     """
     model = model or pricing.MODEL_PER_OUTPUT.get(6, pricing.MODELS["sonnet"])
 
@@ -334,8 +310,87 @@ def _generate_output_6(
             status_code=502,
             detail=f"JSON inválido: {parse_err[:120]} | fin_respuesta: {tail}",
         )
+    return config
 
-    return output6_template.build_output_6_html(config)
+
+def _generate_output_3(
+    client: anthropic.Anthropic,
+    conv_name: str,
+    context: str,
+    instrucciones: str = "",
+    modo: str = "ABIERTA",
+    variant: str = "A",
+    incluir_evaluador: bool = False,
+    existing_cfg: dict | None = None,
+    model: str | None = None,
+    _track: Callable | None = None,
+) -> tuple[str, dict, dict | None]:
+    """
+    Generación de la salida 3 (landing page para WordPress).
+    Claude devuelve los campos SEO + el cuerpo HTML (bloques scoped, sin fondos,
+    con el marcador del evaluador embebido si INCLUIR_EVALUADOR: SI). El backend
+    separa ambas partes, aplica la variante de distribución, y envuelve el cuerpo
+    en la plantilla estática scoped bajo #innovate-ayuda-landing-{slug}.
+
+    Si incluir_evaluador es True, genera (o reutiliza existing_cfg) el mismo CFG
+    que usa la salida 6, para que ambas compartan las mismas preguntas en vez de
+    generarlas por separado y arriesgar que diverjan.
+
+    Devuelve (html_completo, seo, cfg_usado). cfg_usado es None si no se pidió
+    evaluador embebido. Si no es None y existing_cfg era None, el llamador debe
+    persistirlo como "6_cfg" para que una futura salida 6 (o una regeneración de
+    esta misma landing) lo reutilice sin gastar otra llamada a Claude.
+    """
+    model = model or pricing.MODEL_PER_OUTPUT.get(3, pricing.MODELS["haiku"])
+    variant = output3_template.normalize_variant(variant)
+
+    cfg_usado = None
+    if incluir_evaluador:
+        cfg_usado = existing_cfg or _generate_evaluador_cfg(
+            client, conv_name, context, instrucciones, _track=_track,
+        )
+
+    user_prompt = _build_user_prompt(conv_name, context, 3, instrucciones, modo, incluir_evaluador)
+    raw = _claude(
+        client,
+        system=p.SYSTEM_PROMPTS[3],
+        user=user_prompt,
+        max_tokens=p.MAX_TOKENS[3],
+        model=model,
+        _track=_track,
+    )
+    seo, body = output3_template.parse_landing_response(raw, fallback_name=conv_name)
+    html = output3_template.build_output_3_html(body, seo["slug"], variant, cfg=cfg_usado)
+    seo_full = {
+        **seo, "body_html": body, "variant": variant, "confirmed": False,
+        "incluir_evaluador": incluir_evaluador,
+    }
+    return html, seo_full, cfg_usado
+
+
+# ---------------------------------------------------------------------------
+# Generación de salida 6 (evaluador HTML interactivo)
+# ---------------------------------------------------------------------------
+
+def _generate_output_6(
+    client: anthropic.Anthropic,
+    conv_name: str,
+    context: str,
+    instrucciones: str = "",
+    existing_cfg: dict | None = None,
+    model: str | None = None,
+    _track: Callable | None = None,
+) -> tuple[str, dict]:
+    """
+    Generación de la salida 6 (evaluador HTML interactivo standalone).
+    Reutiliza existing_cfg (por ejemplo si la salida 3 ya generó el CFG al
+    embeber el evaluador) en vez de llamar a Claude de nuevo, si se aporta.
+    Devuelve (html, cfg) para que el llamador pueda persistir el CFG usado.
+    """
+    config = existing_cfg or _generate_evaluador_cfg(
+        client, conv_name, context, instrucciones, model=model, _track=_track,
+    )
+    return output6_template.build_output_6_html(config), config
 
 
 # ---------------------------------------------------------------------------
@@ -619,6 +674,7 @@ def _build_user_prompt(
     output_type: int,
     instrucciones: str = "",
     modo: str = "ABIERTA",
+    incluir_evaluador: bool = False,
 ) -> str:
     # La instrucción del usuario se coloca SIEMPRE al final del prompt (máxima
     # recencia). Si se coloca antes del bloque de documentos, el volcado de
@@ -640,8 +696,10 @@ def _build_user_prompt(
                 "MODO DE GENERACIÓN: ABIERTA\n"
                 "Usa los datos confirmados de los documentos aportados: importes, porcentajes, plazos, presupuesto total."
             )
+        evaluador_block = f"INCLUIR_EVALUADOR: {'SI' if incluir_evaluador else 'NO'}"
         return (
             f"{modo_block}\n\n"
+            f"{evaluador_block}\n\n"
             f"Documentos de la convocatoria '{conv_name}':\n\n{context}\n\n"
             f"Genera la landing page siguiendo las instrucciones del system prompt."
             f"{instr_block}"
@@ -673,6 +731,11 @@ def _process_job(job_id: int, conv_id: int, salida_requests: list[dict]) -> None
         conv_name = conv["nombre"]
         documents_json = conv["documentos_json"]
         context = extractors.build_context(documents_json)
+        # Copia mutable de los entregables ya persistidos, para poder reutilizar un
+        # CFG de evaluador generado en una salida anterior DE ESTE MISMO job (la
+        # salida 3 corre antes que la 6 al ordenar por output_type, pero conv["entregables_json"]
+        # es una foto fija de antes de empezar el job: no se actualiza sola).
+        conv_entregables = dict(conv["entregables_json"])
 
         progress = {"outputs": {str(s["output_type"]): {"status": "queued"} for s in salida_requests}}
         db.update_job(job_id, "running", progress)
@@ -729,18 +792,28 @@ def _process_job(job_id: int, conv_id: int, salida_requests: list[dict]) -> None
                     )
 
                 elif output_type == 6:
-                    generated["6"] = _generate_output_6(
+                    existing_cfg = _get_existing_cfg(conv_entregables)
+                    html_6, cfg_used = _generate_output_6(
                         client, conv_name, context, instrucciones,
-                        model=model, _track=track,
+                        existing_cfg=existing_cfg, model=model, _track=track,
                     )
+                    generated["6"] = html_6
+                    generated["6_cfg"] = json.dumps(cfg_used, ensure_ascii=False)
+                    conv_entregables["6_cfg"] = generated["6_cfg"]
 
                 elif output_type == 3:
-                    html_3, seo_3 = _generate_output_3(
+                    incluir_evaluador = bool(salida_req.get("incluir_evaluador", False))
+                    existing_cfg = _get_existing_cfg(conv_entregables)
+                    html_3, seo_3, cfg_used = _generate_output_3(
                         client, conv_name, context, instrucciones, modo, variante,
+                        incluir_evaluador=incluir_evaluador, existing_cfg=existing_cfg,
                         model=model, _track=track,
                     )
                     generated["3"] = html_3
                     generated["3_seo"] = json.dumps(seo_3, ensure_ascii=False)
+                    if cfg_used is not None:
+                        generated["6_cfg"] = json.dumps(cfg_used, ensure_ascii=False)
+                        conv_entregables["6_cfg"] = generated["6_cfg"]
 
                 else:
                     user_prompt = _build_user_prompt(conv_name, context, output_type, instrucciones, modo)
@@ -1048,7 +1121,10 @@ def _load_landing_seo(convocatoria_id: int) -> tuple[dict, dict]:
 
 def _public_seo(seo: dict) -> dict:
     """Subconjunto de la metadata de landing que se devuelve al frontend."""
-    return {k: seo.get(k) for k in ("seo_title", "meta_description", "slug", "variant", "confirmed")}
+    return {k: seo.get(k) for k in (
+        "seo_title", "meta_description", "slug", "variant", "confirmed",
+        "h1_recomendado", "keywords_principales", "faqs_sugeridas", "incluir_evaluador",
+    )}
 
 
 @app.post("/convocatorias/{convocatoria_id}/landing/seo")
@@ -1058,16 +1134,18 @@ def update_landing_seo(convocatoria_id: int, body: LandingSeoRequest):
     Reconstruye el HTML a partir del cuerpo guardado + el nuevo título y meta description,
     conservando la variante de distribución actual. El slug se guarda pero no va en el HTML.
     """
-    seo, _ = _load_landing_seo(convocatoria_id)
+    seo, entregables = _load_landing_seo(convocatoria_id)
     body_html = seo["body_html"]
     variant = output3_template.normalize_variant(seo.get("variant", "A"))
+    cfg = _get_existing_cfg(entregables) if seo.get("incluir_evaluador") else None
 
     seo_title = body.seo_title.strip()
     meta_description = body.meta_description.strip()
     slug = output3_template.slugify(body.slug) if body.slug.strip() else seo.get("slug", "")
 
-    new_html = output3_template.build_output_3_html(body_html, seo_title, meta_description, variant)
+    new_html = output3_template.build_output_3_html(body_html, slug, variant, cfg=cfg)
     new_seo = {
+        **seo,
         "seo_title": seo_title,
         "meta_description": meta_description,
         "slug": slug,
@@ -1089,11 +1167,12 @@ def update_landing_variant(convocatoria_id: int, body: LandingVariantRequest):
     llamar a Claude. Reconstruye el HTML a partir del cuerpo y el SEO guardados con la nueva
     variante. El contenido y el SEO no cambian.
     """
-    seo, _ = _load_landing_seo(convocatoria_id)
+    seo, entregables = _load_landing_seo(convocatoria_id)
     variant = output3_template.normalize_variant(body.variante)
+    cfg = _get_existing_cfg(entregables) if seo.get("incluir_evaluador") else None
 
     new_html = output3_template.build_output_3_html(
-        seo["body_html"], seo.get("seo_title", ""), seo.get("meta_description", ""), variant
+        seo["body_html"], seo.get("slug", ""), variant, cfg=cfg
     )
     new_seo = {**seo, "variant": variant}
     db.update_entregables(convocatoria_id, {
@@ -1165,18 +1244,26 @@ def generate_outputs(convocatoria_id: int, body: GenerateRequest):
                 )
 
             elif output_type == 6:
-                generated["6"] = _generate_output_6(
+                existing_cfg = _get_existing_cfg(generated) or _get_existing_cfg(conv["entregables_json"])
+                html_6, cfg_used = _generate_output_6(
                     client, conv["nombre"], context, instrucciones,
-                    model=model, _track=track,
+                    existing_cfg=existing_cfg, model=model, _track=track,
                 )
+                generated["6"] = html_6
+                generated["6_cfg"] = json.dumps(cfg_used, ensure_ascii=False)
 
             elif output_type == 3:
-                html_3, seo_3 = _generate_output_3(
+                incluir_evaluador = bool(getattr(salida_req, "incluir_evaluador", False))
+                existing_cfg = _get_existing_cfg(generated) or _get_existing_cfg(conv["entregables_json"])
+                html_3, seo_3, cfg_used = _generate_output_3(
                     client, conv["nombre"], context, instrucciones, modo, variante,
+                    incluir_evaluador=incluir_evaluador, existing_cfg=existing_cfg,
                     model=model, _track=track,
                 )
                 generated["3"] = html_3
                 generated["3_seo"] = json.dumps(seo_3, ensure_ascii=False)
+                if cfg_used is not None:
+                    generated["6_cfg"] = json.dumps(cfg_used, ensure_ascii=False)
 
             else:
                 user_prompt = _build_user_prompt(conv["nombre"], context, output_type, instrucciones, modo)
@@ -1276,18 +1363,26 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
                     )
 
                 elif output_type == 6:
-                    generated["6"] = _generate_output_6(
+                    existing_cfg = _get_existing_cfg(generated) or _get_existing_cfg(conv["entregables_json"])
+                    html_6, cfg_used = _generate_output_6(
                         client, conv["nombre"], context, instrucciones,
-                        model=model, _track=track,
+                        existing_cfg=existing_cfg, model=model, _track=track,
                     )
+                    generated["6"] = html_6
+                    generated["6_cfg"] = json.dumps(cfg_used, ensure_ascii=False)
 
                 elif output_type == 3:
-                    html_3, seo_3 = _generate_output_3(
+                    incluir_evaluador = bool(getattr(salida_req, "incluir_evaluador", False))
+                    existing_cfg = _get_existing_cfg(generated) or _get_existing_cfg(conv["entregables_json"])
+                    html_3, seo_3, cfg_used = _generate_output_3(
                         client, conv["nombre"], context, instrucciones, modo, variante,
+                        incluir_evaluador=incluir_evaluador, existing_cfg=existing_cfg,
                         model=model, _track=track,
                     )
                     generated["3"] = html_3
                     generated["3_seo"] = json.dumps(seo_3, ensure_ascii=False)
+                    if cfg_used is not None:
+                        generated["6_cfg"] = json.dumps(cfg_used, ensure_ascii=False)
 
                 else:
                     user_prompt = _build_user_prompt(conv["nombre"], context, output_type, instrucciones, modo)

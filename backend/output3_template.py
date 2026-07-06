@@ -1,19 +1,25 @@
 """
-ConvoKit — Builder para la Salida 3 (Landing page HTML).
+ConvoKit — Builder para la Salida 3 (Landing page HTML para WordPress).
 
 Flujo de generación:
 1. Claude devuelve DOS partes separadas por marcadores:
      ===SEO_JSON===
-     {"seo_title": ..., "meta_description": ..., "slug": ...}
+     {"seo_title": ..., "meta_description": ..., "slug": ..., "h1_recomendado": ...,
+      "keywords_principales": [...], "faqs_sugeridas": [...]}
      ===LANDING_HTML===
      <section class="hero">...   (solo el cuerpo, con clases CSS documentadas)
 2. parse_landing_response(raw) separa los campos SEO del cuerpo HTML.
-3. build_output_3_html(body, seo_title, meta_description) envuelve el cuerpo en la
-   plantilla estática landing_template.html, inyectando título y meta description en
-   el <head>. El slug NO se inserta en el HTML: es un campo independiente que el
-   usuario copia manualmente a WordPress/Yoast.
+3. build_output_3_html(body, slug, variant, cfg) envuelve el cuerpo en la plantilla
+   estática landing_template.html: un bloque scoped bajo #innovate-ayuda-landing-{slug}
+   (CSS, wrapper, header y footer incluidos), SIN doctype/html/head/body. Los campos
+   SEO (título, meta description, H1, keywords, FAQs) NO se insertan en el HTML: se
+   devuelven aparte para que el consultor los configure en Yoast/RankMath, ya que la
+   landing se pega directamente en una página de WordPress que ya tiene su propio <head>.
 
-El HTML resultante es completo y autónomo: una página válida por sí sola.
+Si `cfg` no es None y el cuerpo contiene el marcador `<!--EVALUADOR_EMBED-->` (lo decide
+el propio prompt según el flag INCLUIR_EVALUADOR), se sustituye por el fragmento del
+evaluador (mismo motor que la salida 6, ver output6_template.build_output_6_embed_fragment).
+Si `cfg` es None o el marcador no aparece, la sustitución es un no-op.
 """
 
 import base64
@@ -22,10 +28,13 @@ import pathlib
 import re
 import unicodedata
 
+import output6_template
+
 _TEMPLATE_PATH = pathlib.Path(__file__).parent / "landing_template.html"
 
 _SEO_MARKER = "===SEO_JSON==="
 _HTML_MARKER = "===LANDING_HTML==="
+_EVALUADOR_MARKER = "<!--EVALUADOR_EMBED-->"
 
 # Distribución de fondos por bloque (1..8) para cada variante.
 # El contenido y el SEO son idénticos en las tres: solo cambia el fondo de cada bloque,
@@ -53,22 +62,6 @@ def _load_logo_b64() -> str:
         if p.exists():
             return "data:image/png;base64," + base64.b64encode(p.read_bytes()).decode()
     return "/logo-negativo.png"
-
-
-def _esc_attr(text: str) -> str:
-    """Escapa para usar dentro de un atributo HTML (content="...", etc.)."""
-    return (
-        str(text or "")
-        .replace("&", "&amp;")
-        .replace('"', "&quot;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-    )
-
-
-def _esc_text(text: str) -> str:
-    """Escapa para usar como texto (p. ej. dentro de <title>)."""
-    return str(text or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
 def slugify(text: str) -> str:
@@ -115,14 +108,18 @@ def parse_landing_response(raw: str, fallback_name: str = "") -> tuple[dict, str
     """
     Separa la respuesta de Claude en (seo, body_html).
 
-    seo = {"seo_title": str, "meta_description": str, "slug": str}
+    seo = {"seo_title", "meta_description", "slug", "h1_recomendado",
+           "keywords_principales", "faqs_sugeridas"}
 
     Robusto ante:
     - Marcadores presentes (caso normal).
     - Marcadores ausentes: trata todo como cuerpo y deriva SEO best-effort del nombre.
     - JSON con vallas markdown.
     """
-    seo: dict = {"seo_title": "", "meta_description": "", "slug": ""}
+    seo: dict = {
+        "seo_title": "", "meta_description": "", "slug": "",
+        "h1_recomendado": "", "keywords_principales": [], "faqs_sugeridas": [],
+    }
 
     if _HTML_MARKER in raw:
         seo_part, _, body_part = raw.partition(_HTML_MARKER)
@@ -131,7 +128,7 @@ def parse_landing_response(raw: str, fallback_name: str = "") -> tuple[dict, str
         try:
             parsed = json.loads(_strip_fences(seo_part))
             if isinstance(parsed, dict):
-                seo.update({k: parsed.get(k, "") for k in seo})
+                seo.update({k: parsed.get(k, seo[k]) for k in seo})
         except Exception:
             pass
     else:
@@ -154,28 +151,46 @@ def parse_landing_response(raw: str, fallback_name: str = "") -> tuple[dict, str
         seo["slug"] = slugify(seo["seo_title"] or fallback_name)
     if not seo["meta_description"]:
         seo["meta_description"] = seo["seo_title"]
+    if not seo["h1_recomendado"]:
+        seo["h1_recomendado"] = seo["seo_title"]
+    if not isinstance(seo["keywords_principales"], list):
+        seo["keywords_principales"] = []
+    if not isinstance(seo["faqs_sugeridas"], list):
+        seo["faqs_sugeridas"] = []
 
     return seo, _clean_body(body)
 
 
 def build_output_3_html(
     body_html: str,
-    seo_title: str,
-    meta_description: str,
+    slug: str,
     variant: str = DEFAULT_VARIANT,
+    cfg: dict | None = None,
 ) -> str:
     """
-    Envuelve el cuerpo de la landing en la plantilla estática, aplica la variante de
-    distribución (fondos por bloque) e inyecta el SEO en el <head>.
-    El slug NO se usa aquí: no se inserta en el HTML.
+    Envuelve el cuerpo de la landing en la plantilla estática: un bloque scoped bajo
+    #innovate-ayuda-landing-{slug}, sin doctype/html/head/body, listo para pegar en el
+    bloque "HTML personalizado" de WordPress. Aplica la variante de distribución
+    (fondos por bloque). El SEO (título, meta description, H1, keywords, FAQs) no se
+    inserta aquí: se sirve aparte para que el consultor lo configure en Yoast/RankMath.
+
+    Si `cfg` se proporciona y el cuerpo contiene el marcador del evaluador embebido,
+    lo sustituye por el fragmento del motor del evaluador (misma lógica que la
+    salida 6). Si no hay marcador, o `cfg` es None, no hace nada.
     """
     variant = normalize_variant(variant)
     body = _clean_body(body_html)
 
+    if cfg is not None and _EVALUADOR_MARKER in body:
+        embed_fragment = output6_template.build_output_6_embed_fragment(cfg)
+        body = body.replace(_EVALUADOR_MARKER, embed_fragment)
+
+    wrapper_id = f"innovate-ayuda-landing-{slugify(slug) or 'convocatoria'}"
+
     html = _load_template()
     html = html.replace("{{LANDING_BODY}}", body)
+    html = html.replace("{{WRAPPER_SELECTOR}}", f"#{wrapper_id}")
+    html = html.replace("{{WRAPPER_ID}}", wrapper_id)
     html = html.replace("{{VARIANT_CLASS}}", f"variante-{variant.lower()}")
-    html = html.replace("{{SEO_TITLE}}", _esc_text(seo_title) or "Innóvate 4.0")
-    html = html.replace("{{META_DESCRIPTION}}", _esc_attr(meta_description))
     html = html.replace("{{LOGO_SRC}}", _load_logo_b64())
     return html

@@ -950,12 +950,17 @@ Estructura HTML obligatoria (9 bloques si INCLUIR_EVALUADOR: NO, 10 bloques si I
     <div class="field"><label for="l-email">Email</label><input type="email" id="l-email" name="email" required /></div>
     <div class="field"><label for="l-tel">Teléfono</label><input type="tel" id="l-tel" name="telefono" required /></div>
     <div class="field"><label for="l-msg">Mensaje (opcional)</label><textarea id="l-msg" name="mensaje" placeholder="¿En qué inviertes? ¿A qué sector pertenece tu empresa?"></textarea></div>
+    <label class="field-check"><input type="checkbox" name="privacidad" required />
+      <span>He leído y acepto la <a href="https://innovate40.es/politica-de-privacidad/" target="_blank" rel="noopener noreferrer">política de privacidad</a> y el <a href="https://innovate40.es/aviso-legal/" target="_blank" rel="noopener noreferrer">aviso legal</a> de Innóvate 4.0 Estrategia Empresarial, S.L.</span>
+    </label>
     <button type="submit" class="btn btn-cta">Quiero saber si puedo solicitarla</button>
     <p class="form-nota">Tiempo de respuesta habitual: 24-48 horas laborables.</p>
   </form>
 </div></section>
 
-Clases CSS disponibles (no inventes otras): hero, hero-gancho, hero-sub, hero-body, bloque, wrap, bloque-titulo, bloque-evaluador, lista, grid, card, destacado, destacado-cifra, destacado-detalle, cta, cta-primary, cta-secondary, btn, btn-cta, btn-light, btn-outline, form-landing, field, form-nota.
+Esta casilla de privacidad (con estos dos enlaces exactos y esta razón social exacta) es OBLIGATORIA en el formulario de contacto de toda landing, sin excepción.
+
+Clases CSS disponibles (no inventes otras): hero, hero-gancho, hero-sub, hero-body, bloque, wrap, bloque-titulo, bloque-evaluador, lista, grid, card, destacado, destacado-cifra, destacado-detalle, cta, cta-primary, cta-secondary, btn, btn-cta, btn-light, btn-outline, form-landing, field, field-check, form-nota.
 
 Debe haber un único <h1> en toda la landing (el del hero). Cada sección lleva su <h2>. Todos los enlaces de CTA y botones apuntan a href="#contacto".""",
 

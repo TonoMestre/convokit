@@ -202,7 +202,20 @@ input[type=number]{width:130px}
 .mc-ev .ev-badge{font-family:'Inter';font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;background:var(--steel);color:#fff;border-radius:2px;padding:3px 7px;margin-left:auto;white-space:nowrap}
 .mc-ev .ev-why{display:block;color:var(--steel);font-size:12.5px;margin:5px 0 0 27px;font-weight:500}
 .cap.ev{border-left-color:var(--steel)}.cap.ev .gain{color:var(--steel)}
-@media print{.stepper,.nav,.step{display:none!important}.panel{display:block!important}body{background:#fff}.card,.kpi,.tension-box,.score-hero{box-shadow:none}}
+@media print{
+  @page{margin:1.4cm}
+  html,body{background:#fff!important;background-image:none!important;background-attachment:scroll!important}
+  .stepper,.nav,.step,.ruta-badge,#leadGateBox{display:none!important}
+  .panel{display:none!important}
+  .panel.show{display:block!important}
+  .wrap{max-width:100%;padding:0}
+  header{margin-bottom:14px}
+  .card,.kpi,.tension-box,.score-hero,.callout,.cap,.gate,.blocks,.mc-ev,.verdict{box-shadow:none!important;break-inside:avoid;page-break-inside:avoid}
+  .grid2{display:block!important}
+  .grid2 .kpi{margin-bottom:10px}
+  h1,h2,.sec-h,.score-hero{break-after:avoid;page-break-after:avoid}
+  .caps h3{break-before:avoid}
+}
 </style>
 <style>
 /* Ajustes de integración dentro de WordPress/iframe */

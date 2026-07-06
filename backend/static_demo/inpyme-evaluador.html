@@ -700,8 +700,15 @@ function go(i){
   document.querySelectorAll(".panel").forEach((p,k)=>p.classList.toggle("show",k===i));
   document.querySelectorAll(".step").forEach((s,k)=>{ s.classList.toggle("active",k===i); s.classList.toggle("done",k<i); });
   window.scrollTo({top:0,behavior:"smooth"});
+  i40ScrollParentToTop();
   setTimeout(i40SendHeight,120); setTimeout(i40SendHeight,500);
 }
+// El evaluador vive dentro de un iframe embebido en la landing: window.scrollTo
+// de aqui arriba solo mueve el scroll interno del iframe (que no tiene, se
+// ajusta de alto por mensaje), no el de la pagina que lo contiene. Sin esto,
+// al pasar de un paso largo a uno corto la pagina se queda scrolleada por
+// debajo del contenido nuevo y parece en blanco.
+function i40ScrollParentToTop(){ try{ if(window.parent){ window.parent.postMessage({type:'i40-inpyme-evaluator-scrolltop'}, '*'); } }catch(e){} }
 document.querySelectorAll(".step").forEach(s=>s.addEventListener("click",()=>go(+s.dataset.go)));
 
 /* ============ INIT ============ */

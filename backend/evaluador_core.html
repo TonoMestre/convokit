@@ -1,14 +1,16 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>{{TITULO_EVALUADOR}}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
 <style>
-  :root {
+  /* Reset y estilo base scoped a .evaluador-widget (no a *, html, body o :root):
+     este motor debe poder vivir tanto en una página propia como embebido dentro
+     de una landing sin filtrar variables ni estilos al resto de la página que
+     lo contenga. Las variables de color viven en .evaluador-widget en vez de
+     :root para que no se conviertan en globales de toda la página al embeber. */
+  .evaluador-widget, .evaluador-widget *, .evaluador-widget *::before, .evaluador-widget *::after {
+    box-sizing: border-box; margin: 0; padding: 0;
+  }
+  .evaluador-widget {
     --navy: #1D254C;
     --red: #C50339;
     --cream: #F2EBD8;
@@ -16,14 +18,6 @@
     --black: #000000;
     --navy-10: rgba(29,37,76,0.10);
     --navy-20: rgba(29,37,76,0.20);
-  }
-  /* Reset y estilo base scoped a .evaluador-widget (no a *, html o body): este
-     motor debe poder vivir tanto en una página propia como embebido dentro de
-     una landing sin filtrar estilos al resto de la página que lo contenga. */
-  .evaluador-widget, .evaluador-widget *, .evaluador-widget *::before, .evaluador-widget *::after {
-    box-sizing: border-box; margin: 0; padding: 0;
-  }
-  .evaluador-widget {
     font-family: 'Inter', sans-serif;
     background: var(--cream);
     color: var(--navy);
@@ -31,13 +25,13 @@
     display: flex;
     flex-direction: column;
   }
-  .hp-field {
+  .evaluador-widget .hp-field {
     position: absolute !important; left: -9999px !important; top: -9999px !important;
     height: 0 !important; width: 0 !important; opacity: 0 !important; pointer-events: none !important;
   }
 
   /* ── Header ── */
-  .site-header {
+  .evaluador-widget .site-header {
     background: var(--navy);
     padding: 14px 24px;
     display: flex;
@@ -45,8 +39,8 @@
     justify-content: space-between;
     border-bottom: 2px solid var(--red);
   }
-  .site-header img { display: block; }
-  .site-header .header-tag {
+  .evaluador-widget .site-header img { display: block; }
+  .evaluador-widget .site-header .header-tag {
     font-family: 'Inter', sans-serif;
     font-size: 0.72rem;
     color: rgba(255,255,255,0.5);
@@ -55,12 +49,12 @@
   }
 
   /* ── Progress bar ── */
-  .progress-bar-wrap {
+  .evaluador-widget .progress-bar-wrap {
     background: var(--navy-10);
     height: 4px;
     width: 100%;
   }
-  .progress-bar-inner {
+  .evaluador-widget .progress-bar-inner {
     height: 100%;
     background: var(--red);
     transition: width 0.4s ease;
@@ -68,7 +62,7 @@
   }
 
   /* ── Layout ── */
-  .container {
+  .evaluador-widget .container {
     max-width: 680px;
     width: 100%;
     margin: 0 auto;
@@ -77,7 +71,7 @@
   }
 
   /* ── Intro ── */
-  .intro-titulo {
+  .evaluador-widget .intro-titulo {
     font-family: 'Roboto Slab', serif;
     font-weight: 700;
     font-size: 2rem;
@@ -85,7 +79,7 @@
     color: var(--navy);
     margin-bottom: 14px;
   }
-  .intro-lead {
+  .evaluador-widget .intro-lead {
     font-size: 1.05rem;
     line-height: 1.6;
     color: var(--navy);
@@ -93,161 +87,159 @@
   }
 
   /* ── Strip ── */
-  .strip { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 36px; }
-  .strip-item { background: var(--navy); color: var(--white); padding: 10px 16px; flex: 1 1 auto; }
-  .strip-item .strip-label {
+  .evaluador-widget .strip { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 36px; }
+  .evaluador-widget .strip-item { background: var(--navy); color: var(--white); padding: 10px 16px; flex: 1 1 auto; }
+  .evaluador-widget .strip-item .strip-label {
     font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.7; margin-bottom: 4px;
   }
-  .strip-item .strip-valor { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1rem; }
+  .evaluador-widget .strip-item .strip-valor { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1rem; }
 
   /* ── Form fields ── */
-  .field { margin-bottom: 20px; }
-  .field label {
+  .evaluador-widget .field { margin-bottom: 20px; }
+  .evaluador-widget .field label {
     display: block; font-size: 0.82rem; font-weight: 600; text-transform: uppercase;
     letter-spacing: 0.06em; color: var(--navy); margin-bottom: 6px;
   }
-  .field input[type="text"],
-  .field input[type="email"],
-  .field input[type="tel"],
-  .field input[type="number"] {
+  .evaluador-widget .field input[type="text"],
+  .evaluador-widget .field input[type="email"],
+  .evaluador-widget .field input[type="tel"],
+  .evaluador-widget .field input[type="number"] {
     width: 100%; padding: 11px 14px; border: 1.5px solid var(--navy-20);
     background: var(--white); font-family: 'Inter', sans-serif; font-size: 0.95rem;
     color: var(--navy); outline: none; border-radius: 0; transition: border-color 0.2s;
   }
-  .field input:focus { border-color: var(--navy); }
-  .field input.error { border-color: var(--red); }
+  .evaluador-widget .field input:focus { border-color: var(--navy); }
+  .evaluador-widget .field input.error { border-color: var(--red); }
 
   /* ── RGPD ── */
-  .rgpd-block {
+  .evaluador-widget .rgpd-block {
     background: var(--white); border: 1px solid var(--navy-10); padding: 16px;
     margin-bottom: 24px; font-size: 0.8rem; color: var(--navy); line-height: 1.55;
   }
-  .rgpd-block a { color: var(--red); }
-  .rgpd-check {
+  .evaluador-widget .rgpd-block a { color: var(--red); }
+  .evaluador-widget .rgpd-check {
     display: flex; align-items: flex-start; gap: 10px; margin-top: 12px;
     font-size: 0.82rem; font-weight: 500; cursor: pointer;
   }
-  .rgpd-check input[type="checkbox"] {
+  .evaluador-widget .rgpd-check input[type="checkbox"] {
     margin-top: 2px; accent-color: var(--navy); width: 16px; height: 16px;
     flex-shrink: 0; border-radius: 0;
   }
 
   /* ── Opciones de pregunta ── */
-  .pregunta-block {
+  .evaluador-widget .pregunta-block {
     background: var(--white); border: 1px solid var(--navy-10); padding: 22px; margin-bottom: 20px;
   }
-  .pregunta-titulo {
+  .evaluador-widget .pregunta-titulo {
     font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1rem;
     color: var(--navy); margin-bottom: 8px;
   }
-  .pregunta-ayuda {
+  .evaluador-widget .pregunta-ayuda {
     font-size: 0.82rem; color: rgba(29,37,76,0.65); margin-bottom: 14px; line-height: 1.5;
   }
-  .opciones-lista { display: flex; flex-direction: column; gap: 8px; }
-  .opcion {
+  .evaluador-widget .opciones-lista { display: flex; flex-direction: column; gap: 8px; }
+  .evaluador-widget .opcion {
     display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px;
     border: 1.5px solid var(--navy-20); background: var(--white); cursor: pointer;
     transition: border-color 0.15s, background 0.15s; text-align: left;
     font-family: 'Inter', sans-serif; font-size: 0.9rem; color: var(--navy);
     border-radius: 0; width: 100%;
   }
-  .opcion:hover { border-color: var(--navy); background: var(--cream); }
-  .opcion.selected { border-color: var(--navy); background: var(--navy); color: var(--white); }
-  .opcion .opcion-radio {
+  .evaluador-widget .opcion:hover { border-color: var(--navy); background: var(--cream); }
+  .evaluador-widget .opcion.selected { border-color: var(--navy); background: var(--navy); color: var(--white); }
+  .evaluador-widget .opcion .opcion-radio {
     width: 16px; height: 16px; border: 2px solid currentColor; border-radius: 0;
     flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center;
   }
-  .opcion.selected .opcion-radio::after { content: ''; width: 8px; height: 8px; background: var(--white); display: block; }
+  .evaluador-widget .opcion.selected .opcion-radio::after { content: ''; width: 8px; height: 8px; background: var(--white); display: block; }
 
   /* ── Section header ── */
-  .section-header {
+  .evaluador-widget .section-header {
     font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 0.75rem;
     text-transform: uppercase; letter-spacing: 0.1em; color: var(--red);
     border-bottom: 2px solid var(--red); padding-bottom: 6px; margin-bottom: 20px; margin-top: 36px;
   }
-  .section-header:first-child { margin-top: 0; }
+  .evaluador-widget .section-header:first-child { margin-top: 0; }
 
   /* ── Botones ── */
-  .btn {
+  .evaluador-widget .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     padding: 13px 28px; font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 600;
     cursor: pointer; border: none; border-radius: 0; transition: background 0.2s, color 0.2s; text-decoration: none;
   }
-  .btn-primary { background: var(--navy); color: var(--white); }
-  .btn-primary:hover { background: #111828; }
-  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
-  .btn-secondary { background: transparent; color: var(--navy); border: 1.5px solid var(--navy); }
-  .btn-secondary:hover { background: var(--navy); color: var(--white); }
-  .btn-red { background: var(--red); color: var(--white); }
-  .btn-red:hover { background: #a00230; }
+  .evaluador-widget .btn-primary { background: var(--navy); color: var(--white); }
+  .evaluador-widget .btn-primary:hover { background: #111828; }
+  .evaluador-widget .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .evaluador-widget .btn-secondary { background: transparent; color: var(--navy); border: 1.5px solid var(--navy); }
+  .evaluador-widget .btn-secondary:hover { background: var(--navy); color: var(--white); }
+  .evaluador-widget .btn-red { background: var(--red); color: var(--white); }
+  .evaluador-widget .btn-red:hover { background: #a00230; }
 
   /* ── Step nav ── */
-  .step-nav { display: flex; gap: 12px; margin-top: 28px; align-items: center; flex-wrap: wrap; }
+  .evaluador-widget .step-nav { display: flex; gap: 12px; margin-top: 28px; align-items: center; flex-wrap: wrap; }
 
   /* ── Bloqueo panel ── */
-  .bloqueo-panel { background: var(--navy); color: var(--white); padding: 28px; margin-top: 8px; }
-  .bloqueo-panel h2 { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.4rem; margin-bottom: 10px; }
-  .bloqueo-panel > p { font-size: 0.9rem; line-height: 1.6; opacity: 0.88; margin-bottom: 20px; }
-  .bloqueo-panel .field label { color: rgba(255,255,255,0.8); }
-  .bloqueo-panel .field input {
+  .evaluador-widget .bloqueo-panel { background: var(--navy); color: var(--white); padding: 28px; margin-top: 8px; }
+  .evaluador-widget .bloqueo-panel h2 { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.4rem; margin-bottom: 10px; }
+  .evaluador-widget .bloqueo-panel > p { font-size: 0.9rem; line-height: 1.6; opacity: 0.88; margin-bottom: 20px; }
+  .evaluador-widget .bloqueo-panel .field label { color: rgba(255,255,255,0.8); }
+  .evaluador-widget .bloqueo-panel .field input {
     background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.25); color: var(--white);
   }
-  .bloqueo-panel .field input::placeholder { color: rgba(255,255,255,0.4); }
-  .bloqueo-panel .field input:focus { border-color: var(--white); }
-  .bloqueo-confirm-msg { font-size: 0.9rem; color: rgba(255,255,255,0.88); margin-top: 12px; }
-  .bloqueo-volver {
+  .evaluador-widget .bloqueo-panel .field input::placeholder { color: rgba(255,255,255,0.4); }
+  .evaluador-widget .bloqueo-panel .field input:focus { border-color: var(--white); }
+  .evaluador-widget .bloqueo-confirm-msg { font-size: 0.9rem; color: rgba(255,255,255,0.88); margin-top: 12px; }
+  .evaluador-widget .bloqueo-volver {
     display: inline-block; margin-top: 16px; font-size: 0.82rem; color: rgba(255,255,255,0.55);
     cursor: pointer; border: none; background: none; font-family: 'Inter', sans-serif; text-decoration: underline;
   }
-  .bloqueo-volver:hover { color: var(--white); }
+  .evaluador-widget .bloqueo-volver:hover { color: var(--white); }
 
   /* ── Resultado ── */
-  .resultado-card { background: var(--white); border: 1px solid var(--navy-10); padding: 28px; margin-bottom: 20px; }
-  .resultado-empresa { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--red); margin-bottom: 8px; }
-  .eleg-apto { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.1rem; color: var(--navy); margin-bottom: 14px; line-height: 1.4; }
-  .veredicto-texto { font-size: 0.95rem; line-height: 1.65; color: var(--navy); }
+  .evaluador-widget .resultado-card { background: var(--white); border: 1px solid var(--navy-10); padding: 28px; margin-bottom: 20px; }
+  .evaluador-widget .resultado-empresa { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--red); margin-bottom: 8px; }
+  .evaluador-widget .eleg-apto { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.1rem; color: var(--navy); margin-bottom: 14px; line-height: 1.4; }
+  .evaluador-widget .veredicto-texto { font-size: 0.95rem; line-height: 1.65; color: var(--navy); }
 
-  .concurrencia-block { background: var(--cream); border-left: 3px solid var(--red); padding: 22px 24px; margin-bottom: 20px; }
-  .concurrencia-block p { font-size: 0.92rem; line-height: 1.6; color: var(--navy); margin-bottom: 12px; }
-  .concurrencia-block p:last-child { margin-bottom: 0; }
+  .evaluador-widget .concurrencia-block { background: var(--cream); border-left: 3px solid var(--red); padding: 22px 24px; margin-bottom: 20px; }
+  .evaluador-widget .concurrencia-block p { font-size: 0.92rem; line-height: 1.6; color: var(--navy); margin-bottom: 12px; }
+  .evaluador-widget .concurrencia-block p:last-child { margin-bottom: 0; }
 
-  .score-display { display: flex; gap: 20px; flex-wrap: wrap; margin: 20px 0; }
-  .score-box { flex: 1 1 auto; background: var(--cream); padding: 16px 20px; text-align: center; }
-  .score-box .score-num { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 2.5rem; color: var(--navy); line-height: 1; }
-  .score-box .score-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(29,37,76,0.6); margin-top: 6px; }
-  .score-box.potencial .score-num { color: var(--red); }
+  .evaluador-widget .score-display { display: flex; gap: 20px; flex-wrap: wrap; margin: 20px 0; }
+  .evaluador-widget .score-box { flex: 1 1 auto; background: var(--cream); padding: 16px 20px; text-align: center; }
+  .evaluador-widget .score-box .score-num { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 2.5rem; color: var(--navy); line-height: 1; }
+  .evaluador-widget .score-box .score-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(29,37,76,0.6); margin-top: 6px; }
+  .evaluador-widget .score-box.potencial .score-num { color: var(--red); }
 
-  .score-bar-wrap { height: 8px; background: var(--navy-10); margin-bottom: 6px; }
-  .score-bar-inner { height: 100%; background: var(--navy); transition: width 0.6s ease; width: 0%; }
+  .evaluador-widget .score-bar-wrap { height: 8px; background: var(--navy-10); margin-bottom: 6px; }
+  .evaluador-widget .score-bar-inner { height: 100%; background: var(--navy); transition: width 0.6s ease; width: 0%; }
 
-  .calc-block { background: var(--white); border: 1px solid var(--navy-10); padding: 24px; margin-bottom: 20px; }
-  .calc-block h3 { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1rem; color: var(--navy); margin-bottom: 8px; }
-  .calc-formula { font-size: 0.8rem; color: rgba(29,37,76,0.65); margin-bottom: 16px; line-height: 1.5; }
-  .calc-result { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.6rem; color: var(--red); margin-top: 12px; }
+  .evaluador-widget .calc-block { background: var(--white); border: 1px solid var(--navy-10); padding: 24px; margin-bottom: 20px; }
+  .evaluador-widget .calc-block h3 { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1rem; color: var(--navy); margin-bottom: 8px; }
+  .evaluador-widget .calc-formula { font-size: 0.8rem; color: rgba(29,37,76,0.65); margin-bottom: 16px; line-height: 1.5; }
+  .evaluador-widget .calc-result { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.6rem; color: var(--red); margin-top: 12px; }
 
-  .cta-block { background: var(--navy); color: var(--white); padding: 28px; margin-bottom: 20px; }
-  .cta-block h2 { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.3rem; margin-bottom: 10px; }
-  .cta-block .cta-desc { font-size: 0.9rem; opacity: 0.88; line-height: 1.6; margin-bottom: 14px; }
-  .cta-block .cta-contacto { font-size: 0.95rem; font-weight: 500; line-height: 1.5; }
-  .cta-block a { color: var(--white); }
+  .evaluador-widget .cta-block { background: var(--navy); color: var(--white); padding: 28px; margin-bottom: 20px; }
+  .evaluador-widget .cta-block h2 { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.3rem; margin-bottom: 10px; }
+  .evaluador-widget .cta-block .cta-desc { font-size: 0.9rem; opacity: 0.88; line-height: 1.6; margin-bottom: 14px; }
+  .evaluador-widget .cta-block .cta-contacto { font-size: 0.95rem; font-weight: 500; line-height: 1.5; }
+  .evaluador-widget .cta-block a { color: var(--white); }
 
-  .nota-fuente { font-size: 0.72rem; color: rgba(29,37,76,0.5); margin-top: 24px; line-height: 1.5; }
-  .form-error { color: var(--red); font-size: 0.82rem; margin-top: 10px; display: none; }
+  .evaluador-widget .nota-fuente { font-size: 0.72rem; color: rgba(29,37,76,0.5); margin-top: 24px; line-height: 1.5; }
+  .evaluador-widget .form-error { color: var(--red); font-size: 0.82rem; margin-top: 10px; display: none; }
 
   /* ── Footer ── */
-  .site-footer { background: var(--navy); color: rgba(255,255,255,0.55); text-align: center; padding: 18px 24px; font-size: 0.75rem; line-height: 1.8; }
-  .site-footer a { color: rgba(255,255,255,0.55); }
-  .site-footer a:hover { color: var(--white); }
+  .evaluador-widget .site-footer { background: var(--navy); color: rgba(255,255,255,0.55); text-align: center; padding: 18px 24px; font-size: 0.75rem; line-height: 1.8; }
+  .evaluador-widget .site-footer a { color: rgba(255,255,255,0.55); }
+  .evaluador-widget .site-footer a:hover { color: var(--white); }
 
   @media (max-width: 480px) {
-    .intro-titulo { font-size: 1.5rem; }
-    .strip { gap: 8px; }
-    .strip-item { padding: 8px 12px; }
-    .score-display { gap: 12px; }
+    .evaluador-widget .intro-titulo { font-size: 1.5rem; }
+    .evaluador-widget .strip { gap: 8px; }
+    .evaluador-widget .strip-item { padding: 8px 12px; }
+    .evaluador-widget .score-display { gap: 12px; }
   }
 </style>
-</head>
-<body>
 
 <div class="evaluador-widget">
 
@@ -1013,5 +1005,3 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 });
 </script>
-</body>
-</html>

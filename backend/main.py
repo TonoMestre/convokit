@@ -296,7 +296,7 @@ def _generate_output_6(
     """
     Generación de la salida 6 (evaluador HTML interactivo).
     Claude genera SOLO el objeto JSON de configuración (CFG).
-    El backend inyecta ese JSON en la plantilla estática evaluador_template.html.
+    El backend inyecta ese JSON en el fragmento reutilizable evaluador_core.html.
     """
     model = model or pricing.MODEL_PER_OUTPUT.get(6, pricing.MODELS["sonnet"])
 

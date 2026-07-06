@@ -99,13 +99,18 @@
   .hero .hero-body { font-size: 1rem; color: rgba(255,255,255,0.8); margin-bottom: 32px; max-width: 640px; margin-left: auto; margin-right: auto; }
 
   /* ── Listas ── */
-  .lista { list-style: none; max-width: 760px; }
+  /* list-style!important y ::marker vacío: algunos temas de WordPress aplican su
+     propio bullet (disc o ::marker) con más especificidad que un simple .lista,
+     y sin esto se ve un punto del tema Y el cuadrado rojo a la vez. */
+  .lista { list-style: none !important; max-width: 760px; }
   .lista li {
+    list-style: none !important;
     position: relative;
     padding-left: 30px;
     margin-bottom: 16px;
     font-size: 1.02rem;
   }
+  .lista li::marker { content: '' !important; }
   .lista li::before {
     content: '';
     position: absolute;
@@ -118,7 +123,11 @@
   .lista li strong { display: block; margin-bottom: 2px; }
 
   /* ── Tarjetas de beneficios / qué financia ── */
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; }
+  /* 2 columnas fijas, no auto-fit: con 4 tarjetas auto-fit suele encajar 3 en la
+     primera fila y dejar la 4ª sola abajo. Con 2 columnas fijas, 4 tarjetas caen
+     2x2 y 3 tarjetas caen 2+1, nunca 3+1. En móvil colapsa a 1 columna (ver media
+     query). */
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
   .card {
     background: var(--cream);
     border-left: 3px solid var(--red);
@@ -243,6 +252,7 @@
     .bloque { padding: 40px 0; }
     .bloque-titulo { font-size: 1.4rem; }
     .form-landing { padding: 22px; }
+    .grid { grid-template-columns: 1fr; }
   }
 
   /* ── Variantes (solo background-color; layout, padding y tipografía intactos) ── */

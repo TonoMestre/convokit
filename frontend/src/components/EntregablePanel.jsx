@@ -47,6 +47,7 @@ function InstruccionesField({ value, onChange }) {
 function PendingSalidaRow({
   salida, selected, onToggle, outputStatuses, output4Progress,
   instructions, setInstructions, mode3, setMode3, variant3, setVariant3,
+  incluirEvaluador3, setIncluirEvaluador3,
 }) {
   const isChecked = selected.includes(salida.num);
   const outputStatus = outputStatuses[String(salida.num)]?.status;
@@ -141,6 +142,19 @@ function PendingSalidaRow({
               <span className="text-xs text-gray-500">
                 {VARIANT_OPTIONS.find((o) => o.value === variant3)?.hint}. Podrás cambiarla luego en la vista previa.
               </span>
+              <label className="flex items-start gap-2 cursor-pointer text-xs text-gray-700 mt-2">
+                <input
+                  type="checkbox"
+                  checked={incluirEvaluador3}
+                  onChange={(e) => setIncluirEvaluador3(e.target.checked)}
+                  className="w-4 h-4 shrink-0 mt-0.5"
+                  style={{ accentColor: "var(--color-navy)" }}
+                />
+                <span>
+                  Incluir el evaluador de encaje embebido en la landing (comparte las mismas
+                  preguntas que la salida 6, sin generarlas dos veces).
+                </span>
+              </label>
             </div>
           )}
           <InstruccionesField
@@ -633,6 +647,7 @@ export default function EntregablePanel({ convocatoria, onUpdate: _onUpdate }) {
   const [instructions, setInstructions] = useState({});
   const [mode3, setMode3] = useState("ABIERTA");
   const [variant3, setVariant3] = useState("A");
+  const [incluirEvaluador3, setIncluirEvaluador3] = useState(false);
 
   const pollRef = useRef(null);
 
@@ -705,7 +720,7 @@ export default function EntregablePanel({ convocatoria, onUpdate: _onUpdate }) {
     const salidas = types.map((t) => ({
       output_type: t,
       instrucciones_adicionales: instrMap[t] || "",
-      ...(t === 3 ? { modo: mode3, variante: variant3 } : {}),
+      ...(t === 3 ? { modo: mode3, variante: variant3, incluir_evaluador: incluirEvaluador3 } : {}),
     }));
 
     try {
@@ -760,6 +775,8 @@ export default function EntregablePanel({ convocatoria, onUpdate: _onUpdate }) {
                 setMode3={setMode3}
                 variant3={variant3}
                 setVariant3={setVariant3}
+                incluirEvaluador3={incluirEvaluador3}
+                setIncluirEvaluador3={setIncluirEvaluador3}
               />
             ))}
           </div>

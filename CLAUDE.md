@@ -51,8 +51,15 @@ operativo.
 - `prompts.py` — todos los system prompts (nunca incrustados en endpoints)
 - `extractors.py` — extracción de texto de PDF/DOCX/XLSX/TXT
 - `exporters.py` — exportación de salidas 4 y 5 a JSON estructurado
-- `output3_template.py` — inyección de la landing en landing_template.html
-- `output6_template.py` — inyección del evaluador en evaluador_template.html
+- `output3_template.py` — inyección del cuerpo de la landing en landing_template.html
+  (bloque scoped, sin doctype/html/head/body) y, si procede, sustitución del marcador
+  `<!--EVALUADOR_EMBED-->` por el fragmento del evaluador embebido
+- `output6_template.py` — construcción del evaluador: `evaluador_core.html` (motor
+  scoped bajo `.evaluador-widget`, reutilizable) envuelto en un shell HTML completo
+  para la salida 6 standalone, o servido tal cual (sin shell) como fragmento embebido
+  dentro de la salida 3
+- `result_email.py` — construcción del HTML de los correos de resultado del evaluador
+  (interno a Innóvate y al cliente), enviados vía Resend desde `/submit-evaluation`
 - `pricing.py` — definición de modelos y precios por token; registro en api_calls
 
 ## Reglas de código
@@ -85,6 +92,12 @@ la salida 3 (landing), que es contenido público de marca.
 Backend (.env en /backend):
 - ANTHROPIC_API_KEY
 - DB_PATH (ruta del fichero SQLite; en Railway apunta al volumen montado)
+- RESEND_API_KEY (envío de los correos de resultado del evaluador)
+- RESEND_FROM_EMAIL (remitente de esos correos, ej. `Innóvate 4.0 <hola@innovate40.es>`)
+- EVALUATOR_INTERNAL_EMAIL (bandeja que recibe el aviso interno de lead de `/submit-evaluation`)
+- EVALUATOR_REPLY_TO_EMAIL (reply-to opcional de ambos correos del evaluador)
+- BACKEND_URL (URL pública de este backend; la usa el HTML del evaluador para llamar a
+  `/submit-evaluation` tanto en la salida 6 standalone como embebido en la salida 3)
 
 Frontend (.env en /frontend):
 - VITE_API_URL (URL del backend desplegado en Railway)
@@ -128,9 +141,14 @@ Tres tablas en SQLite:
 Claves de `entregables_json`:
 - `"1"` — markdown guía consultor
 - `"2"` — markdown ficha comercial
-- `"3"` — HTML completo landing (con plantilla y marca aplicada)
-- `"3_seo"` — objeto JSON: {seo_title, meta_description, slug, body_html, confirmed, variant}
+- `"3"` — HTML de la landing: bloque scoped bajo `#innovate-ayuda-landing-{slug}`, sin
+  doctype/html/head/body, listo para pegar en un bloque "HTML personalizado" de WordPress
+- `"3_seo"` — objeto JSON: {seo_title, meta_description, slug, h1_recomendado,
+  keywords_principales, faqs_sugeridas, body_html, confirmed, variant, incluir_evaluador}
 - `"3_instruccion"` — instrucción libre del usuario para la landing
+- `"6_cfg"` — objeto JSON de configuración del evaluador (ver "Salida 6"), compartido
+  entre la salida 6 standalone y el evaluador embebido en la salida 3 para no generarlo
+  (ni redactar sus preguntas) dos veces
 - `"4"` — markdown set de prompts
 - `"4_json"` — objeto JSON, contrato de exportación v2.0 (ver docs/contrato-convokit.md
   y la sección "Salida 4" más abajo). No es un array: la raíz es
@@ -171,24 +189,55 @@ Los endpoints de generación lenta (salidas 1, 4, 6) usan generación asíncrona
 `pricing.MODELS` define los IDs reales: `"sonnet"` = `claude-sonnet-4-6`,
 `"haiku"` = `claude-haiku-4-5-20251001`.
 
-## Salida 3 — Landing page
+## Salida 3 — Landing page (fragmento embebible en WordPress)
+
+La landing NO es un documento HTML completo: es un bloque scoped pensado para pegarse
+directamente en un bloque "HTML personalizado" de una página de WordPress que ya tiene
+su propio `<head>`/`<body>`. Por eso nunca lleva doctype/html/head/body propios, y todo
+el SEO (título, meta description, H1, keywords, FAQs) se devuelve como JSON aparte en
+vez de inyectarse en un `<head>` que no existe: el consultor lo traslada a mano a
+Yoast/RankMath.
 
 ### Generación
 Claude devuelve la respuesta en dos bloques separados por marcadores:
 ```
 ===SEO_JSON===
-{"seo_title": ..., "meta_description": ..., "slug": ...}
+{"seo_title": ..., "meta_description": ..., "slug": ..., "h1_recomendado": ...,
+ "keywords_principales": [...], "faqs_sugeridas": [...]}
 ===LANDING_HTML===
 <section class="hero">...</section>
-... (8 secciones más)
+... (8 ó 9 secciones más, según incluya evaluador embebido)
 ```
 
-`output3_template.py` parsea la respuesta, inyecta el cuerpo en `landing_template.html`
-y devuelve el HTML completo. El slug no se inserta en el HTML; el usuario lo copia
-manualmente a WordPress/Yoast.
+`output3_template.py` parsea la respuesta (`parse_landing_response`) e inyecta el cuerpo
+en `landing_template.html` (`build_output_3_html`), que envuelve todo bajo
+`<div id="innovate-ayuda-landing-{slug}">` con su propio `<style>` scoped (todos los
+selectores prefijados con ese wrapper, sin tocar `*`/`html`/`body`/`:root`) para poder
+convivir con el CSS del tema de WordPress sin colisiones. El slug no se inserta en el
+HTML; el usuario lo copia manualmente a WordPress/Yoast.
 
-### Estructura de secciones (orden fijo, siempre 9)
-1. `section.hero` — hero con gancho, H1, descriptor (.hero-sub), cuerpo, botón
+### Evaluador embebido (flag `incluir_evaluador`)
+La convocatoria puede pedir que el evaluador de encaje (salida 6) se embeba dentro de
+la propia landing, en vez de (o además de) generarse como página standalone:
+- El frontend expone un checkbox en la fila de generación de la salida 3
+  (`EntregablePanel.jsx`) que fija `incluir_evaluador` en la petición de generación.
+- `main.py` inyecta una línea `INCLUIR_EVALUADOR: SI/NO` en el prompt de usuario.
+  Si es `SI`, el prompt de Claude añade un CTA temprano en el hero
+  (`.btn-outline-light`, nunca `.btn-outline` sobre el fondo navy del hero — sería
+  texto navy sobre navy, invisible) que enlaza a `#evaluador-embebido`, y deja el
+  literal `<!--EVALUADOR_EMBED-->` en el punto donde debe ir el evaluador.
+- `_get_existing_cfg` reutiliza el CFG ya guardado en `3_seo`/`6_cfg` si existe; si no,
+  `_generate_evaluador_cfg` genera uno nuevo (mismo prompt que usa la salida 6) y lo
+  persiste en `6_cfg` para que la salida 6 standalone, si se genera después, lo reutilice
+  sin volver a redactar las mismas preguntas.
+- `output3_template.build_output_3_html` sustituye `<!--EVALUADOR_EMBED-->` por
+  `output6_template.build_output_6_embed_fragment(cfg)` — el mismo motor que la salida 6,
+  pero sin el shell standalone. Si no hay `cfg` o no aparece el marcador, no hace nada.
+- `3_seo.incluir_evaluador` persiste la decisión para reflejarla en el panel al recargar.
+
+### Estructura de secciones (orden fijo: 9 sin evaluador, 10 con evaluador)
+1. `section.hero` — hero con gancho, H1, descriptor (.hero-sub), cuerpo, botón(es).
+   Si `incluir_evaluador`, un segundo botón `.btn-outline-light` hacia `#evaluador-embebido`.
 2. `section.bloque` — beneficios (lista o grid de cards)
 3. `section.bloque` — elegibilidad (quién puede pedir)
 4. `section.bloque` — qué financia
@@ -196,21 +245,33 @@ manualmente a WordPress/Yoast.
 6. `section.bloque` — cómo trabajamos
 7. `section.cta.cta-primary` — CTA principal (navy)
 8. `section.cta.cta-secondary` — CTA secundario (crema)
-9. `section.bloque#contacto` — formulario de contacto
+9. `[EVALUADOR EMBEBIDO]` — solo si `incluir_evaluador`; marcador `<!--EVALUADOR_EMBED-->`
+9/10. `section.bloque#contacto` — formulario de contacto, con checkbox de consentimiento
+   (`.field-check`) enlazando política de privacidad y aviso legal (ver memoria
+   `evaluador-privacidad-legal`)
 
 El H1 del hero es SOLO el nombre de la convocatoria (ej. "INPYME"). El descriptor
 va en `.hero-sub`, separado. Nunca unir nombre y descriptor con guion ni dash.
 
-### Variantes de color (A y B)
-Las variantes solo modifican `background-color` mediante clases CSS en `<body>`.
-El `body_html` almacenado en `3_seo.body_html` no se toca entre variantes.
+### Reglas de diseño equilibrado
+Grids de tarjetas siempre en columnas fijas (nunca `auto-fit`, para no producir un
+reparto 3+1 con un número de cards no múltiplo de las columnas); listas con
+`list-style:none!important` + reset de `::marker` (para no doblar el marcador con el
+bullet propio del tema de WordPress); bloques de dos columnas con `align-items:stretch`
+para que texto y panel visual queden a la misma altura. Ver memoria
+`landing-diseno-equilibrio` para el detalle y el porqué de cada regla.
 
-- `body.variante-a`: elegibilidad (nth-child 3) y importe (5) en crema.
-- `body.variante-b`: hero en crema (texto navy), qué-financia (4) en crema,
+### Variantes de color (A y B)
+Las variantes solo modifican `background-color` mediante una clase CSS en el wrapper
+(`{{WRAPPER_SELECTOR}}.variante-a` / `.variante-b`). El `body_html` almacenado en
+`3_seo.body_html` no se toca entre variantes.
+
+- `variante-a`: elegibilidad (nth-child 3) y importe (5) en crema.
+- `variante-b`: hero en crema (texto navy), qué-financia (4) en crema,
   importe (5) en navy con textos blancos.
 
-La función `build_output_3_html(body_html, seo_title, meta_description, variant)`
-en `output3_template.py` acepta `variant="A"` o `"B"` (default `"A"`).
+La función `build_output_3_html(body_html, slug, variant, cfg=None)` en
+`output3_template.py` acepta `variant="A"` o `"B"` (default `"A"`).
 `VALID_VARIANTS = {"A", "B"}`. La variante C fue eliminada.
 
 ### Parámetro `modo`
@@ -219,10 +280,56 @@ El prompt de salida 3 recibe el campo `modo` de la convocatoria:
 - `ANTICIPADA` — plazo no abierto aún; el copy del CTA cambia en consecuencia.
 
 ### Endpoints específicos
-- `POST /landing/seo` — confirma los campos SEO (seo_title, meta_description, slug)
-  y los persiste en `3_seo.confirmed = true`.
+- `POST /landing/seo` — confirma los campos SEO (seo_title, meta_description, slug,
+  h1_recomendado, keywords_principales, faqs_sugeridas) y los persiste en
+  `3_seo.confirmed = true`.
 - `POST /landing/variant` — cambia la variante guardada en `3_seo.variant` y
   regenera el HTML completo con la nueva clase sin volver a llamar a Claude.
+
+## Salida 6 — Evaluador de encaje
+
+### Motor compartido: `evaluador_core.html` + `output6_template.py`
+El evaluador es un único motor HTML/CSS/JS (`backend/evaluador_core.html`), scoped bajo
+`.evaluador-widget` (mismo criterio que la landing: ningún selector toca `*`/`html`/
+`body`/`:root`, para poder embeberse sin colisión dentro de la salida 3). `output6_template.py`
+lo usa de dos formas:
+- `build_output_6_html(config)` — el core envuelto en un shell HTML completo
+  (doctype/html/head/body) para la salida 6 standalone.
+- `build_output_6_embed_fragment(config)` — el core sin shell, para insertarlo en el
+  punto `<!--EVALUADOR_EMBED-->` de la salida 3.
+
+Claude solo genera el objeto de configuración CFG (`OUTPUT_6_CONFIG_PROMPT`):
+`titulo_corto`, `organismo`, `strip`, `elegibilidad`, `baremo`, `grupos_baremo`,
+`puntos_max_total`, `inversion`, `datos_proyecto` (preguntas de cualificación no
+puntuables, `tipo` ∈ seleccion/texto_libre/numero/fecha), `textos`. El motor (HTML/CSS/JS)
+nunca lo escribe Claude; así la marca y la lógica de gating nunca dependen de que el
+modelo reescriba código.
+
+### Envío de resultado: gating real, sin fire-and-forget
+El resultado del evaluador (elegible o no) NUNCA se muestra hasta que el backend confirma
+el envío del correo al cliente. El flujo en el motor (`onContactoSubmit`,
+`enviarLeadBloqueo`) es: validar → deshabilitar botón ("Enviando...") → `await` la llamada
+a `POST /submit-evaluation` → solo si la respuesta indica éxito se llama a
+`renderResultado()`; si falla, se reactiva el botón y se muestra el error, sin revelar el
+resultado.
+
+`POST /submit-evaluation` (`main.py`) valida el honeypot y los campos obligatorios, y
+envía DOS correos vía Resend (`result_email.py`): uno interno a
+`EVALUATOR_INTERNAL_EMAIL` (best-effort, un fallo no bloquea) y uno al cliente
+(`lead.email`, éste sí bloqueante — su éxito es lo que gatea `renderResultado`).
+
+### Honeypot antispam
+Campo oculto (`.hp-field`, `position:absolute;left:-9999px;opacity:0;pointer-events:none`)
+validado en cliente y en servidor. Si viene relleno, no se envía nada pero se responde
+como si hubiera ido bien (para no delatar el filtro a un bot).
+
+### Embebido en iframe: postMessage
+Cuando el evaluador se sirve en un iframe (standalone o embebido en la landing), usa
+`postMessage` para comunicarse con la página contenedora:
+- `i40-inpyme-evaluator-height` — redimensiona el iframe al alto real del contenido.
+- `i40-inpyme-evaluator-scrolltop` — al cambiar de paso, pide a la página padre que haga
+  `scrollIntoView`, porque `window.scrollTo` dentro de un iframe solo afecta al scroll
+  interno del iframe, no al de la página que lo contiene.
 
 ## Salida 4 — Set de prompts (arquitectura multi-llamada, contrato v2.0)
 
@@ -338,11 +445,12 @@ volver a subir archivos.
 - La salida 2 (ficha comercial) sale en .md limpio con jerarquía clara (H1, H2, bullets,
   destacados). El diseño visual lo aplica Claude design después, que ya tiene el design
   system de Innóvate 4.0; no generar frontmatter de marca ni CSS en esa salida.
-- La salida 3 (landing) y la salida 6 (evaluador) salen como HTML completo y autocontenido,
-  con la marca Innóvate 4.0 ya aplicada, listo para subir a innovate40.es como subcarpeta.
-  Ambas usan el mismo patrón: Claude genera solo el contenido variable (cuerpo HTML en la
-  salida 3, objeto CFG JSON en la salida 6) y el backend lo inyecta en una plantilla
-  estática (backend/landing_template.html y backend/evaluador_template.html) que contiene
-  el CSS de marca, la cabecera con logo y el pie. Así la marca nunca depende de que Claude
-  reescriba el CSS. El logo se incrusta en base64 para que la vista previa en iframe
-  (srcDoc) funcione.
+- La salida 3 (landing) es un fragmento HTML scoped listo para pegar en un bloque "HTML
+  personalizado" de WordPress (ver "Salida 3" arriba); la salida 6 (evaluador) sale como
+  HTML completo y autocontenido para alojar en innovate40.es como subcarpeta, o embebido
+  dentro de la propia salida 3. Ambas usan el mismo patrón: Claude genera solo el
+  contenido variable (cuerpo HTML en la salida 3, objeto CFG JSON en la salida 6) y el
+  backend lo inyecta en una plantilla estática (backend/landing_template.html,
+  backend/evaluador_core.html) que contiene el CSS de marca, la cabecera con logo y el
+  pie. Así la marca nunca depende de que Claude reescriba el CSS. El logo se incrusta en
+  base64 para que la vista previa en iframe (srcDoc) funcione.

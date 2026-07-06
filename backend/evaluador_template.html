@@ -17,15 +17,23 @@
     --navy-10: rgba(29,37,76,0.10);
     --navy-20: rgba(29,37,76,0.20);
   }
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { font-size: 16px; scroll-behavior: smooth; }
-  body {
+  /* Reset y estilo base scoped a .evaluador-widget (no a *, html o body): este
+     motor debe poder vivir tanto en una página propia como embebido dentro de
+     una landing sin filtrar estilos al resto de la página que lo contenga. */
+  .evaluador-widget, .evaluador-widget *, .evaluador-widget *::before, .evaluador-widget *::after {
+    box-sizing: border-box; margin: 0; padding: 0;
+  }
+  .evaluador-widget {
     font-family: 'Inter', sans-serif;
     background: var(--cream);
     color: var(--navy);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+  }
+  .hp-field {
+    position: absolute !important; left: -9999px !important; top: -9999px !important;
+    height: 0 !important; width: 0 !important; opacity: 0 !important; pointer-events: none !important;
   }
 
   /* ── Header ── */
@@ -241,6 +249,8 @@
 </head>
 <body>
 
+<div class="evaluador-widget">
+
 <header class="site-header">
   <img src="{{LOGO_SRC}}" height="28" style="object-fit:contain;" alt="Innóvate 4.0" />
   <span class="header-tag">Evaluador de encaje</span>
@@ -262,19 +272,24 @@
   &nbsp;|&nbsp; 960 66 66 10
 </footer>
 
+</div>
+
 <script>
 const CFG = {{CFG_JSON}};
-const WEB3FORMS_KEY = "9230bf98-4a35-437a-b326-eb6e24e88f2e";
-const BACKUP_EMAIL = "proyectos2@innovate40.es";
 const BACKEND_URL = "{{BACKEND_URL}}";
 
 const STATE = {
   nombre: "", empresa: "", municipio: "",
-  email: "", tel: "",
+  email: "", tel: "", rgpd: false,
   respuestas: {},
   bloqueado: false,
   bloqueoMotivo: "",
 };
+
+function getPageUrl() {
+  try { if (window.parent && window.parent !== window && window.parent.location) { return window.parent.location.href; } } catch (e) {}
+  return window.location.href;
+}
 
 var SCREENS = [];
 var currentIdx = 0;
@@ -396,6 +411,7 @@ function onStep1Submit() {
   STATE.nombre    = nombre;
   STATE.empresa   = empresa;
   STATE.municipio = document.getElementById("f-municipio").value.trim();
+  STATE.rgpd      = rgpd;
   avanzar();
 }
 
@@ -488,7 +504,7 @@ function renderGrupo(groupIdx) {
     var optsHtml = preg.opciones.map(function(opt, opIdx) {
       var sel = (saved && saved.opIdx === opIdx) ? " selected" : "";
       // Los puntos por opción NO se muestran al cliente: siguen en los datos (opt.puntos),
-      // en el cálculo (calcularScore) y en la notificación interna (buildMensaje).
+      // en el cálculo (calcularScore) y en el email interno a Innóvate 4.0.
       return '<button class="opcion' + sel + '" id="bo-' + escHtml(preg.id) + '-' + opIdx + '" ' +
         'data-pregid="' + escHtml(preg.id) + '" data-opidx="' + opIdx + '" ' +
         'onclick="onBaremoOpt(this.dataset.pregid,+this.dataset.opidx)" type="button">' +
@@ -556,13 +572,14 @@ function renderContacto() {
     : '';
   setContent(
     '<p class="section-header">Último paso</p>' +
-    '<p class="intro-lead" style="margin-bottom:24px;">Introduce tus datos de contacto para ver tu resultado personalizado.</p>' +
+    '<p class="intro-lead" style="margin-bottom:24px;">Para mostrarte el resultado de la evaluación y poder comentarlo contigo, necesitamos tus datos de contacto. Recibirás también una copia por correo electrónico.</p>' +
     '<div class="field"><label for="f-email">Email *</label>' +
     '<input type="email" id="f-email" placeholder="email@empresa.com" autocomplete="email" value="' + escHtml(STATE.email) + '" /></div>' +
     '<div class="field"><label for="f-tel">Teléfono *</label>' +
     '<input type="tel" id="f-tel" placeholder="Número de contacto" autocomplete="tel" value="' + escHtml(STATE.tel) + '" /></div>' +
+    '<input class="hp-field" type="text" id="f-website" name="website" tabindex="-1" autocomplete="off" />' +
     '<div class="step-nav">' + backBtn +
-    '<button class="btn btn-primary" onclick="onContactoSubmit()">Ver mi resultado →</button>' +
+    '<button class="btn btn-primary" id="btn-ver-resultado" onclick="onContactoSubmit()">Ver mi resultado →</button>' +
     '</div>' +
     '<div class="form-error" id="e-contacto">Por favor, completa tu email y teléfono para ver el resultado.</div>'
   );
@@ -578,12 +595,18 @@ function isValidTel(v) {
   return /^(?:\+34|0034)?\d{9}$/.test(s);
 }
 
-function onContactoSubmit() {
+async function onContactoSubmit() {
   var emailEl = document.getElementById("f-email");
   var telEl   = document.getElementById("f-tel");
   var email = emailEl.value.trim();
   var tel   = telEl.value.trim();
   var errEl = document.getElementById("e-contacto");
+  var btnEl = document.getElementById("btn-ver-resultado");
+
+  // Honeypot: si el campo oculto viene relleno, es un envío automatizado.
+  // Se descarta en silencio, sin mostrar resultado ni enviar nada.
+  var honeypot = (document.getElementById("f-website") || {}).value || "";
+  if (honeypot.trim()) { return; }
 
   emailEl.classList.remove("error");
   telEl.classList.remove("error");
@@ -613,23 +636,17 @@ function onContactoSubmit() {
   autoFillRedaccion();
   var score = calcularScore();
 
-  enviarWeb3Forms({
-    tipo: "resultado",
-    nombre: STATE.nombre,
-    empresa: STATE.empresa,
-    municipio: STATE.municipio,
-    email: STATE.email,
-    tel: STATE.tel,
-    convocatoria: CFG.titulo_corto || "",
-    puntuacion_actual: score.actual,
-    puntuacion_potencial: score.potencial,
-    puntuacion_max: score.max,
-    mensaje: buildMensaje(score),
-  }).catch(function() {});
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = "Enviando..."; }
 
-  enviarEmailResultado(score).catch(function() {});
+  var ok = await enviarEvaluacion(score);
 
-  renderResultado(score);
+  if (ok) {
+    renderResultado(score);
+  } else {
+    if (btnEl) { btnEl.disabled = false; btnEl.textContent = "Ver mi resultado →"; }
+    errEl.textContent = "No hemos podido enviar la evaluación en este momento. Inténtalo de nuevo o contacta directamente con Innóvate 4.0.";
+    errEl.style.display = "block";
+  }
 }
 
 // ── Bloqueo ──────────────────────────────────────
@@ -644,9 +661,10 @@ function renderBloqueo() {
     '<div id="bloqueo-form">' +
     '<div class="field"><label for="b-email">Tu email *</label>' +
     '<input type="email" id="b-email" placeholder="email@empresa.com" /></div>' +
-    '<div class="field"><label for="b-tel">Teléfono</label>' +
+    '<div class="field"><label for="b-tel">Teléfono *</label>' +
     '<input type="tel" id="b-tel" placeholder="Número de contacto" /></div>' +
-    '<button class="btn btn-red" onclick="enviarLeadBloqueo()">Recibir información de otras ayudas</button>' +
+    '<input class="hp-field" type="text" id="b-website" name="website" tabindex="-1" autocomplete="off" />' +
+    '<button class="btn btn-red" id="btn-bloqueo-enviar" onclick="enviarLeadBloqueo()">Recibir información de otras ayudas</button>' +
     '<div class="form-error" id="e-bloqueo">Revisa los datos de contacto.</div>' +
     '</div>' +
     '<div id="bloqueo-confirm" style="display:none">' +
@@ -657,12 +675,16 @@ function renderBloqueo() {
   );
 }
 
-function enviarLeadBloqueo() {
+async function enviarLeadBloqueo() {
   var emailEl = document.getElementById("b-email");
   var telEl   = document.getElementById("b-tel");
   var errEl   = document.getElementById("e-bloqueo");
+  var btnEl   = document.getElementById("btn-bloqueo-enviar");
   var email = emailEl ? emailEl.value.trim() : "";
   var tel   = telEl ? telEl.value.trim() : "";
+
+  var honeypot = (document.getElementById("b-website") || {}).value || "";
+  if (honeypot.trim()) { return; }
 
   if (emailEl) emailEl.classList.remove("error");
   if (telEl) telEl.classList.remove("error");
@@ -677,29 +699,31 @@ function enviarLeadBloqueo() {
     }
     return;
   }
-  // El teléfono es opcional en esta pantalla; si se rellena, debe tener formato válido.
-  if (tel && !isValidTel(tel)) {
+  if (!tel || !isValidTel(tel)) {
     if (telEl) { telEl.classList.add("error"); telEl.focus(); }
     if (errEl) {
-      errEl.textContent = "El teléfono debe tener 9 dígitos (puedes incluir el prefijo +34).";
+      errEl.textContent = tel
+        ? "El teléfono debe tener 9 dígitos (puedes incluir el prefijo +34)."
+        : "Indica tu teléfono para que podamos contactarte.";
       errEl.style.display = "block";
     }
     return;
   }
   if (errEl) errEl.style.display = "none";
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = "Enviando..."; }
 
-  enviarWeb3Forms({
-    tipo: "bloqueo",
-    nombre: STATE.nombre,
-    empresa: STATE.empresa,
-    municipio: STATE.municipio,
-    email: emailEl.value.trim(),
-    tel: telEl ? telEl.value.trim() : "",
-    convocatoria: CFG.titulo_corto || "",
-    motivo_bloqueo: STATE.bloqueoMotivo,
-  }).catch(function() {});
-  document.getElementById("bloqueo-form").style.display = "none";
-  document.getElementById("bloqueo-confirm").style.display = "block";
+  var ok = await enviarLeadNoElegible(email, tel);
+
+  if (ok) {
+    document.getElementById("bloqueo-form").style.display = "none";
+    document.getElementById("bloqueo-confirm").style.display = "block";
+  } else {
+    if (btnEl) { btnEl.disabled = false; btnEl.textContent = "Recibir información de otras ayudas"; }
+    if (errEl) {
+      errEl.textContent = "No hemos podido enviar tus datos en este momento. Inténtalo de nuevo o contacta directamente con Innóvate 4.0.";
+      errEl.style.display = "block";
+    }
+  }
 }
 
 // ── Auto-relleno de criterios de redacción ───────
@@ -754,62 +778,30 @@ function calcularScore() {
   };
 }
 
-// ── Web3Forms mensaje estructurado ───────────────
-function buildMensaje(score) {
-  var lines = [];
-
-  if ((CFG.elegibilidad || []).length > 0) {
-    lines.push("--- ELEGIBILIDAD ---");
-    CFG.elegibilidad.forEach(function(p) {
-      var r = STATE.respuestas[p.id];
-      lines.push(p.pregunta);
-      lines.push("→ " + (r ? r.label : "(sin responder)"));
-      lines.push("");
-    });
-  }
-
-  if ((CFG.baremo || []).length > 0) {
-    var baremoObjetivo = (CFG.baremo || []).filter(isObjetivo);
-    var baremoRedaccion = (CFG.baremo || []).filter(function(p) { return p.tipo === "redaccion"; });
-    if (baremoObjetivo.length > 0) {
-      lines.push("--- BAREMO (respondido por el usuario) ---");
-      baremoObjetivo.forEach(function(p) {
-        var r   = STATE.respuestas[p.id];
-        var pts = r ? (r.puntos || 0) : 0;
-        var mx  = p.puntos_max || 0;
-        lines.push(p.pregunta);
-        lines.push("→ " + (r ? r.label : "(sin responder)") + " [" + pts + "/" + mx + " pts]");
-        lines.push("");
-      });
-    }
-    if (baremoRedaccion.length > 0) {
-      lines.push("--- BAREMO (redacción Innóvate 4.0 — puntuación máxima asumida) ---");
-      baremoRedaccion.forEach(function(p) {
-        lines.push(p.pregunta + " [" + (p.puntos_max || 0) + "/" + (p.puntos_max || 0) + " pts]");
-      });
-      lines.push("");
+// ── Resumen legible para el email (etiquetas en castellano) ──
+function buildResumen(score, veredicto) {
+  var resumen = [
+    { label: "Estado de elegibilidad", value: "Cumple los requisitos de acceso declarados" },
+  ];
+  if (score.max > 0) {
+    resumen.push({ label: "Puntuación estimada", value: score.actual + " / " + score.max });
+    if (score.potencial > score.actual) {
+      resumen.push({ label: "Puntuación potencial trabajando mejoras", value: score.potencial + " / " + score.max });
     }
   }
+  resumen.push({ label: "Veredicto", value: veredicto });
+  if (STATE.municipio) resumen.push({ label: "Municipio", value: STATE.municipio });
+  return resumen;
+}
 
-  if (score.mejoras && score.mejoras.length > 0) {
-    lines.push("--- MEJORAS SUGERIDAS ---");
-    score.mejoras.forEach(function(m) {
-      lines.push("+" + m.puntos_ganables + " pts: " + m.pregunta);
-    });
-    lines.push("");
-  }
-
-  lines.push("--- RESULTADO ---");
-  lines.push("Pts objetivos (usuario): " + score.objetivo + " / " + (CFG.puntos_max_total || 0));
-  if (score.redaccion > 0) {
-    lines.push("Pts redacción (Innóvate 4.0): +" + score.redaccion);
-  }
-  lines.push("Puntuación total estimada: " + score.actual + " / " + (CFG.puntos_max_total || 0));
-  if (score.potencial > score.actual) {
-    lines.push("Puntuación potencial con Innóvate: " + score.potencial + " / " + (CFG.puntos_max_total || 0));
-  }
-
-  return lines.join("\n");
+function buildPendingActions(score) {
+  return (score.mejoras || []).map(function(m) {
+    return {
+      gain: "+" + m.puntos_ganables,
+      title: m.pregunta,
+      text: "Criterio influenciable: trabajarlo antes de presentar la solicitud puede sumar estos puntos.",
+    };
+  });
 }
 
 // ── Render resultado ─────────────────────────────
@@ -929,9 +921,11 @@ function renderResultado(score) {
   }
 }
 
-// ── Email de resultado al cliente (vía backend + Resend) ─────────────────
-async function enviarEmailResultado(score) {
-  if (!BACKEND_URL) return;
+// ── Envío del resultado (vía backend + Resend) ────────────────────────────
+// El resultado NUNCA se muestra hasta que el backend confirme el envío
+// correcto del email al cliente (ver onContactoSubmit).
+async function enviarEvaluacion(score) {
+  if (!BACKEND_URL) return false;
   var pct = score.max > 0 ? score.actual / score.max : 0;
   var veredicto = pct >= 0.65
     ? (CFG.textos.veredicto_alto  || "")
@@ -941,37 +935,70 @@ async function enviarEmailResultado(score) {
   veredicto = veredicto.replace(/\{empresa\}/g, STATE.empresa);
 
   try {
-    await fetch(BACKEND_URL + "/send-result-email", {
+    var res = await fetch(BACKEND_URL + "/submit-evaluation", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        nombre: STATE.nombre,
-        empresa: STATE.empresa,
-        email: STATE.email,
-        convocatoria: CFG.titulo_corto || "",
-        puntuacion_actual: score.actual,
-        puntuacion_max: score.max,
-        veredicto: veredicto,
+        source: "Evaluador de encaje Innóvate 4.0",
+        tool: CFG.titulo_corto || (CFG.textos && CFG.textos.titulo_evaluador) || "",
+        created_at: new Date().toISOString(),
+        page_url: getPageUrl(),
+        lead: {
+          nombre: STATE.nombre,
+          empresa: STATE.empresa,
+          poblacion: STATE.municipio,
+          telefono: STATE.tel,
+          email: STATE.email,
+          website: (document.getElementById("f-website") || {}).value || "",
+          privacy: !!STATE.rgpd,
+        },
+        summary: buildResumen(score, veredicto),
+        answers: STATE.respuestas,
+        pending_actions: buildPendingActions(score),
+        legal_note: "Resultado orientativo. La puntuación final depende de la evaluación del organismo convocante.",
       }),
     });
-  } catch (e) { /* fail silently */ }
+    var data = {};
+    try { data = await res.json(); } catch (e) {}
+    return res.ok && data.success !== false;
+  } catch (e) {
+    return false;
+  }
 }
 
-// ── Web3Forms ────────────────────────────────────
-async function enviarWeb3Forms(datos) {
+// ── Lead de la pantalla de no elegibilidad (vía backend + Resend) ────────
+async function enviarLeadNoElegible(email, tel) {
+  if (!BACKEND_URL) return false;
   try {
-    var payload = Object.assign({}, datos, {
-      access_key: WEB3FORMS_KEY,
-      subject: "[ConvoKit] " + (CFG.titulo_corto || "") + " — " + (datos.tipo || "lead"),
-      from_name: "Evaluador Innóvate 4.0",
-      email: datos.email || BACKUP_EMAIL,
-    });
-    await fetch("https://api.web3forms.com/submit", {
+    var res = await fetch(BACKEND_URL + "/submit-evaluation", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Accept": "application/json" },
-      body: JSON.stringify(payload),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        source: "Evaluador de encaje Innóvate 4.0 (no elegible)",
+        tool: CFG.titulo_corto || (CFG.textos && CFG.textos.titulo_evaluador) || "",
+        created_at: new Date().toISOString(),
+        page_url: getPageUrl(),
+        lead: {
+          nombre: STATE.nombre,
+          empresa: STATE.empresa,
+          poblacion: STATE.municipio,
+          telefono: tel,
+          email: email,
+          website: (document.getElementById("b-website") || {}).value || "",
+          privacy: !!STATE.rgpd,
+        },
+        summary: [{ label: "Motivo de no elegibilidad", value: STATE.bloqueoMotivo || "No especificado" }],
+        answers: STATE.respuestas,
+        pending_actions: [],
+        legal_note: "Solicitud de información sobre otras ayudas adaptadas al perfil de la empresa.",
+      }),
     });
-  } catch (e) { /* fail silently */ }
+    var data = {};
+    try { data = await res.json(); } catch (e) {}
+    return res.ok && data.success !== false;
+  } catch (e) {
+    return false;
+  }
 }
 
 // ── Init ─────────────────────────────────────────

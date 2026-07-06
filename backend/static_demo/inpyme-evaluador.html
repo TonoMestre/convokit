@@ -561,7 +561,7 @@ function renderLeadGate(){
           <div class="lead-field"><label for="lead-telefono">Teléfono</label><input id="lead-telefono" name="telefono" type="tel" autocomplete="tel" required value="${esc(S.lead&&S.lead.telefono)}"></div>
           <div class="lead-field full"><label for="lead-email">Correo electrónico</label><input id="lead-email" name="email" type="email" autocomplete="email" required value="${esc(S.lead&&S.lead.email)}"></div>
         </div>
-        <label class="lead-check"><input name="privacy" type="checkbox" required> <span>Acepto que Innóvate 4.0 trate estos datos para enviarme el resultado orientativo y contactar conmigo sobre la preparación de INPYME 2027. Resultado basado en datos de INPYME 2026.</span></label>
+        <label class="lead-check"><input name="privacy" type="checkbox" required> <span>He leído y acepto la <a href="https://innovate40.es/politica-de-privacidad/" target="_blank" rel="noopener noreferrer">política de privacidad</a> y el <a href="https://innovate40.es/aviso-legal/" target="_blank" rel="noopener noreferrer">aviso legal</a> de Innóvate 4.0 Estrategia Empresarial, S.L., y autorizo el tratamiento de estos datos para enviarme el resultado orientativo y contactar conmigo sobre la preparación de INPYME 2027. Resultado basado en datos de INPYME 2026.</span></label>
         <div class="lead-actions"><button class="btn ghost" type="button" onclick="go(2)">← Ajustar respuestas</button><button class="btn primary" type="submit">Enviar y ver resultado</button></div>
         <div id="leadSubmitStatus" aria-live="polite"></div>
       </form>

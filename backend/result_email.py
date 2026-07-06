@@ -186,19 +186,48 @@ def build_result_email_html(
 </html>"""
 
 
-def _kv_rows_html(data: dict) -> str:
-    """Filas etiqueta/valor para un dict plano (usado en el email interno)."""
-    if not data:
+def _format_value(value):
+    if isinstance(value, bool):
+        return "Sí" if value else "No"
+    if value is None:
+        return "—"
+    if isinstance(value, list):
+        return ", ".join(str(v) for v in value) if value else "—"
+    if isinstance(value, dict):
+        return json.dumps(value, ensure_ascii=False)
+    return value
+
+
+def _kv_rows_html(data) -> str:
+    """
+    Filas etiqueta/valor para el bloque de resumen de un email.
+
+    Acepta dos formatos:
+    - Lista de {"label": ..., "value": ...}: el evaluador ya decidió la
+      etiqueta legible (preferido: evita adivinar traducciones de claves
+      técnicas como "objective_score" o "sector_tension").
+    - Dict plano (compatibilidad): la clave se usa como etiqueta best-effort
+      (guiones bajos → espacios, primera letra en mayúscula).
+    """
+    if isinstance(data, list):
+        pairs = [
+            (item.get("label", ""), item.get("value", ""))
+            for item in data if isinstance(item, dict)
+        ]
+    elif isinstance(data, dict):
+        pairs = [(str(k).replace("_", " ").capitalize(), v) for k, v in data.items()]
+    else:
+        pairs = []
+
+    if not pairs:
         return ""
+
     rows = []
-    for key, value in data.items():
-        label = str(key).replace("_", " ").capitalize()
-        if isinstance(value, (list, dict)):
-            value = json.dumps(value, ensure_ascii=False)
+    for label, value in pairs:
         rows.append(f"""
               <tr>
                 <td style="padding:8px 12px;font-size:12.5px;font-weight:700;color:{NAVY};background:{CREAM};border-bottom:1px solid #e5e1d4;white-space:nowrap;vertical-align:top;">{_esc(label)}</td>
-                <td style="padding:8px 12px;font-size:13px;color:{NAVY};border-bottom:1px solid #e5e1d4;">{_esc(value)}</td>
+                <td style="padding:8px 12px;font-size:13px;color:{NAVY};border-bottom:1px solid #e5e1d4;">{_esc(_format_value(value))}</td>
               </tr>""")
     return f"""
               <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="border:1px solid #e5e1d4;margin:0 0 24px 0;">
@@ -239,7 +268,7 @@ def build_internal_lead_email_html(
     page_url: str,
     created_at: str,
     lead: dict,
-    summary: dict,
+    summary,
     answers: dict,
     pending_actions: list,
     logo_url: str = "",
@@ -324,7 +353,7 @@ def build_internal_lead_email_html(
 def build_user_lead_email_html(
     tool: str,
     lead: dict,
-    summary: dict,
+    summary,
     logo_url: str = "",
 ) -> str:
     """

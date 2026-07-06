@@ -1427,7 +1427,7 @@ class SubmitEvaluationRequest(BaseModel):
     created_at: str = ""
     page_url: str = ""
     lead: EvaluationLead
-    summary: dict = {}
+    summary: list | dict = {}
     answers: dict = {}
     pending_actions: list = []
     legal_note: str = ""

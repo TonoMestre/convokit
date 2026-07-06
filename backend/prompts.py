@@ -43,6 +43,16 @@ El objetivo es que el texto resulte indistinguible del que escribiría una perso
 # ---------------------------------------------------------------------------
 # Prompts auxiliares usados en la generación multi-llamada de la salida 4.
 # No son salidas finales: los usa internamente el endpoint /generate.
+#
+# Contrato de exportación de la salida 4 (4_json): versión 2.0, ver
+# docs/contrato-convokit.md. La raíz es un objeto {version_esquema,
+# convocatoria, campos_empresa, apartados, datos_aplicativo}, no un array.
+# Pipeline (orquestado en main.py, _generate_output_4):
+#   1. SECTION_EXTRACTOR_PROMPT       -> metadatos de convocatoria + lista de secciones
+#   2. SECTION_PROMPT_SYSTEM          -> markdown de cada apartado (una llamada por apartado)
+#   3. OUTPUT_4_JSON_EXTRACTOR        -> JSON tipado de ese apartado (una llamada por apartado)
+#   4. OUTPUT_4_CAMPOS_EMPRESA_CONSOLIDATOR -> dedup del catálogo de datos de empresa
+#   5. OUTPUT_4_DATOS_APLICATIVO_EXTRACTOR   -> datos de formulario/aplicativo (no narrativos)
 # ---------------------------------------------------------------------------
 
 OUTPUT_6_CONFIG_PROMPT = _RULE_ESTILO_HUMANO + "\n\n" + """Eres un extractor de datos de convocatorias de ayudas públicas. Tu única tarea es analizar los documentos aportados y devolver un objeto JSON de configuración para el evaluador de encaje interactivo. Las reglas de estilo de arriba aplican a los textos del JSON (veredictos, intro, CTA, ayudas).
@@ -181,7 +191,17 @@ Devuelve el objeto JSON completo. Nada más."""
 
 SECTION_EXTRACTOR_PROMPT = """Analiza la plantilla de memoria y las bases reguladoras de la convocatoria.
 
-Tu tarea es listar todos los apartados de la memoria que requieren que el solicitante redacte o cumplimente contenido.
+Tu tarea tiene dos partes: identificar los datos generales de la convocatoria y listar todos los apartados de la memoria que requieren que el solicitante redacte o cumplimente contenido.
+
+--- PARTE 1: DATOS DE LA CONVOCATORIA ---
+
+Extrae:
+- "nombre": nombre oficial completo de la convocatoria tal como figura en los documentos.
+- "anio": año de la edición (ejercicio) como número entero. Si no consta un año explícito de la convocatoria del ejercicio, usa el año de publicación o resolución más reciente que conste en los documentos. Si no hay ningún año identificable, usa null.
+- "organismo": nombre del organismo convocante.
+- "tipo_ayuda": clasifica la convocatoria en una de estas categorías exactas: "inversion_productiva", "digitalizacion", "idi", "internacionalizacion", "medioambiente_energia", "empleo", "otro". Usa "otro" si no encaja claramente en ninguna; nunca fuerces la categoría más parecida por similitud superficial.
+
+--- PARTE 2: APARTADOS DE LA MEMORIA ---
 
 CRITERIO DE INCLUSIÓN: incluir un apartado si la plantilla oficial de memoria lo presenta como un campo o sección a cumplimentar por el solicitante. No importa si tiene baremo propio o no — si la plantilla lo pide, se incluye.
 
@@ -194,10 +214,16 @@ Este criterio es genérico y funciona para cualquier convocatoria. No hardcodees
 
 JERARQUÍA DE FUENTES: la convocatoria del ejercicio prevalece sobre las bases para puntuaciones, pesos y criterios. Si un apartado aparece en la plantilla pero la convocatoria no especifica su baremo, inclúyelo igualmente (puntos_max: null).
 
-Devuelve ÚNICAMENTE un objeto JSON válido, sin texto antes ni después, sin bloques de código markdown. Formato exacto:
-{"secciones": [{"codigo": "I", "nombre": "Nombre del apartado", "puntos_max": 30, "es_habilitante": false}]}
+--- FORMATO DE SALIDA ---
 
-Reglas de campo:
+Devuelve ÚNICAMENTE un objeto JSON válido, sin texto antes ni después, sin bloques de código markdown. Formato exacto:
+
+{
+  "convocatoria": {"nombre": "...", "anio": 2026, "organismo": "...", "tipo_ayuda": "inversion_productiva"},
+  "secciones": [{"codigo": "I", "nombre": "Nombre del apartado", "puntos_max": 30, "es_habilitante": false}]
+}
+
+Reglas de campo de "secciones":
 - "codigo": identificador según la plantilla o las bases (ej. "I", "II.A", "III.B"). Si no hay código explícito, usa "1", "2", etc.
 - "nombre": nombre exacto según la plantilla o las bases.
 - "puntos_max": puntuación máxima como número entero extraída de las bases, o null si no consta.
@@ -236,55 +262,47 @@ Si este apartado puede redactarse tanto de forma integrada como criterio por cri
 FORMATO DE SALIDA:
 Devuelve ÚNICAMENTE el bloque markdown de esta sección. Sin texto antes ni después. Sin bloque de código externo que envuelva todo el contenido. No devuelvas JSON.
 
-Usa exactamente esta estructura con estos tres sub-apartados, en este orden:
+Usa exactamente esta estructura, en este orden:
 
 ---
 
 ### Sección [codigo]: [nombre] ([X puntos] / [criterio excluyente] / [sin puntuación especificada])
+
+**Requiere cálculo de rentabilidad:** [Sí/No]
+**Usa tabla de inversiones:** [Sí/No]
+
+REGLA PARA ESTOS DOS FLAGS (léela antes de rellenar QUÉ DEBES APORTAR):
+- "Requiere cálculo de rentabilidad: Sí" cuando el baremo de este apartado valora la rentabilidad, viabilidad económico-financiera o retorno de la inversión (VAN, TIR, payback, ROI o equivalente). Ese cálculo lo produce el módulo estructurado de la aplicación a partir de datos ya introducidos; el consultor nunca lo redacta como texto libre ni lo aporta como documento.
+- "Usa tabla de inversiones: Sí" cuando este apartado necesita el desglose de partidas de la inversión (presupuesto, activos, importes). Ese desglose lo cubre la tabla única de inversiones de la cuenta justificativa del expediente. NUNCA pidas el presupuesto de la inversión como documento a adjuntar ni como dato de texto libre en "QUÉ DEBES APORTAR": si el apartado necesita esa cifra, ya queda resuelta por este flag.
+- En el resto de apartados, ambos flags van en "No".
 
 **QUÉ BUSCA EL EVALUADOR**
 Criterios exactos de baremo para este apartado, con el peso en puntos si figura en los documentos. Suma TODOS los criterios y subcriterios que cubre este apartado (no solo uno) y, si agrupa varios, muestra el desglose ("X puntos = A de [criterio] + B de [criterio]"). No cuentes un criterio que ya hayas atribuido a otro apartado. Si hay umbrales mínimos o requisitos habilitantes, indicarlos explícitamente. Si el baremo no consta: "Baremo no especificado en los documentos; redactar con máximo detalle y evidencias documentales."
 
 **QUÉ DEBES APORTAR ANTES DE GENERAR**
 
-*Lo que cubre el Perfil Estratégico de Empresa (Ruta i40) — no necesitas aportar nada:*
-- [Lista de aspectos de este apartado que el PEE ya cubre automáticamente]
+Reparte lo que el consultor debe aportar en estos tres bloques, en este orden. Si un bloque no tiene ningún ítem real, OMÍTELO por completo: nunca escribas "no aplica", "ninguno" ni "ya cubierto" como si fuera un ítem.
 
-*Documentación adicional específica del proyecto:*
-- [Lista concreta y accionable: qué documento, en qué formato, qué debe contener. Si el consultor tiene que solicitar algo a un tercero (banco, administración, notaría), indicarlo. Si para este apartado el PEE cubre todo, escribir: "Ninguna — el Perfil Estratégico cubre todo lo necesario para este apartado."]
+*Datos generales de empresa (cubiertos por el Perfil Estratégico de Empresa — Ruta i40):*
+- [Nombre del dato general que este apartado necesita y que el PEE ya aporta, ej. "Datos económicos de la empresa (últimos 3 ejercicios)". No pidas aquí nada específico del proyecto.]
+
+*Específico de este proyecto — imprescindible para redactar el apartado:*
+- [Documento o dato concreto y accionable, distinto del PEE. Si es un documento a adjuntar, indica formato y contenido esperado. Si el consultor tiene que solicitarlo a un tercero (banco, administración, notaría, registro), indícalo. NUNCA incluyas aquí el presupuesto de la inversión ni el cálculo de rentabilidad: esos se resuelven con los flags de arriba, no como ítem de esta lista.]
+
+*Específico de este proyecto — mejora la puntuación pero no es imprescindible:*
+- [Documento o dato que suma puntos según el baremo pero cuya ausencia no impide generar un borrador razonable del apartado.]
 
 **INSTRUCCIÓN A CLAUDE**
 ```
 [Texto completo del prompt que el consultor pegará en Claude para generar el borrador de este apartado. Debe:
 1. Indicar el nombre exacto del apartado y su peso en el baremo (o "sin puntuación especificada" si no consta).
 2. Indicar que el Perfil Estratégico de Empresa está adjunto como fuente principal.
-3. Pedir que adjunte los documentos adicionales específicos de este apartado antes de redactar; si no se han aportado, que los solicite.
-4. Dar instrucciones precisas de qué redactar, con qué extensión orientativa, y qué argumentos maximizan la puntuación según los criterios del baremo.
-5. Pedir que señale con [DATO PENDIENTE: descripción] cualquier información que falte, en lugar de inventarla.
+3. Si alguno de los dos flags de arriba está en "Sí", indicar que ese dato (rentabilidad o desglose de inversión) se aporta ya calculado por la aplicación como dato dado, y que el prompt debe incorporarlo tal cual, nunca recalcularlo ni inventarlo.
+4. Pedir que adjunte los documentos adicionales específicos de este apartado antes de redactar; si no se han aportado, que los solicite.
+5. Dar instrucciones precisas de qué redactar, con qué extensión orientativa, y qué argumentos maximizan la puntuación según los criterios del baremo.
+6. Pedir que señale con [DATO PENDIENTE: descripción] cualquier información que falte, en lugar de inventarla.
 Escrito en segunda persona dirigiéndose a Claude.]
 ```"""
-
-
-OUTPUT_4_JSON_CONVERTER = """Convierte el texto markdown de un set de prompts para memoria en un array JSON estructurado.
-
-Devuelve ÚNICAMENTE un array JSON válido, sin texto antes ni después, sin bloques de código markdown.
-
-Esquema de cada elemento del array:
-{
-  "codigo": "II.C",
-  "nombre": "Nombre exacto del apartado",
-  "puntos_max": 40,
-  "inputs_minimos": ["item1"],
-  "inputs_puntuacion_completa": ["item1", "item2"],
-  "documentos_requeridos": ["doc1"],
-  "prompt": "Texto completo del prompt para Claude"
-}
-
-- "puntos_max": número entero o null si no consta.
-- "inputs_minimos": mínimo para redactar algo con sentido.
-- "inputs_puntuacion_completa": todo lo necesario para la puntuación máxima.
-- "documentos_requeridos": documentación adicional al Perfil Estratégico.
-- "prompt": texto completo del prompt dentro del bloque de código, sin los backticks."""
 
 
 OUTPUT_5_JSON_CONVERTER = """Convierte la tabla de documentación de una memoria de ayudas en un array JSON estructurado.
@@ -346,29 +364,104 @@ Lo que NO se convierte — citar tal cual de los documentos:
 Excepción permanente: el nombre oficial de la convocatoria (ej. INPYME 2026, CDTI 2025) sí puede y debe citarse con el año porque es el nombre oficial extraído de los documentos."""
 
 
-OUTPUT_4_JSON_EXTRACTOR = """Eres un extractor de datos JSON. Recibirás un documento markdown con un set de prompts para redactar memorias de ayudas públicas. Cada sección tiene esta estructura:
+OUTPUT_4_JSON_EXTRACTOR = """Eres un extractor de datos JSON. Recibirás el bloque markdown de UN apartado de un set de prompts para redactar memorias de ayudas públicas, con esta estructura:
 
 ### Sección [codigo]: [nombre] — [puntuación]
+**Requiere cálculo de rentabilidad:** Sí/No
+**Usa tabla de inversiones:** Sí/No
 **QUÉ BUSCA EL EVALUADOR** — criterios de baremo
-**QUÉ DEBES APORTAR ANTES DE GENERAR** — dos sublistas:
-  - "Lo que cubre el Perfil Estratégico de Empresa" → fuente: perfil_estrategico
-  - "Documentación adicional específica del proyecto" → fuente: proyecto
+**QUÉ DEBES APORTAR ANTES DE GENERAR** — hasta tres sublistas:
+  - "Datos generales de empresa (Perfil Estratégico...)" → tipo dato_empresa
+  - "Específico de este proyecto — imprescindible..." → nivel minimo
+  - "Específico de este proyecto — mejora la puntuación..." → nivel completo
 **INSTRUCCIÓN A CLAUDE** — bloque de código con el prompt
 
-Por cada sección, extrae los siguientes campos y devuelve ÚNICAMENTE un array JSON válido, sin texto adicional, sin bloques de código markdown, sin explicaciones:
+Devuelve ÚNICAMENTE un objeto JSON válido (un objeto, no un array), sin texto adicional, sin bloques de código markdown, con este esquema exacto:
 
-- codigo: string con el código de la sección (ej: 'II.C')
-- nombre: string con el nombre exacto del apartado
-- puntos_max: número entero extraído de la cabecera, o null si es criterio excluyente o no consta
-- inputs_minimos: array de strings en lenguaje natural legible (ej: "Actividad principal de la empresa y CNAE", "Descripción del proyecto en bruto"). NUNCA identificadores técnicos ni nombres de campo (nada de snake_case, camelCase ni abreviaturas internas). Incluye el PEE si aparece en la sublista del Perfil, más el documento adicional más básico si lo hay.
-- inputs_puntuacion_completa: array de strings en lenguaje natural legible (mismo criterio que inputs_minimos). Todo lo necesario para puntuación máxima: PEE más todos los documentos adicionales de la sublista "proyecto".
-- documentos_requeridos: array de objetos, uno por cada ítem de ambas sublistas de "QUÉ DEBES APORTAR":
-  {
-    "nombre": string con el nombre del documento o dato,
-    "fuente": "perfil_estrategico" si viene de la sublista del Perfil Estratégico, "proyecto" si viene de la sublista de documentación adicional
-  }
-  Si la sublista de proyecto indica "Ninguna", documentos_requeridos contiene solo los ítems del Perfil Estratégico.
-- prompt: string con el texto completo que aparece dentro del bloque de código de la sección (sin los backticks). Si no hay bloque de código, string vacío."""
+{
+  "codigo": "II.C",
+  "nombre": "Nombre exacto del apartado",
+  "puntos_max": 40,
+  "requiere_calculo_rentabilidad": false,
+  "usa_tabla_inversiones": false,
+  "inputs": [
+    {"id": "slug-kebab-case", "label": "Texto legible del dato o documento", "tipo": "texto_libre", "nivel": "minimo", "ayuda": "Aclaración breve, opcional"}
+  ],
+  "documentos_requeridos": [
+    {"nombre": "Nombre del documento", "fuente": "cliente"}
+  ],
+  "prompt": "Texto completo del prompt dentro del bloque de código, sin los backticks"
+}
+
+Reglas de extracción:
+
+- "puntos_max": número entero de la cabecera, o null si es criterio excluyente o no consta.
+- "requiere_calculo_rentabilidad" / "usa_tabla_inversiones": copia literal del Sí/No de las dos líneas de flags (true si Sí, false si No).
+- "inputs": un objeto por cada ítem real de las tres sublistas de "QUÉ DEBES APORTAR" (una sublista ausente no genera ítems), más un input adicional por cada flag activo. Nunca omitas un ítem ni lo dupliques. Nunca generes un input a partir de una sublista vacía o con un placeholder tipo "ninguno"/"no aplica".
+  - Ítems de "Datos generales de empresa": "tipo": "dato_empresa", "nivel": "minimo". Añade "ref_campo_empresa" con un id provisional en kebab-case derivado del nombre del dato (una consolidación posterior unificará este id con el mismo dato de otros apartados; no te preocupes por la coherencia entre apartados).
+  - Ítems de "imprescindible": "nivel": "minimo". "tipo": "documento" si el ítem nombra explícitamente un archivo, certificado, plano o documento a adjuntar; en caso contrario "texto_libre".
+  - Ítems de "mejora la puntuación": misma regla de tipo, "nivel": "completo".
+  - Si "requiere_calculo_rentabilidad" es true, añade un input {"id": "rentabilidad", "label": "Cálculo de rentabilidad (VAN, TIR, payback)", "tipo": "rentabilidad", "nivel": "completo"}.
+  - Si "usa_tabla_inversiones" es true, añade un input {"id": "inversion", "label": "Desglose de la inversión por partidas", "tipo": "inversion", "nivel": "minimo"}.
+  - Los tipos "rentabilidad" e "inversion" nunca llevan "tipo": "documento": ese dato nunca es un archivo a adjuntar, así que tampoco debe aparecer en "documentos_requeridos".
+- "documentos_requeridos": SOLO los inputs de tipo "documento" de arriba, con {"nombre": label del input, "fuente": "cliente"}. Usa "fuente": "generado" únicamente cuando el propio texto indique que el documento lo genera o rellena Innóvate 4.0 a partir de datos ya disponibles, no el cliente.
+- "prompt": string con el texto completo dentro del bloque de código de "INSTRUCCIÓN A CLAUDE", sin los backticks. Si no hay bloque de código, string vacío."""
+
+
+OUTPUT_4_CAMPOS_EMPRESA_CONSOLIDATOR = """Eres un consolidador de catálogo de datos de empresa para convocatorias de ayudas públicas.
+
+Recibirás un array JSON de propuestas de "dato_empresa" extraídas de distintos apartados de una misma convocatoria. Cada propuesta tiene esta forma:
+{"codigo_apartado": "A.1", "id_propuesto": "datos-economicos-empresa", "label": "Datos económicos de la empresa", "ayuda": "..."}
+
+Tu tarea: identificar qué propuestas describen EL MISMO dato de empresa aunque estén redactadas con palabras distintas (ej. "datos económicos de la empresa" y "cifras financieras de los últimos ejercicios" son el mismo dato), y fusionarlas en un catálogo único.
+
+REGLA DE ORO: si dos apartados piden el mismo dato con otras palabras, deben acabar apuntando al mismo id final. Nunca crees dos entradas de catálogo para el mismo concepto. A la inversa, no fusiones datos que sean genuinamente distintos solo porque se parezcan superficialmente.
+
+Devuelve ÚNICAMENTE un objeto JSON, sin texto adicional, sin bloques de código markdown, con este esquema exacto:
+
+{
+  "campos_empresa": [
+    {"id": "datos-economicos", "nombre": "Datos económicos de la empresa (últimos 3 ejercicios)", "descripcion": "Facturación, EBITDA y resultado de los últimos ejercicios.", "formato": "texto"}
+  ],
+  "remapeo": [
+    {"codigo_apartado": "A.1", "id_propuesto": "datos-economicos-empresa", "id_final": "datos-economicos"},
+    {"codigo_apartado": "A.3", "id_propuesto": "cifras-financieras", "id_final": "datos-economicos"}
+  ]
+}
+
+Reglas:
+- "id": slug kebab-case estable, descriptivo del dato en sí (no del apartado que lo pide).
+- "nombre": nombre claro y reutilizable del dato, sin referencia a un apartado o código concretos.
+- "descripcion": una frase que aclare qué incluye el dato, en términos genéricos.
+- "formato": "texto" para datos descriptivos, "numero" para una cifra única, "tabla_historica" para series de varios ejercicios (en ese caso añade "variables": array de nombres de columna, y "num_anios": número entero sugerido de ejercicios históricos).
+- "remapeo": debe contener EXACTAMENTE una entrada por cada propuesta recibida, en el mismo orden, con "codigo_apartado" e "id_propuesto" copiados literalmente de la entrada de entrada correspondiente. "id_final" es el id del catálogo de "campos_empresa" al que corresponde esa propuesta.
+- No inventes datos de empresa que no estén representados en las propuestas recibidas."""
+
+
+OUTPUT_4_DATOS_APLICATIVO_EXTRACTOR = """Eres un extractor de datos de convocatorias de ayudas públicas. Tu tarea es identificar los "datos de aplicativo": exigencias de las bases, la convocatoria o el formulario de solicitud que se resuelven con un valor puntual (una URL, un número, un sí/no, una fecha, o una opción de una lista cerrada), NUNCA con un párrafo redactado.
+
+REGLA DE DECISIÓN: si la respuesta esperada es una frase o un párrafo argumentado, NO es un dato de aplicativo (es contenido de memoria narrativa y no debes incluirlo aquí). Si la respuesta esperada es un dato que un consultor tecleraría en una casilla de un formulario, SÍ es un dato de aplicativo. Ante la duda, un requisito que empieza por "indicar", "número de", "fecha de", "sí/no" o que pide un dato identificativo de la empresa (NIF, razón social, domicilio, URL de la web) casi siempre es un dato de aplicativo.
+
+REGLA ABSOLUTA — NO INVENCIÓN: solo incluye datos que las bases, la convocatoria o el formulario mencionen explícitamente como exigidos. No inventes campos de formulario que no consten en los documentos aportados.
+
+NO DUPLIQUES datos que ya están cubiertos como "campos_empresa" de la memoria (se te proporciona esa lista a continuación del documento). Si un dato aparece tanto en la memoria narrativa como en el formulario (ej. la razón social encabeza la memoria y también el formulario), NO lo repitas aquí: ya está cubierto como dato de empresa referenciado desde un apartado.
+
+Devuelve ÚNICAMENTE un array JSON, sin texto adicional, sin bloques de código markdown. Esquema de cada elemento:
+
+{
+  "id": "empleados-a-contratar",
+  "label": "Número de empleados a contratar con esta ayuda",
+  "tipo_dato": "numero",
+  "ambito": "proyecto",
+  "obligatorio": true
+}
+
+- "tipo_dato": uno de "texto_corto", "numero", "booleano", "fecha", "url", "seleccion". Para "seleccion" añade "opciones": array de strings con la lista cerrada extraída de los documentos.
+- "ambito": "empresa" si el dato es reutilizable entre expedientes futuros del mismo cliente (ej. la URL de la web, el NIF), "proyecto" si es específico de esta solicitud concreta (ej. empleados a contratar con esta ayuda).
+- "obligatorio": true si las bases o el formulario lo exigen siempre, false si es opcional o condicional.
+- "id": slug kebab-case descriptivo del dato.
+
+Si no identificas ningún dato de aplicativo en los documentos, devuelve un array vacío []."""
 
 
 SYSTEM_PROMPTS: dict[int, str] = {

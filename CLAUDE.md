@@ -132,7 +132,9 @@ Claves de `entregables_json`:
 - `"3_seo"` — objeto JSON: {seo_title, meta_description, slug, body_html, confirmed, variant}
 - `"3_instruccion"` — instrucción libre del usuario para la landing
 - `"4"` — markdown set de prompts
-- `"4_json"` — JSON array de secciones (ver esquema en PRD sección 12)
+- `"4_json"` — objeto JSON, contrato de exportación v2.0 (ver docs/contrato-convokit.md
+  y la sección "Salida 4" más abajo). No es un array: la raíz es
+  `{version_esquema, convocatoria, campos_empresa, apartados, datos_aplicativo}`.
 - `"4_instruccion"` — instrucción libre del usuario
 - `"5"` — markdown lista de documentación + correo
 - `"5_json"` — JSON array de documentos (ver esquema en PRD sección 12)
@@ -222,22 +224,71 @@ El prompt de salida 3 recibe el campo `modo` de la convocatoria:
 - `POST /landing/variant` — cambia la variante guardada en `3_seo.variant` y
   regenera el HTML completo con la nueva clase sin volver a llamar a Claude.
 
-## Salida 4 — Set de prompts (arquitectura multi-llamada)
+## Salida 4 — Set de prompts (arquitectura multi-llamada, contrato v2.0)
 
-La generación de la salida 4 es multi-paso para evitar truncación con convocatorias
-largas (INPYME tiene 23 secciones, ~60 K caracteres de markdown):
+El JSON de exportación de la salida 4 (`4_json`) sigue el contrato `docs/contrato-convokit.md`
+(versión `2.0`), pensado para que la App de Memorias lo importe sin post-proceso de IA ni
+revisión manual. La raíz es un OBJETO, no un array:
 
-1. **Extractor de secciones** (`OUTPUT_4_SECTION_EXTRACTOR`): Claude lee los documentos
-   y devuelve la lista de secciones de memoria con su título y número.
-2. **Generación por sección**: para cada sección, una llamada a Sonnet genera el bloque
-   markdown (max_tokens = 8192).
-3. **Extracción JSON por sección** (`OUTPUT_4_JSON_EXTRACTOR`): inmediatamente después
-   de generar el markdown de cada sección, una llamada a Haiku extrae el objeto JSON
-   de esa sección (max_tokens = 4096). Esto evita enviar 60 K chars en una sola llamada.
+```json
+{
+  "version_esquema": "2.0",
+  "convocatoria": {"nombre", "anio", "organismo", "tipo_ayuda", "fecha_generacion"},
+  "campos_empresa": [{"id", "nombre", "descripcion", "formato"}],
+  "apartados": [{
+    "codigo", "nombre", "puntos_max", "prompt",
+    "requiere_calculo_rentabilidad", "usa_tabla_inversiones",
+    "inputs": [{"id", "label", "tipo", "nivel", "ayuda"?, "ref_campo_empresa"?}],
+    "documentos_requeridos": [{"nombre", "fuente"}]
+  }],
+  "datos_aplicativo": [{"id", "label", "tipo_dato", "ambito", "obligatorio", "opciones"?}]
+}
+```
 
-El JSON final (`4_json`) es un array con un objeto por sección. Los campos
-`inputs_minimos` e `inputs_puntuacion_completa` deben ser siempre strings en lenguaje
-natural (ej. "Descripción detallada del proyecto"), nunca snake_case ni camelCase.
+`apartados` contiene SOLO contenido narrativo real de la memoria (lo que el consultor
+redacta). Cualquier exigencia de las bases o del formulario telemático que se resuelva con
+un valor puntual (URL, número, sí/no, fecha, selección) va en `datos_aplicativo`, nunca
+como apartado: `datos_aplicativo` no genera prompt ni se envía a Claude para redactar.
+
+Vocabularios cerrados: `inputs[].tipo` ∈ `texto_libre | dato_empresa | inversion |
+rentabilidad | documento`; `inputs[].nivel` ∈ `minimo | completo`; `documentos_requeridos[].fuente`
+∈ `cliente | perfil_estrategico | generado`; `campos_empresa[].formato` ∈ `texto |
+tabla_historica | numero`; `datos_aplicativo[].tipo_dato` ∈ `texto_corto | numero | booleano
+| fecha | url | seleccion`; `datos_aplicativo[].ambito` ∈ `empresa | proyecto`;
+`convocatoria.tipo_ayuda` ∈ `inversion_productiva | digitalizacion | idi |
+internacionalizacion | medioambiente_energia | empleo | otro`.
+
+La generación es multi-paso para evitar truncación con convocatorias largas (INPYME tiene
+23 secciones, ~60 K caracteres de markdown) y para poder deduplicar semánticamente entre
+apartados, algo que una sola llamada sobre el markdown completo no puede hacer bien.
+Todo el pipeline vive en `_generate_output_4` (`backend/main.py`):
+
+1. **Metadatos + secciones** (`SECTION_EXTRACTOR_PROMPT`): una llamada lee los documentos
+   completos y devuelve `{convocatoria: {...}, secciones: [...]}`.
+2. **Generación por sección** (`SECTION_PROMPT_SYSTEM`): para cada sección, una llamada a
+   Sonnet genera el bloque markdown (max_tokens = 8192), con dos flags explícitos
+   (`Requiere cálculo de rentabilidad` / `Usa tabla de inversiones`) y los datos a aportar
+   repartidos en tres bloques (datos generales de empresa / imprescindible / mejora
+   puntuación) en vez de listas libres.
+3. **Extracción JSON por sección** (`OUTPUT_4_JSON_EXTRACTOR`): inmediatamente después de
+   generar el markdown de cada sección, una llamada a Haiku extrae el objeto JSON tipado
+   de ese apartado (max_tokens = 4096). Esto evita enviar 60 K chars en una sola llamada.
+   Los `ref_campo_empresa` que produce esta llamada son IDs provisionales por apartado.
+4. **Desambiguación de códigos** (Python, sin llamada a Claude): si dos apartados comparten
+   `codigo`, se añade un sufijo numérico (`-2`, `-3`...) para garantizar unicidad.
+5. **Consolidación de `campos_empresa`** (`OUTPUT_4_CAMPOS_EMPRESA_CONSOLIDATOR`): una
+   llamada a Haiku recibe todas las propuestas de `dato_empresa` de todos los apartados y
+   devuelve el catálogo deduplicado más un remapeo que `main.py` aplica in place a los
+   `ref_campo_empresa` de cada apartado. Esto resuelve que "datos económicos" en un
+   apartado y "cifras financieras" en otro apunten al mismo campo aunque se hayan
+   generado en llamadas aisladas.
+6. **Extracción de `datos_aplicativo`** (`OUTPUT_4_DATOS_APLICATIVO_EXTRACTOR`): una
+   llamada a Haiku sobre el contexto completo (no solo la plantilla de memoria) identifica
+   los datos de formulario/aplicativo, evitando duplicar lo que ya está en `campos_empresa`.
+
+`exporters.export_output_4` normaliza el objeto final antes de servirlo: fuerza los
+vocabularios cerrados, descarta placeholders de la lista negra ("no aplica", "ya
+incluido", "ver otro apartado"...) y elimina `ref_campo_empresa` huérfanos.
 
 ## Las dos apps (importante)
 
@@ -245,11 +296,13 @@ ConvoKit es la primera de dos aplicaciones. La segunda (App de Memorias) redacta
 técnicas y cuentas justificativas a partir de los datos reales de cada empresa.
 
 Las salidas 4 y 5 exportan JSON estructurado precisamente para alimentar la App de Memorias:
-- Salida 4 produce el perfil de convocatoria (secciones, baremo, inputs).
-- Salida 5 produce el árbol de documentos.
+- Salida 4 produce el perfil de convocatoria (contrato `docs/contrato-convokit.md` v2.0:
+  convocatoria, campos_empresa, apartados, datos_aplicativo).
+- Salida 5 produce el árbol de documentos (esquema en PRD sección 12).
 
-El esquema de campos de ambos JSON (sección 12 del PRD) no debe modificarse sin coordinarlo
-con el modelo de datos de la App de Memorias, porque esa app lo consume directamente.
+El esquema de ambos JSON no debe modificarse sin coordinarlo con el modelo de datos de la
+App de Memorias, porque esa app lo consume directamente. Cualquier cambio de contrato para
+la salida 4 se documenta primero en `docs/contrato-convokit.md`.
 
 La integración en el MVP es manual: se descarga el JSON de ConvoKit y se carga en la App de
 Memorias. No se construye conexión automática entre ambas apps en esta fase.

@@ -8,6 +8,7 @@ import re
 import threading
 import time
 from contextlib import asynccontextmanager
+from datetime import date
 from typing import Annotated, Callable
 
 import anthropic
@@ -341,6 +342,103 @@ def _generate_output_6(
 # Generación de salida 4
 # ---------------------------------------------------------------------------
 
+def _dedupe_apartado_codigos(apartados: list[dict]) -> None:
+    """Desambigua códigos de apartado repetidos añadiendo un sufijo numérico, in place."""
+    seen: dict[str, int] = {}
+    for apartado in apartados:
+        codigo = apartado.get("codigo") or ""
+        count = seen.get(codigo, 0)
+        seen[codigo] = count + 1
+        if count > 0:
+            apartado["codigo"] = f"{codigo}-{count + 1}"
+
+
+def _consolidate_campos_empresa(
+    client: anthropic.Anthropic,
+    apartados: list[dict],
+    _track: Callable | None = None,
+) -> list[dict]:
+    """
+    Recoge las propuestas de dato_empresa de todos los apartados ya generados,
+    las deduplica semánticamente con una llamada a Claude y remapea in place
+    el ref_campo_empresa de cada apartado al id final del catálogo.
+    """
+    propuestas = []
+    for apartado in apartados:
+        for inp in apartado.get("inputs", []):
+            if inp.get("tipo") == "dato_empresa" and inp.get("ref_campo_empresa"):
+                propuestas.append({
+                    "codigo_apartado": apartado.get("codigo", ""),
+                    "id_propuesto": inp["ref_campo_empresa"],
+                    "label": inp.get("label", ""),
+                    "ayuda": inp.get("ayuda", ""),
+                })
+
+    if not propuestas:
+        return []
+
+    try:
+        raw = _claude(
+            client,
+            system=p.OUTPUT_4_CAMPOS_EMPRESA_CONSOLIDATOR,
+            user=json.dumps(propuestas, ensure_ascii=False),
+            max_tokens=3000,
+            model=pricing.MODELS["haiku"],
+            _track=_track,
+        )
+        data = _parse_json(raw)
+    except Exception:
+        return []
+
+    if not isinstance(data, dict):
+        return []
+
+    campos_empresa = data.get("campos_empresa") or []
+    remapeo = data.get("remapeo") or []
+    remap_index = {
+        (r.get("codigo_apartado"), r.get("id_propuesto")): r.get("id_final")
+        for r in remapeo if isinstance(r, dict)
+    }
+
+    for apartado in apartados:
+        codigo = apartado.get("codigo", "")
+        for inp in apartado.get("inputs", []):
+            if inp.get("tipo") == "dato_empresa" and inp.get("ref_campo_empresa"):
+                id_final = remap_index.get((codigo, inp["ref_campo_empresa"]))
+                if id_final:
+                    inp["ref_campo_empresa"] = id_final
+
+    return campos_empresa if isinstance(campos_empresa, list) else []
+
+
+def _extract_datos_aplicativo(
+    client: anthropic.Anthropic,
+    full_context: str,
+    campos_empresa: list[dict],
+    _track: Callable | None = None,
+) -> list[dict]:
+    """Extrae los datos de aplicativo/formulario (no narrativos) del contexto completo."""
+    campos_conocidos = [{"id": c.get("id"), "nombre": c.get("nombre")} for c in campos_empresa]
+    user_msg = (
+        f"Documentos de la convocatoria:\n\n{full_context}\n\n"
+        "Datos de empresa ya cubiertos como contenido de memoria (no los dupliques aquí):\n"
+        f"{json.dumps(campos_conocidos, ensure_ascii=False)}"
+    )
+    try:
+        raw = _claude(
+            client,
+            system=p.OUTPUT_4_DATOS_APLICATIVO_EXTRACTOR,
+            user=user_msg,
+            max_tokens=4096,
+            model=pricing.MODELS["haiku"],
+            _track=_track,
+        )
+        data = _parse_json(raw)
+        return data if isinstance(data, list) else []
+    except Exception:
+        return []
+
+
 def _generate_output_4(
     client: anthropic.Anthropic,
     conv_name: str,
@@ -349,30 +447,37 @@ def _generate_output_4(
     model: str | None = None,
     _track: Callable | None = None,
     _progress_cb: Callable | None = None,
-) -> tuple[str, list[dict]]:
+) -> tuple[str, dict]:
     """
-    Generación multi-llamada de la salida 4.
+    Generación multi-llamada de la salida 4. Produce el objeto raíz del
+    contrato de exportación v2.0 (docs/contrato-convokit.md): version_esquema,
+    convocatoria, campos_empresa, apartados, datos_aplicativo.
 
     Flujo:
-    1. Extraer lista de secciones (contexto completo, un solo documento relevante basta).
-    2. Generar cada sección con contexto reducido (slicing por prioridad de documento).
-       Pausa de 2 s entre secciones para reducir carga en la API.
-    3. Extracción JSON del markdown completo con una sola llamada adicional.
+    1. Extraer metadatos de la convocatoria y lista de secciones.
+    2. Generar cada sección con contexto reducido: markdown + JSON tipado
+       (inputs con tipo/nivel, flags de rentabilidad/inversión).
+       Pausa entre secciones para reducir carga en la API.
+    3. Desambiguar códigos de apartado repetidos.
+    4. Consolidar el catálogo de campos_empresa (dedup semántico entre apartados).
+    5. Extraer los datos_aplicativo del contexto completo (bases/formulario).
     """
     model = model or pricing.MODEL_PER_OUTPUT[4]
     full_context = extractors.build_context(documents_json)
 
-    # Paso 1: extraer secciones
+    # Paso 1: metadatos de convocatoria + secciones
     raw_sections = _claude(
         client,
         system=p.SECTION_EXTRACTOR_PROMPT,
         user=f"Documentos de la convocatoria '{conv_name}':\n\n{full_context}",
-        max_tokens=1500,
+        max_tokens=2000,
         model=model,
         _track=_track,
     )
     try:
-        secciones = _parse_json(raw_sections).get("secciones", [])
+        parsed_step1 = _parse_json(raw_sections)
+        secciones = parsed_step1.get("secciones", [])
+        conv_meta = parsed_step1.get("convocatoria") or {}
     except Exception:
         raise HTTPException(
             status_code=502,
@@ -386,7 +491,7 @@ def _generate_output_4(
             detail="No se encontraron apartados en la plantilla de memoria.",
         )
 
-    # Paso 2: generar markdown por sección con contexto reducido
+    # Paso 2: generar markdown + JSON tipado por sección con contexto reducido
     header = (
         f"# Set de prompts para la memoria — {conv_name}\n\n"
         "> **Nota de uso:** El **Perfil Estratégico de Empresa** (documento de Ruta i40) "
@@ -396,7 +501,7 @@ def _generate_output_4(
         "ADICIONAL específica del proyecto que el Perfil no cubre.\n\n---"
     )
     markdown_parts = [header]
-    json_sections: list[dict] = []
+    apartados: list[dict] = []
     section_context = _slice_context_for_section(documents_json)
 
     for i, seccion in enumerate(secciones):
@@ -432,7 +537,7 @@ def _generate_output_4(
                     raw_section = f"<!-- Error generando sección {seccion['codigo']}: {exc} -->"
         markdown_parts.append(raw_section or "")
 
-        # Extraer JSON de esta sección individualmente (evita truncar con el markdown completo)
+        # Extraer JSON tipado de esta sección individualmente (evita truncar con el markdown completo)
         try:
             raw_json_sec = _claude(
                 client,
@@ -442,11 +547,9 @@ def _generate_output_4(
                 model=pricing.MODELS["haiku"],
                 _track=_track,
             )
-            parsed = _parse_json(raw_json_sec)
-            if isinstance(parsed, list):
-                json_sections.extend(parsed)
-            elif isinstance(parsed, dict):
-                json_sections.append(parsed)
+            parsed_sec = _parse_json(raw_json_sec)
+            if isinstance(parsed_sec, dict):
+                apartados.append(parsed_sec)
         except Exception:
             pass  # sección sin JSON válido: se omite, el markdown queda intacto
 
@@ -454,7 +557,31 @@ def _generate_output_4(
             _progress_cb(i + 1, len(secciones))
 
     markdown = "\n\n---\n\n".join(markdown_parts)
-    return markdown, json_sections
+
+    # Paso 3: desambiguar códigos repetidos
+    _dedupe_apartado_codigos(apartados)
+
+    # Paso 4: consolidar catálogo de campos_empresa y remapear referencias
+    campos_empresa = _consolidate_campos_empresa(client, apartados, _track=_track)
+
+    # Paso 5: extraer datos_aplicativo del contexto completo
+    datos_aplicativo = _extract_datos_aplicativo(client, full_context, campos_empresa, _track=_track)
+
+    root = {
+        "version_esquema": "2.0",
+        "convocatoria": {
+            "nombre": conv_meta.get("nombre") or conv_name,
+            "anio": conv_meta.get("anio"),
+            "organismo": conv_meta.get("organismo") or "",
+            "tipo_ayuda": conv_meta.get("tipo_ayuda") or "otro",
+            "fecha_generacion": date.today().isoformat(),
+        },
+        "campos_empresa": campos_empresa,
+        "apartados": apartados,
+        "datos_aplicativo": datos_aplicativo,
+    }
+
+    return markdown, root
 
 
 # ---------------------------------------------------------------------------
@@ -582,12 +709,12 @@ def _process_job(job_id: int, conv_id: int, salida_requests: list[dict]) -> None
                         progress["output4_progress"] = {"actual": actual, "total": total}
                         db.update_job(job_id, "running", progress)
 
-                    md_text, json_secs = _generate_output_4(
+                    md_text, output_4_data = _generate_output_4(
                         client, conv_name, documents_json, instrucciones,
                         model=model, _track=track, _progress_cb=progress_cb,
                     )
                     generated["4"] = md_text
-                    generated["4_json"] = json.dumps(json_secs, ensure_ascii=False)
+                    generated["4_json"] = json.dumps(output_4_data, ensure_ascii=False)
 
                 elif output_type == 5:
                     user_prompt = _build_user_prompt(conv_name, context, 5, instrucciones)
@@ -1003,12 +1130,12 @@ def generate_outputs(convocatoria_id: int, body: GenerateRequest):
                 )
 
             elif output_type == 4:
-                md_text, json_sections = _generate_output_4(
+                md_text, output_4_data = _generate_output_4(
                     client, conv["nombre"], conv["documentos_json"], instrucciones,
                     model=model, _track=track,
                 )
                 generated["4"] = md_text
-                generated["4_json"] = json.dumps(json_sections, ensure_ascii=False)
+                generated["4_json"] = json.dumps(output_4_data, ensure_ascii=False)
 
             elif output_type == 5:
                 user_prompt = _build_user_prompt(conv["nombre"], context, 5, instrucciones)
@@ -1114,72 +1241,12 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
                     )
 
                 elif output_type == 4:
-                    # Paso 1: extraer secciones
-                    raw_sections = _claude(
-                        client,
-                        system=p.SECTION_EXTRACTOR_PROMPT,
-                        user=f"Documentos de la convocatoria '{conv['nombre']}':\n\n{context}",
-                        max_tokens=1500,
-                        model=model,
-                        _track=track,
+                    md_text, output_4_data = _generate_output_4(
+                        client, conv["nombre"], conv["documentos_json"], instrucciones,
+                        model=model, _track=track,
                     )
-                    try:
-                        secciones = _parse_json(raw_sections).get("secciones", [])
-                    except Exception:
-                        yield _evt({"tipo": "error", "mensaje": "No se pudieron identificar los apartados de la memoria."})
-                        return
-
-                    n = len(secciones)
-                    if n == 0:
-                        yield _evt({"tipo": "error", "mensaje": "No se encontraron apartados en la plantilla de memoria."})
-                        return
-
-                    yield _evt({"tipo": "inicio_4", "total": n})
-
-                    header = (
-                        f"# Set de prompts para la memoria — {conv['nombre']}\n\n"
-                        "> **Nota de uso:** El **Perfil Estratégico de Empresa** (documento de Ruta i40) "
-                        "es la fuente principal de información sobre la empresa. Tenlo abierto antes de usar "
-                        "estos prompts: cubre historia, actividad, datos económicos, estructura accionarial, "
-                        "mercados y experiencia previa. Cada prompt indica únicamente la documentación "
-                        "ADICIONAL específica del proyecto que el Perfil no cubre.\n\n---"
-                    )
-                    markdown_parts = [header]
-                    section_context = _slice_context_for_section(conv["documentos_json"])
-
-                    for i, seccion in enumerate(secciones):
-                        if i > 0:
-                            time.sleep(2)
-                        user_msg = (
-                            f"Convocatoria: {conv['nombre']}\n"
-                            f"Apartado: {seccion['codigo']} — {seccion['nombre']} "
-                            f"(puntos_max: {seccion.get('puntos_max') or 'no especificado'}, "
-                            f"habilitante: {seccion.get('es_habilitante', False)})\n\n"
-                            f"Documentos de la convocatoria:\n{section_context}"
-                        )
-                        user_msg += _instr_block(instrucciones)
-                        raw_section = _claude(
-                            client, system=p.SECTION_PROMPT_SYSTEM, user=user_msg,
-                            max_tokens=4096, model=model, _track=track,
-                        )
-                        markdown_parts.append(raw_section)
-                        yield _evt({"tipo": "progreso_4", "actual": i + 1, "total": n})
-
-                    markdown_4 = "\n\n---\n\n".join(markdown_parts)
-                    time.sleep(2)
-                    raw_json_4 = _claude(
-                        client, system=p.OUTPUT_4_JSON_EXTRACTOR, user=markdown_4,
-                        max_tokens=8192, model=pricing.MODELS["haiku"], _track=track,
-                    )
-                    try:
-                        json_sections = _parse_json(raw_json_4)
-                        if not isinstance(json_sections, list):
-                            json_sections = []
-                    except Exception:
-                        json_sections = []
-
-                    generated["4"] = markdown_4
-                    generated["4_json"] = json.dumps(json_sections, ensure_ascii=False)
+                    generated["4"] = md_text
+                    generated["4_json"] = json.dumps(output_4_data, ensure_ascii=False)
 
                 elif output_type == 5:
                     user_prompt = _build_user_prompt(conv["nombre"], context, 5, instrucciones)
@@ -1221,6 +1288,9 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
                 return
             except anthropic.APIError:
                 yield _evt({"tipo": "error", "mensaje": f"Error de API al generar la salida {output_type}."})
+                return
+            except HTTPException as exc:
+                yield _evt({"tipo": "error", "mensaje": str(exc.detail)})
                 return
 
         db.update_entregables(convocatoria_id, generated)

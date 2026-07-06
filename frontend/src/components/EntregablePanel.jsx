@@ -181,6 +181,7 @@ function parseSeo(seoRaw) {
       slug: s.slug || "",
       variant: (s.variant || "A").toUpperCase(),
       confirmed: !!s.confirmed,
+      incluir_evaluador: !!s.incluir_evaluador,
     };
   } catch {
     return null;
@@ -405,6 +406,10 @@ function EntregableItem({
   const [downloadingJson, setDownloadingJson] = useState(false);
   const [showRegenPanel, setShowRegenPanel] = useState(false);
   const [regenInstr, setRegenInstr] = useState(instruccionPrevia || "");
+  const seoInicial = parseSeo(seoRaw);
+  const [regenModo, setRegenModo] = useState("ABIERTA");
+  const [regenVariant, setRegenVariant] = useState(seoInicial?.variant || "A");
+  const [regenIncluirEvaluador, setRegenIncluirEvaluador] = useState(seoInicial?.incluir_evaluador || false);
 
   function handleCopy(e) {
     e.stopPropagation();
@@ -557,6 +562,65 @@ function EntregableItem({
           style={{ borderTop: "1px solid var(--color-navy-20)", background: "#f9f9f9" }}
           onClick={(e) => e.stopPropagation()}
         >
+          {salida.num === 3 && (
+            <div className="flex flex-col gap-1.5 mb-1">
+              <span className="text-xs font-semibold text-brand-blue uppercase tracking-wide">
+                Modo de generación
+              </span>
+              <div className="flex flex-col gap-1">
+                {[
+                  { value: "ABIERTA",    label: "Convocatoria abierta o inminente" },
+                  { value: "ANTICIPADA", label: "Posicionamiento anticipado (edición futura)" },
+                ].map((opt) => (
+                  <label key={opt.value} className="flex items-center gap-2 cursor-pointer text-xs text-gray-700">
+                    <input
+                      type="radio"
+                      name={`regenModo3-${salida.num}`}
+                      value={opt.value}
+                      checked={regenModo === opt.value}
+                      onChange={() => setRegenModo(opt.value)}
+                      style={{ accentColor: "var(--color-navy)" }}
+                    />
+                    {opt.label}
+                  </label>
+                ))}
+              </div>
+              <span className="text-xs font-semibold text-brand-blue uppercase tracking-wide mt-1">
+                Variante de distribución
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {VARIANT_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setRegenVariant(opt.value)}
+                    title={opt.hint}
+                    className={`text-xs px-3 py-1.5 border transition-colors ${
+                      regenVariant === opt.value
+                        ? "bg-brand-blue text-white border-brand-blue font-semibold"
+                        : "bg-white text-brand-blue border-brand-blue/40 hover:border-brand-blue"
+                    }`}
+                    style={{ borderRadius: 0 }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <label className="flex items-start gap-2 cursor-pointer text-xs text-gray-700 mt-2">
+                <input
+                  type="checkbox"
+                  checked={regenIncluirEvaluador}
+                  onChange={(e) => setRegenIncluirEvaluador(e.target.checked)}
+                  className="w-4 h-4 shrink-0 mt-0.5"
+                  style={{ accentColor: "var(--color-navy)" }}
+                />
+                <span>
+                  Incluir el evaluador de encaje embebido en la landing (comparte las mismas
+                  preguntas que la salida 6, sin generarlas dos veces).
+                </span>
+              </label>
+            </div>
+          )}
           <label className="text-xs font-semibold text-brand-blue uppercase tracking-wide">
             Instrucción adicional{" "}
             <span className="font-normal normal-case text-gray-400">(opcional)</span>
@@ -572,7 +636,12 @@ function EntregableItem({
             <button
               onClick={() => {
                 setShowRegenPanel(false);
-                onRegenerate(regenInstr);
+                onRegenerate(
+                  regenInstr,
+                  salida.num === 3
+                    ? { modo: regenModo, variante: regenVariant, incluir_evaluador: regenIncluirEvaluador }
+                    : undefined
+                );
               }}
               className="text-xs px-3 py-1.5 bg-brand-red text-white font-semibold hover:bg-red-800 transition-colors"
             >
@@ -707,7 +776,7 @@ export default function EntregablePanel({ convocatoria, onUpdate: _onUpdate }) {
     }
   }
 
-  async function generate(types, overrideInstructions) {
+  async function generate(types, overrideInstructions, output3Opts) {
     stopPolling();
     setError(null);
     setOutput4Progress(null);
@@ -720,7 +789,11 @@ export default function EntregablePanel({ convocatoria, onUpdate: _onUpdate }) {
     const salidas = types.map((t) => ({
       output_type: t,
       instrucciones_adicionales: instrMap[t] || "",
-      ...(t === 3 ? { modo: mode3, variante: variant3, incluir_evaluador: incluirEvaluador3 } : {}),
+      ...(t === 3 ? {
+        modo: output3Opts?.modo ?? mode3,
+        variante: output3Opts?.variante ?? variant3,
+        incluir_evaluador: output3Opts?.incluir_evaluador ?? incluirEvaluador3,
+      } : {}),
     }));
 
     try {
@@ -813,7 +886,7 @@ export default function EntregablePanel({ convocatoria, onUpdate: _onUpdate }) {
                   outputStatus={salStatus?.status}
                   output4Progress={s.num === 4 ? output4Progress : null}
                   costEur={salStatus?.cost_eur ?? null}
-                  onRegenerate={(instr) => generate([s.num], { [s.num]: instr })}
+                  onRegenerate={(instr, output3Opts) => generate([s.num], { [s.num]: instr }, output3Opts)}
                 />
               );
             })}

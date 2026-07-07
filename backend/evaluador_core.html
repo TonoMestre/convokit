@@ -386,9 +386,15 @@ function scrollWidgetToTop() {
   }
 }
 
+var FIRST_RENDER = true;
+
 function renderScreen() {
   updateProgress();
-  scrollWidgetToTop();
+  // El scroll solo aplica al CAMBIAR de pantalla. En el render inicial
+  // (DOMContentLoaded) no debe ejecutarse: embebido a mitad de una landing,
+  // scrollIntoView saltaría directamente al evaluador al abrir la página y el
+  // visitante nunca vería el inicio de la landing.
+  if (FIRST_RENDER) { FIRST_RENDER = false; } else { scrollWidgetToTop(); }
   if (STATE.bloqueado) { renderBloqueo(); return; }
   var s = SCREENS[currentIdx];
   if      (s.type === "inicio")   renderInicio();
@@ -923,7 +929,10 @@ function renderResultado(score) {
   document.getElementById("progress-bar-inner").style.width = "100%";
 
   var empresa  = STATE.empresa;
-  var pct      = score.max > 0 ? score.actual / score.max : 0;
+  // Sin baremo puntuable (max 0), quien llega aquí ha superado todos los
+  // requisitos de acceso: el veredicto es el alto, nunca el bajo (que hablaría
+  // de dificultades justo debajo del mensaje "cumple los requisitos").
+  var pct      = score.max > 0 ? score.actual / score.max : 1;
   var veredicto = pct >= 0.65
     ? (CFG.textos.veredicto_alto  || "")
     : pct >= 0.35
@@ -1039,7 +1048,8 @@ function renderResultado(score) {
 // correcto del email al cliente (ver onContactoSubmit).
 async function enviarEvaluacion(score) {
   if (!BACKEND_URL) return false;
-  var pct = score.max > 0 ? score.actual / score.max : 0;
+  // Mismo criterio que renderResultado: sin baremo puntuable, veredicto alto.
+  var pct = score.max > 0 ? score.actual / score.max : 1;
   var veredicto = pct >= 0.65
     ? (CFG.textos.veredicto_alto  || "")
     : pct >= 0.35

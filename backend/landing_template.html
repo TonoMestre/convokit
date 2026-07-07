@@ -249,6 +249,15 @@
   {{WRAPPER_SELECTOR}}.variante-b .hero h1 { color: var(--navy); }
   {{WRAPPER_SELECTOR}}.variante-b .hero .hero-sub { color: var(--navy); }
   {{WRAPPER_SELECTOR}}.variante-b .hero .hero-body { color: var(--navy-60); }
+  /* Botones del hero en variante B: .btn-light (blanco) y .btn-outline-light
+     (texto/borde blancos) están pensados para el hero navy; sobre crema el
+     blanco es ilegible. Prohibida esa mezcla: sobre crema el sólido pasa a
+     navy y el outline a navy. Se corrige aquí en CSS para que valga con
+     cualquier HTML que genere Claude, sin depender del prompt. */
+  {{WRAPPER_SELECTOR}}.variante-b .hero .btn-light { background: var(--navy); color: var(--white); }
+  {{WRAPPER_SELECTOR}}.variante-b .hero .btn-light:hover { background: #111828; }
+  {{WRAPPER_SELECTOR}}.variante-b .hero .btn-outline-light { color: var(--navy); border-color: var(--navy); }
+  {{WRAPPER_SELECTOR}}.variante-b .hero .btn-outline-light:hover { background: var(--navy); color: var(--white); }
 
   {{WRAPPER_SELECTOR}}.variante-b .landing > section:nth-child(4) { background: var(--cream); }
 

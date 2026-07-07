@@ -303,7 +303,11 @@ Claude solo genera el objeto de configuración CFG (`OUTPUT_6_CONFIG_PROMPT`):
 `puntos_max_total`, `inversion`, `datos_proyecto` (preguntas de cualificación no
 puntuables, `tipo` ∈ seleccion/texto_libre/numero/fecha), `textos`. El motor (HTML/CSS/JS)
 nunca lo escribe Claude; así la marca y la lógica de gating nunca dependen de que el
-modelo reescriba código.
+modelo reescriba código. `datos_proyecto`, si no está vacío, se muestra en su propia
+pantalla (`renderProyecto`) entre los bloques de baremo y el paso de contacto: `seleccion`
+como botones tipo `.opcion` (no puntuables, no bloqueantes), `texto_libre`/`numero`/`fecha`
+como campos de formulario simples. Las respuestas se guardan en `STATE.respuestas` con
+`puntos: 0` para que `calcularScore` las ignore sin necesidad de un caso especial.
 
 ### Envío de resultado: gating real, sin fire-and-forget
 El resultado del evaluador (elegible o no) NUNCA se muestra hasta que el backend confirma
@@ -323,13 +327,21 @@ Campo oculto (`.hp-field`, `position:absolute;left:-9999px;opacity:0;pointer-eve
 validado en cliente y en servidor. Si viene relleno, no se envía nada pero se responde
 como si hubiera ido bien (para no delatar el filtro a un bot).
 
-### Embebido en iframe: postMessage
-Cuando el evaluador se sirve en un iframe (standalone o embebido en la landing), usa
-`postMessage` para comunicarse con la página contenedora:
-- `i40-inpyme-evaluator-height` — redimensiona el iframe al alto real del contenido.
-- `i40-inpyme-evaluator-scrolltop` — al cambiar de paso, pide a la página padre que haga
-  `scrollIntoView`, porque `window.scrollTo` dentro de un iframe solo afecta al scroll
-  interno del iframe, no al de la página que lo contiene.
+### Scroll al cambiar de paso: nunca `window.scrollTo`
+El motor compartido (`evaluador_core.html`) se embebe como fragmento DOM inline en la
+salida 3 (sin iframe: `build_output_6_embed_fragment` inserta el HTML directamente en el
+documento de la landing). Por eso `renderScreen` nunca usa `window.scrollTo`, que
+desplazaría TODA la página contenedora a `y=0` y perdería el evaluador de la vista —
+usa `scrollWidgetToTop()`, que llama a `.evaluador-widget.scrollIntoView({block:"start"})`
+para desplazar solo lo necesario y dejar la cabecera del widget arriba del viewport, tanto
+si el motor ocupa la página entera (standalone) como si está a mitad de una landing.
+
+Si en el futuro el motor se sirve dentro de un `<iframe>` (por ejemplo, la salida 6
+standalone incrustada en otra página mediante `<iframe src="...">`), `scrollIntoView`
+ejecutado dentro del iframe solo afecta a su scroll interno; ese caso necesitaría un
+puente `postMessage` hacia la página contenedora — no implementado actualmente en
+`evaluador_core.html` (sí existe, como referencia, en el demo ad-hoc
+`static_demo/inpyme-evaluador.html`, que es una herramienta distinta y no comparte motor).
 
 ## Salida 4 — Set de prompts (arquitectura multi-llamada, contrato v2.0)
 

@@ -310,6 +310,9 @@ function buildScreens() {
   } else if ((CFG.baremo || []).some(isObjetivo)) {
     SCREENS.push({ type: "grupo", idx: -1 });
   }
+  if ((CFG.datos_proyecto || []).length > 0) {
+    SCREENS.push({ type: "proyecto" });
+  }
   SCREENS.push({ type: "contacto" });
 }
 
@@ -332,14 +335,27 @@ function updateProgress() {
   bar.style.width = pct + "%";
 }
 
+function scrollWidgetToTop() {
+  // Nunca window.scrollTo: el motor puede vivir embebido a mitad de una landing
+  // (fragmento inline, sin iframe), y eso arrastraría TODA la página a y=0 en
+  // vez de solo el widget. scrollIntoView desplaza justo lo necesario para que
+  // la cabecera del widget quede arriba del viewport, tanto si es la página
+  // entera (standalone) como si es un bloque embebido a mitad de la landing.
+  var widget = document.querySelector(".evaluador-widget");
+  if (widget && widget.scrollIntoView) {
+    widget.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
 function renderScreen() {
   updateProgress();
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  scrollWidgetToTop();
   if (STATE.bloqueado) { renderBloqueo(); return; }
   var s = SCREENS[currentIdx];
   if      (s.type === "inicio")   renderInicio();
   else if (s.type === "eleg")     renderEleg(s.idx);
   else if (s.type === "grupo")    renderGrupo(s.idx);
+  else if (s.type === "proyecto") renderProyecto();
   else if (s.type === "contacto") renderContacto();
 }
 
@@ -555,6 +571,72 @@ function onGrupoNext(idsStr) {
   if (pending.length > 0) { if (errEl) errEl.style.display = "block"; return; }
   if (errEl) errEl.style.display = "none";
   avanzar();
+}
+
+// ── PASO 2f — Datos del proyecto (cualificación, no puntúa) ──
+function renderProyecto() {
+  var preguntas = CFG.datos_proyecto || [];
+  var backBtn = currentIdx > 0 ? '<button class="btn btn-secondary" onclick="retroceder()">← Atrás</button>' : '';
+
+  var pregsHtml = preguntas.map(function(preg) {
+    var saved = STATE.respuestas[preg.id];
+    var campoHtml;
+    if (preg.tipo === "seleccion") {
+      var optsHtml = (preg.opciones || []).map(function(opt, opIdx) {
+        var sel = (saved && saved.opIdx === opIdx) ? " selected" : "";
+        return '<button class="opcion' + sel + '" id="dp-' + escHtml(preg.id) + '-' + opIdx + '" ' +
+          'data-pregid="' + escHtml(preg.id) + '" data-opidx="' + opIdx + '" ' +
+          'onclick="onProyectoOpt(this.dataset.pregid,+this.dataset.opidx)" type="button">' +
+          '<span class="opcion-radio"></span><span>' + escHtml(opt) + '</span>' +
+          '</button>';
+      }).join('');
+      campoHtml = '<div class="opciones-lista">' + optsHtml + '</div>';
+    } else {
+      var inputType = preg.tipo === "numero" ? "number" : preg.tipo === "fecha" ? "date" : "text";
+      var val = (saved && saved.value != null) ? saved.value : "";
+      campoHtml = '<div class="field"><input type="' + inputType + '" id="dp-input-' + escHtml(preg.id) + '" ' +
+        'data-pregid="' + escHtml(preg.id) + '" value="' + escHtml(val) + '" ' +
+        'onchange="onProyectoInput(this.dataset.pregid,this.value)" /></div>';
+    }
+    return '<div class="pregunta-block">' +
+      '<p class="pregunta-titulo">' + escHtml(preg.pregunta) + '</p>' +
+      (preg.ayuda ? '<p class="pregunta-ayuda">' + escHtml(preg.ayuda) + '</p>' : '') +
+      campoHtml +
+      '</div>';
+  }).join('');
+
+  setContent(
+    '<p class="section-header">Sobre tu proyecto</p>' +
+    pregsHtml +
+    '<div class="step-nav">' + backBtn +
+    '<button class="btn btn-primary" onclick="avanzar()">Continuar →</button>' +
+    '</div>'
+  );
+}
+
+function onProyectoOpt(pregId, opIdx) {
+  var preg = (CFG.datos_proyecto || []).find(function(p) { return p.id === pregId; });
+  if (!preg) return;
+  var opt = preg.opciones[opIdx];
+
+  preg.opciones.forEach(function(_, i) {
+    var btn = document.getElementById("dp-" + pregId + "-" + i);
+    if (btn) btn.classList.toggle("selected", i === opIdx);
+  });
+
+  STATE.respuestas[pregId] = {
+    opIdx: opIdx, value: opt, label: opt, preguntaLabel: preg.pregunta,
+    puntos: 0, puntosMax: 0, esBloqueo: false, bloquea: false, influenciable: false,
+  };
+}
+
+function onProyectoInput(pregId, value) {
+  var preg = (CFG.datos_proyecto || []).find(function(p) { return p.id === pregId; });
+  if (!preg) return;
+  STATE.respuestas[pregId] = {
+    value: value, label: value, preguntaLabel: preg.pregunta,
+    puntos: 0, puntosMax: 0, esBloqueo: false, bloquea: false, influenciable: false,
+  };
 }
 
 // ── PASO 3 — Contacto ────────────────────────────

@@ -30,6 +30,13 @@ _STANDALONE_SHELL = """<!DOCTYPE html>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>{titulo}</title>
+<style>
+  /* Esta página es un documento propio (no un fragmento embebido en otra
+     página), así que aquí sí podemos resetear html/body: sin este reset
+     el margin por defecto del user-agent (~8px) deja un marco en blanco
+     alrededor del fondo crema del widget. */
+  html, body {{ margin: 0; padding: 0; }}
+</style>
 </head>
 <body>
 {core}

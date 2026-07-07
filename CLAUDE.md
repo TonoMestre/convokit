@@ -343,6 +343,18 @@ puente `postMessage` hacia la página contenedora — no implementado actualment
 `evaluador_core.html` (sí existe, como referencia, en el demo ad-hoc
 `static_demo/inpyme-evaluador.html`, que es una herramienta distinta y no comparte motor).
 
+### Diseño visual: peso y contraste dentro de las reglas de marca
+El motor usa sombras suaves con tinte navy (`--shadow`, `--shadow-btn`), un borde superior
+rojo de 3px en los bloques de pregunta/resultado/CTA, y un indicador de opción seleccionada
+en rojo con check blanco (en vez del antiguo cuadrado blanco relleno, poco perceptible)
+para que quede claro que un clic ha registrado antes de avanzar de pantalla. Todo dentro de
+las reglas de marca (`## Marca Innóvate 4.0`): sin colores fuera de navy/rojo/blanco/negro/
+crema, `border-radius: 0` en todo. El shell standalone (`_STANDALONE_SHELL` en
+`output6_template.py`) resetea `html,body{margin:0}` — a diferencia de `evaluador_core.html`,
+que nunca debe tocar `html`/`body` porque también se usa como fragmento embebido, el shell
+standalone es un documento propio y necesita ese reset para no dejar un marco en blanco
+alrededor del fondo crema del widget.
+
 ## Salida 4 — Set de prompts (arquitectura multi-llamada, contrato v2.0)
 
 El JSON de exportación de la salida 4 (`4_json`) sigue el contrato `docs/contrato-convokit.md`

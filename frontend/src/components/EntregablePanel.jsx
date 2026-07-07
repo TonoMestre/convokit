@@ -262,15 +262,20 @@ function SeoPanel({ seoRaw, convocatoriaId }) {
   const { API, openConvocatoria } = useApp();
   const initial = parseSeo(seoRaw);
 
-  const emptyImgs = [{ url: "", alt: "" }, { url: "", alt: "" }];
-  const initImgs = (arr) =>
-    emptyImgs.map((e, i) => ({ url: arr?.[i]?.url || "", alt: arr?.[i]?.alt || "" }));
+  // Alt sugerido (editable): borrador a partir de la frase clave para que el
+  // consultor revise en vez de escribir de cero. Nunca pisa un alt ya guardado.
+  const suggestAlt = (fraseClave, idx) => (fraseClave ? `${fraseClave} — imagen ${idx + 1}` : "");
+  const initImgs = (arr, fraseClave) =>
+    [0, 1].map((i) => ({
+      url: arr?.[i]?.url || "",
+      alt: arr?.[i]?.alt || suggestAlt(fraseClave, i),
+    }));
 
   const [fraseClave, setFraseClave] = useState(initial?.frase_clave || "");
   const [title, setTitle] = useState(initial?.seo_title || "");
   const [meta, setMeta] = useState(initial?.meta_description || "");
   const [slug, setSlug] = useState(initial?.slug || "");
-  const [imagenes, setImagenes] = useState(initImgs(initial?.imagenes));
+  const [imagenes, setImagenes] = useState(initImgs(initial?.imagenes, initial?.frase_clave));
   const [confirmed, setConfirmed] = useState(initial?.confirmed || false);
   const [saving, setSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
@@ -284,7 +289,7 @@ function SeoPanel({ seoRaw, convocatoriaId }) {
       setTitle(s.seo_title);
       setMeta(s.meta_description);
       setSlug(s.slug);
-      setImagenes(initImgs(s.imagenes));
+      setImagenes(initImgs(s.imagenes, s.frase_clave));
       setConfirmed(s.confirmed);
     }
   }, [seoRaw]);
@@ -433,9 +438,9 @@ function SeoPanel({ seoRaw, convocatoriaId }) {
           Imágenes de la landing
         </span>
         <p className="text-xs text-gray-500 mb-3">
-          Sube 1-2 imágenes a la <strong>biblioteca de medios de WordPress</strong>, copia aquí su URL
-          y guarda: se insertan en el HTML con su <code>alt</code>. Usa la frase clave en el alt
-          (p. ej. «{fraseClave || "frase clave"} — maquinaria industrial»).
+          Sube 1-2 imágenes a la <strong>biblioteca de medios de WordPress</strong> y pega aquí su URL.
+          El texto alt viene sugerido a partir de la frase clave — revísalo o cámbialo por algo más
+          descriptivo de cada imagen antes de guardar.
         </p>
         <div className="space-y-3">
           {imagenes.map((img, idx) => (

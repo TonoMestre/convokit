@@ -143,14 +143,22 @@
     box-shadow: var(--shadow);
   }
   #i40-evaluador .rgpd-block a { color: var(--red); }
+  /* !important: mismo choque que en la landing (output3) — el <label> global
+     de algunos temas de WordPress fuerza display:block/centrado/mayúsculas y
+     dejaba el checkbox encima del texto en vez de a su izquierda. */
   #i40-evaluador .rgpd-check {
-    display: flex; align-items: flex-start; gap: 10px; margin-top: 14px;
+    display: flex !important; align-items: flex-start !important;
+    justify-content: flex-start !important; text-align: left !important;
+    text-transform: none !important; width: 100%;
+    gap: 10px; margin-top: 14px;
     font-size: 0.84rem; font-weight: 500; cursor: pointer;
   }
   #i40-evaluador .rgpd-check input[type="checkbox"] {
-    margin-top: 2px; accent-color: var(--navy); width: 17px; height: 17px;
-    flex-shrink: 0; border-radius: 0;
+    display: inline-block !important; flex: 0 0 auto !important;
+    margin: 2px 0 0 !important; accent-color: var(--navy);
+    width: 17px !important; height: 17px !important; border-radius: 0;
   }
+  #i40-evaluador .rgpd-check span { text-align: left !important; }
 
   /* ── Opciones de pregunta ── */
   #i40-evaluador .pregunta-block {

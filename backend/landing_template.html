@@ -232,9 +232,18 @@
   {{WRAPPER_SELECTOR}} .form-landing input:focus,
   {{WRAPPER_SELECTOR}} .form-landing textarea:focus { border-color: var(--navy); }
   {{WRAPPER_SELECTOR}} .form-landing textarea { resize: vertical; min-height: 90px; }
+  /* !important en todo el bloque: algunos temas de WordPress aplican su propio
+     estilo global a <label> (display:block, text-align:center, uppercase,
+     negrita) con más especificidad o con !important propio; sin esto el
+     checkbox se veía encima del texto y centrado en vez de a su izquierda. */
   {{WRAPPER_SELECTOR}} .field-check {
-    display: flex;
-    align-items: flex-start;
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+    text-transform: none !important;
+    font-weight: 400 !important;
+    width: 100%;
     gap: 10px;
     font-size: 0.82rem;
     color: var(--navy-60);
@@ -242,7 +251,16 @@
     margin: 4px 0 18px;
     cursor: pointer;
   }
-  {{WRAPPER_SELECTOR}} .field-check input { margin-top: 3px; flex: 0 0 auto; cursor: pointer; accent-color: var(--red); }
+  {{WRAPPER_SELECTOR}} .field-check input {
+    display: inline-block !important;
+    flex: 0 0 auto !important;
+    width: 17px !important;
+    height: 17px !important;
+    margin: 3px 0 0 !important;
+    cursor: pointer;
+    accent-color: var(--red);
+  }
+  {{WRAPPER_SELECTOR}} .field-check span { text-align: left !important; }
   {{WRAPPER_SELECTOR}} .field-check a { color: var(--navy); text-decoration: underline; }
   {{WRAPPER_SELECTOR}} .form-landing .btn { width: 100%; margin-top: 6px; }
   {{WRAPPER_SELECTOR}} .form-nota { font-size: 0.8rem; color: var(--navy-60); margin-top: 14px; text-align: center; }

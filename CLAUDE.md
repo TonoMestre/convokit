@@ -217,6 +217,13 @@ selectores prefijados con ese wrapper, sin tocar `*`/`html`/`body`/`:root`) para
 convivir con el CSS del tema de WordPress sin colisiones. El slug no se inserta en el
 HTML; el usuario lo copia manualmente a WordPress/Yoast.
 
+La landing NO lleva header ni footer propios: se pega dentro de innovate40.es, que ya
+aporta su cabecera con menú y su pie — duplicarlos pisaba el header real de la web. El
+wrapper es full-bleed (`width:100vw; margin-left/right: calc(50% - 50vw)`): el bloque
+"HTML personalizado" vive dentro de la columna de contenido del tema (~700-800px) y sin
+esto los fondos navy/crema quedaban encajonados con blanco a los lados; si el contenedor
+ya es full-width el cálculo da 0 y no desplaza nada.
+
 ### Evaluador embebido (flag `incluir_evaluador`)
 La convocatoria puede pedir que el evaluador de encaje (salida 6) se embeba dentro de
 la propia landing, en vez de (o además de) generarse como página standalone:
@@ -290,12 +297,28 @@ El prompt de salida 3 recibe el campo `modo` de la convocatoria:
 ## Salida 6 — Evaluador de encaje
 
 ### Motor compartido: `evaluador_core.html` + `output6_template.py`
-El evaluador es un único motor HTML/CSS/JS (`backend/evaluador_core.html`), scoped bajo
-`.evaluador-widget` (mismo criterio que la landing: ningún selector toca `*`/`html`/
-`body`/`:root`, para poder embeberse sin colisión dentro de la salida 3). `output6_template.py`
-lo usa de dos formas:
+El evaluador es un único motor HTML/CSS/JS (`backend/evaluador_core.html`). Su CSS se
+escopa bajo `#i40-evaluador` (el div raíz lleva `class="evaluador-widget"` para el JS e
+`id="i40-evaluador"` para el CSS; ningún selector toca `*`/`html`/`body`/`:root`). El
+scope es un ID y no una clase por especificidad: el reset scoped de la landing
+(`#innovate-ayuda-landing-{slug} * {margin:0;padding:0}`) tiene especificidad de ID
+(1,0,0) y machacaba cualquier regla de clase del widget embebido (0,2,0) — el evaluador
+salía sin ningún padding dentro de WordPress. Con `#i40-evaluador .x` (1,1,0) las reglas
+del widget ganan siempre al reset, y los empates (ej. `.btn` en ambos) los gana el widget
+por orden de documento (su `<style>` se inyecta después del de la landing).
+
+El core NO lleva header ni footer (embebido, la web contenedora ya los aporta;
+duplicarlos metía un segundo logo a mitad de página): solo un topbar fino navy con el
+rótulo "Evaluador de encaje". Tampoco lleva `min-height:100vh` (como fragmento debe
+medir lo que mide su contenido) y es full-bleed con el mismo cálculo que la landing
+(dentro del wrapper full-bleed de la landing el cálculo da 0 — se auto-neutraliza).
+
+`output6_template.py` lo usa de dos formas:
 - `build_output_6_html(config)` — el core envuelto en un shell HTML completo
-  (doctype/html/head/body) para la salida 6 standalone.
+  (doctype/html/head/body) para la salida 6 standalone. El shell SÍ añade cabecera con
+  logo y pie legal (tokens `__TITULO__`, `__LOGO__`, `__CORE__`) y oculta el topbar del
+  core (`.shell-main #i40-evaluador .widget-topbar{display:none}` — necesita igualar la
+  especificidad del core, que además va después en el documento).
 - `build_output_6_embed_fragment(config)` — el core sin shell, para insertarlo en el
   punto `<!--EVALUADOR_EMBED-->` de la salida 3.
 
@@ -509,6 +532,8 @@ volver a subir archivos.
   dentro de la propia salida 3. Ambas usan el mismo patrón: Claude genera solo el
   contenido variable (cuerpo HTML en la salida 3, objeto CFG JSON en la salida 6) y el
   backend lo inyecta en una plantilla estática (backend/landing_template.html,
-  backend/evaluador_core.html) que contiene el CSS de marca, la cabecera con logo y el
-  pie. Así la marca nunca depende de que Claude reescriba el CSS. El logo se incrusta en
-  base64 para que la vista previa en iframe (srcDoc) funcione.
+  backend/evaluador_core.html) que contiene el CSS de marca. Así la marca nunca depende
+  de que Claude reescriba el CSS. Cabecera con logo y pie legal solo existen en el shell
+  standalone de la salida 6 (documento propio); la landing y el evaluador embebido NO
+  los llevan porque la web contenedora (innovate40.es) ya aporta los suyos. El logo del
+  shell se incrusta en base64 para que la vista previa en iframe (srcDoc) funcione.

@@ -11,7 +11,9 @@ Flujo de generación:
 2. parse_landing_response(raw) separa los campos SEO del cuerpo HTML.
 3. build_output_3_html(body, slug, variant, cfg) envuelve el cuerpo en la plantilla
    estática landing_template.html: un bloque scoped bajo #innovate-ayuda-landing-{slug}
-   (CSS, wrapper, header y footer incluidos), SIN doctype/html/head/body. Los campos
+   full-bleed (rompe la columna de contenido del tema de WordPress con width:100vw),
+   SIN doctype/html/head/body y SIN header/footer propios (la web contenedora ya
+   aporta menú y pie; duplicarlos pisaba la cabecera real de innovate40.es). Los campos
    SEO (título, meta description, H1, keywords, FAQs) NO se insertan en el HTML: se
    devuelven aparte para que el consultor los configure en Yoast/RankMath, ya que la
    landing se pega directamente en una página de WordPress que ya tiene su propio <head>.
@@ -22,7 +24,6 @@ evaluador (mismo motor que la salida 6, ver output6_template.build_output_6_embe
 Si `cfg` es None o el marcador no aparece, la sustitución es un no-op.
 """
 
-import base64
 import json
 import pathlib
 import re
@@ -51,17 +52,6 @@ def normalize_variant(variant: str | None) -> str:
 
 def _load_template() -> str:
     return _TEMPLATE_PATH.read_text(encoding="utf-8")
-
-
-def _load_logo_b64() -> str:
-    candidates = [
-        pathlib.Path(__file__).parent.parent / "frontend" / "public" / "logo-negativo.png",
-        pathlib.Path(__file__).parent / "logo-negativo.png",
-    ]
-    for p in candidates:
-        if p.exists():
-            return "data:image/png;base64," + base64.b64encode(p.read_bytes()).decode()
-    return "/logo-negativo.png"
 
 
 def slugify(text: str) -> str:
@@ -192,5 +182,4 @@ def build_output_3_html(
     html = html.replace("{{WRAPPER_SELECTOR}}", f"#{wrapper_id}")
     html = html.replace("{{WRAPPER_ID}}", wrapper_id)
     html = html.replace("{{VARIANT_CLASS}}", f"variante-{variant.lower()}")
-    html = html.replace("{{LOGO_SRC}}", _load_logo_b64())
     return html

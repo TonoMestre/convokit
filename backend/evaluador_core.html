@@ -2,15 +2,15 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
 <style>
-  /* Reset y estilo base scoped a .evaluador-widget (no a *, html, body o :root):
+  /* Reset y estilo base scoped a #i40-evaluador (no a *, html, body o :root):
      este motor debe poder vivir tanto en una página propia como embebido dentro
      de una landing sin filtrar variables ni estilos al resto de la página que
-     lo contenga. Las variables de color viven en .evaluador-widget en vez de
+     lo contenga. Las variables de color viven en #i40-evaluador en vez de
      :root para que no se conviertan en globales de toda la página al embeber. */
-  .evaluador-widget, .evaluador-widget *, .evaluador-widget *::before, .evaluador-widget *::after {
+  #i40-evaluador, #i40-evaluador *, #i40-evaluador *::before, #i40-evaluador *::after {
     box-sizing: border-box; margin: 0; padding: 0;
   }
-  .evaluador-widget {
+  #i40-evaluador {
     --navy: #1D254C;
     --red: #C50339;
     --cream: #F2EBD8;
@@ -25,43 +25,53 @@
     font-family: 'Inter', sans-serif;
     background: var(--cream);
     color: var(--navy);
-    min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
+    /* Full-bleed: si el motor acaba dentro de la columna de contenido de un tema
+       de WordPress (embebido en la landing o pegado directamente), rompe la columna
+       y ocupa todo el viewport. Si el contenedor ya es full-width, el cálculo da 0
+       y no desplaza nada — seguro en ambos contextos. Sin min-height:100vh: como
+       fragmento embebido debe medir lo que mide su contenido, no la pantalla. */
+    width: 100vw;
+    max-width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
   }
-  .evaluador-widget > * { width: 100%; }
-  .evaluador-widget .hp-field {
+  #i40-evaluador > * { width: 100%; }
+  #i40-evaluador .hp-field {
     position: absolute !important; left: -9999px !important; top: -9999px !important;
     height: 0 !important; width: 0 !important; opacity: 0 !important; pointer-events: none !important;
   }
 
-  /* ── Header ── */
-  .evaluador-widget .site-header {
+  /* Sin header ni footer en el core: embebido en la landing (o en una página de
+     WordPress) la web contenedora ya aporta cabecera y pie; duplicarlos metía un
+     segundo logo a mitad de página. El shell standalone de la salida 6 (que sí es
+     un documento propio) añade los suyos en output6_template.py. */
+
+  /* ── Topbar: identificador fino del widget, no una cabecera ── */
+  #i40-evaluador .widget-topbar {
     background: var(--navy);
-    padding: 18px 28px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 2px solid var(--red);
-    box-shadow: 0 2px 10px rgba(0,0,0,.15);
+    border-bottom: 3px solid var(--red);
+    padding: 11px 28px;
+    text-align: center;
   }
-  .evaluador-widget .site-header img { display: block; }
-  .evaluador-widget .site-header .header-tag {
+  #i40-evaluador .widget-topbar-tag {
     font-family: 'Inter', sans-serif;
-    font-size: 0.74rem;
-    color: rgba(255,255,255,0.55);
-    letter-spacing: 0.12em;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.85);
+    letter-spacing: 0.16em;
     text-transform: uppercase;
   }
 
   /* ── Progress bar ── */
-  .evaluador-widget .progress-bar-wrap {
+  #i40-evaluador .progress-bar-wrap {
     background: var(--navy-10);
     height: 6px;
     width: 100%;
   }
-  .evaluador-widget .progress-bar-inner {
+  #i40-evaluador .progress-bar-inner {
     height: 100%;
     background: var(--red);
     transition: width 0.4s ease;
@@ -69,16 +79,16 @@
   }
 
   /* ── Layout ── */
-  .evaluador-widget .container {
-    max-width: 720px;
+  #i40-evaluador .container {
+    max-width: 760px;
     width: 100%;
     margin: 0 auto;
-    padding: 48px 28px 90px;
+    padding: 56px 32px 96px;
     flex: 1;
   }
 
   /* ── Intro ── */
-  .evaluador-widget .intro-titulo {
+  #i40-evaluador .intro-titulo {
     font-family: 'Roboto Slab', serif;
     font-weight: 700;
     font-size: 2.15rem;
@@ -87,7 +97,7 @@
     color: var(--navy);
     margin-bottom: 16px;
   }
-  .evaluador-widget .intro-lead {
+  #i40-evaluador .intro-lead {
     font-size: 1.08rem;
     line-height: 1.6;
     color: var(--navy);
@@ -95,75 +105,75 @@
   }
 
   /* ── Strip ── */
-  .evaluador-widget .strip { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 40px; }
-  .evaluador-widget .strip-item {
+  #i40-evaluador .strip { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 40px; }
+  #i40-evaluador .strip-item {
     background: var(--navy); color: var(--white); padding: 14px 18px; flex: 1 1 auto;
     box-shadow: var(--shadow);
   }
-  .evaluador-widget .strip-item .strip-label {
+  #i40-evaluador .strip-item .strip-label {
     font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.09em; opacity: 0.7; margin-bottom: 5px;
   }
-  .evaluador-widget .strip-item .strip-valor { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.1rem; }
+  #i40-evaluador .strip-item .strip-valor { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.1rem; }
 
   /* ── Form fields ── */
-  .evaluador-widget .field { margin-bottom: 22px; }
-  .evaluador-widget .field label {
+  #i40-evaluador .field { margin-bottom: 22px; }
+  #i40-evaluador .field label {
     display: block; font-size: 0.82rem; font-weight: 600; text-transform: uppercase;
     letter-spacing: 0.06em; color: var(--navy); margin-bottom: 7px;
   }
-  .evaluador-widget .field input[type="text"],
-  .evaluador-widget .field input[type="email"],
-  .evaluador-widget .field input[type="tel"],
-  .evaluador-widget .field input[type="number"],
-  .evaluador-widget .field input[type="date"] {
+  #i40-evaluador .field input[type="text"],
+  #i40-evaluador .field input[type="email"],
+  #i40-evaluador .field input[type="tel"],
+  #i40-evaluador .field input[type="number"],
+  #i40-evaluador .field input[type="date"] {
     width: 100%; padding: 13px 15px; border: 1.5px solid var(--field-border);
     background: var(--white); font-family: 'Inter', sans-serif; font-size: 0.98rem;
     color: var(--navy); outline: none; border-radius: 0;
     box-shadow: inset 0 1px 2px rgba(29,37,76,0.05);
     transition: border-color 0.2s, box-shadow 0.2s;
   }
-  .evaluador-widget .field input::placeholder { color: rgba(29,37,76,0.42); }
-  .evaluador-widget .field input:focus { border-color: var(--navy); box-shadow: 0 0 0 3px var(--navy-10); }
-  .evaluador-widget .field input.error { border-color: var(--red); }
+  #i40-evaluador .field input::placeholder { color: rgba(29,37,76,0.42); }
+  #i40-evaluador .field input:focus { border-color: var(--navy); box-shadow: 0 0 0 3px var(--navy-10); }
+  #i40-evaluador .field input.error { border-color: var(--red); }
 
   /* ── RGPD ── */
-  .evaluador-widget .rgpd-block {
+  #i40-evaluador .rgpd-block {
     background: var(--white); border: 1px solid var(--navy-10); padding: 20px 22px;
     margin-bottom: 26px; font-size: 0.82rem; color: var(--navy); line-height: 1.6;
     box-shadow: var(--shadow);
   }
-  .evaluador-widget .rgpd-block a { color: var(--red); }
-  .evaluador-widget .rgpd-check {
+  #i40-evaluador .rgpd-block a { color: var(--red); }
+  #i40-evaluador .rgpd-check {
     display: flex; align-items: flex-start; gap: 10px; margin-top: 14px;
     font-size: 0.84rem; font-weight: 500; cursor: pointer;
   }
-  .evaluador-widget .rgpd-check input[type="checkbox"] {
+  #i40-evaluador .rgpd-check input[type="checkbox"] {
     margin-top: 2px; accent-color: var(--navy); width: 17px; height: 17px;
     flex-shrink: 0; border-radius: 0;
   }
 
   /* ── Opciones de pregunta ── */
-  .evaluador-widget .pregunta-block {
-    background: var(--white); border: 1px solid var(--line);
-    padding: 28px 30px 26px; margin-bottom: 18px; box-shadow: var(--shadow);
+  #i40-evaluador .pregunta-block {
+    background: var(--white); border: 1px solid var(--line); border-top: 3px solid var(--red);
+    padding: 32px 36px 30px; margin-bottom: 22px; box-shadow: var(--shadow);
   }
-  .evaluador-widget .pregunta-titulo {
-    font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.1rem;
+  #i40-evaluador .pregunta-titulo {
+    font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.18rem;
     color: var(--navy); margin-bottom: 10px; line-height: 1.35;
   }
-  .evaluador-widget .pregunta-ayuda {
-    font-size: 0.85rem; color: rgba(29,37,76,0.62); margin-bottom: 18px; line-height: 1.5;
+  #i40-evaluador .pregunta-ayuda {
+    font-size: 0.87rem; color: rgba(29,37,76,0.62); margin-bottom: 22px; line-height: 1.55;
   }
-  .evaluador-widget .opciones-lista { display: flex; flex-direction: column; gap: 9px; }
-  .evaluador-widget .opcion {
-    display: flex; align-items: flex-start; gap: 12px; padding: 13px 16px;
+  #i40-evaluador .opciones-lista { display: flex; flex-direction: column; gap: 11px; }
+  #i40-evaluador .opcion {
+    display: flex; align-items: flex-start; gap: 14px; padding: 16px 18px;
     border: 1.5px solid var(--navy-20); background: var(--white); cursor: pointer;
     transition: border-color 0.15s, background 0.15s, transform 0.12s, box-shadow 0.15s; text-align: left;
-    font-family: 'Inter', sans-serif; font-size: 0.94rem; color: var(--navy);
+    font-family: 'Inter', sans-serif; font-size: 0.96rem; line-height: 1.45; color: var(--navy);
     border-radius: 0; width: 100%;
   }
-  .evaluador-widget .opcion:hover { border-color: var(--navy); background: var(--cream); transform: translateY(-1px); box-shadow: 0 4px 10px -6px rgba(29,37,76,.35); }
-  .evaluador-widget .opcion.selected {
+  #i40-evaluador .opcion:hover { border-color: var(--navy); background: var(--cream); transform: translateY(-1px); box-shadow: 0 4px 10px -6px rgba(29,37,76,.35); }
+  #i40-evaluador .opcion.selected {
     border-color: var(--navy); background: var(--navy); color: var(--white);
     animation: i40-select-pulse 0.28s ease;
   }
@@ -172,121 +182,118 @@
     45% { transform: scale(1.015); }
     100% { transform: scale(1); }
   }
-  .evaluador-widget .opcion .opcion-radio {
+  #i40-evaluador .opcion .opcion-radio {
     width: 19px; height: 19px; border: 2px solid currentColor; border-radius: 0;
     flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center;
     transition: background 0.15s, border-color 0.15s;
   }
-  .evaluador-widget .opcion.selected .opcion-radio { background: var(--red); border-color: var(--red); }
-  .evaluador-widget .opcion.selected .opcion-radio::after {
+  #i40-evaluador .opcion.selected .opcion-radio { background: var(--red); border-color: var(--red); }
+  #i40-evaluador .opcion.selected .opcion-radio::after {
     content: ''; width: 5px; height: 9px; border: solid var(--white); border-width: 0 2px 2px 0;
     transform: rotate(45deg); margin-top: -2px; display: block;
   }
 
   /* ── Section header ── */
-  .evaluador-widget .section-header {
+  #i40-evaluador .section-header {
     font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 0.78rem;
     text-transform: uppercase; letter-spacing: 0.1em; color: var(--red);
     border-bottom: 2px solid var(--red); padding-bottom: 8px; margin-bottom: 22px; margin-top: 40px;
   }
-  .evaluador-widget .section-header:first-child { margin-top: 0; }
+  #i40-evaluador .section-header:first-child { margin-top: 0; }
 
   /* ── Botones ── */
-  .evaluador-widget .btn {
+  #i40-evaluador .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     padding: 14px 30px; font-family: 'Inter', sans-serif; font-size: 0.92rem; font-weight: 600;
     cursor: pointer; border: none; border-radius: 0; text-decoration: none;
     transition: background 0.2s, color 0.2s, transform 0.12s, box-shadow 0.2s;
   }
-  .evaluador-widget .btn-primary { background: var(--navy); color: var(--white); box-shadow: var(--shadow-btn); }
-  .evaluador-widget .btn-primary:hover { background: #111828; transform: translateY(-1px); }
-  .evaluador-widget .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-  .evaluador-widget .btn-secondary { background: transparent; color: var(--navy); border: 1.5px solid var(--navy); }
-  .evaluador-widget .btn-secondary:hover { background: var(--navy); color: var(--white); }
-  .evaluador-widget .btn-red { background: var(--red); color: var(--white); box-shadow: 0 6px 16px -8px rgba(197,3,57,.55); }
-  .evaluador-widget .btn-red:hover { background: #a00230; transform: translateY(-1px); }
+  #i40-evaluador .btn-primary { background: var(--navy); color: var(--white); box-shadow: var(--shadow-btn); }
+  #i40-evaluador .btn-primary:hover { background: #111828; transform: translateY(-1px); }
+  #i40-evaluador .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  #i40-evaluador .btn-secondary { background: transparent; color: var(--navy); border: 1.5px solid var(--navy); }
+  #i40-evaluador .btn-secondary:hover { background: var(--navy); color: var(--white); }
+  #i40-evaluador .btn-red { background: var(--red); color: var(--white); box-shadow: 0 6px 16px -8px rgba(197,3,57,.55); }
+  #i40-evaluador .btn-red:hover { background: #a00230; transform: translateY(-1px); }
 
   /* ── Step nav ── */
-  .evaluador-widget .step-nav { display: flex; gap: 14px; margin-top: 34px; align-items: center; flex-wrap: wrap; }
+  #i40-evaluador .step-nav { display: flex; gap: 14px; margin-top: 34px; align-items: center; flex-wrap: wrap; }
 
   /* ── Bloqueo panel ── */
-  .evaluador-widget .bloqueo-panel { background: var(--navy); color: var(--white); padding: 40px 38px; margin-top: 20px; box-shadow: var(--shadow); }
-  .evaluador-widget .bloqueo-panel h2 { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.5rem; margin-bottom: 12px; line-height: 1.3; }
-  .evaluador-widget .bloqueo-panel > p { font-size: 0.92rem; line-height: 1.65; opacity: 0.86; margin-bottom: 28px; }
-  .evaluador-widget .bloqueo-panel .field { margin-bottom: 20px; }
-  .evaluador-widget .bloqueo-panel .field label { color: rgba(255,255,255,0.82); }
-  .evaluador-widget .bloqueo-panel .field input {
+  #i40-evaluador .bloqueo-panel { background: var(--navy); color: var(--white); padding: 40px 38px; margin-top: 20px; box-shadow: var(--shadow); }
+  #i40-evaluador .bloqueo-panel h2 { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.5rem; margin-bottom: 12px; line-height: 1.3; }
+  #i40-evaluador .bloqueo-panel > p { font-size: 0.92rem; line-height: 1.65; opacity: 0.86; margin-bottom: 28px; }
+  #i40-evaluador .bloqueo-panel .field { margin-bottom: 20px; }
+  #i40-evaluador .bloqueo-panel .field label { color: rgba(255,255,255,0.82); }
+  #i40-evaluador .bloqueo-panel .field input {
     background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.30); color: var(--white);
     box-shadow: none;
   }
-  .evaluador-widget .bloqueo-panel .field input::placeholder { color: rgba(255,255,255,0.45); }
-  .evaluador-widget .bloqueo-panel .field input:focus { border-color: var(--white); box-shadow: 0 0 0 3px rgba(255,255,255,0.12); }
-  .evaluador-widget .bloqueo-panel .btn-red { margin-top: 8px; }
-  .evaluador-widget .bloqueo-confirm-msg { font-size: 0.92rem; color: rgba(255,255,255,0.88); margin-top: 12px; line-height: 1.6; }
-  .evaluador-widget .bloqueo-volver {
+  #i40-evaluador .bloqueo-panel .field input::placeholder { color: rgba(255,255,255,0.45); }
+  #i40-evaluador .bloqueo-panel .field input:focus { border-color: var(--white); box-shadow: 0 0 0 3px rgba(255,255,255,0.12); }
+  #i40-evaluador .bloqueo-panel .btn-red { margin-top: 8px; }
+  #i40-evaluador .bloqueo-confirm-msg { font-size: 0.92rem; color: rgba(255,255,255,0.88); margin-top: 12px; line-height: 1.6; }
+  #i40-evaluador .bloqueo-volver {
     display: block; margin-top: 26px; padding-top: 22px; border-top: 1px solid rgba(255,255,255,0.15);
     font-size: 0.83rem; color: rgba(255,255,255,0.6);
     cursor: pointer; border-left: none; border-right: none; border-bottom: none;
     background: none; font-family: 'Inter', sans-serif; text-decoration: underline; text-align: left; width: 100%;
   }
-  .evaluador-widget .bloqueo-volver:hover { color: var(--white); }
+  #i40-evaluador .bloqueo-volver:hover { color: var(--white); }
 
   /* ── Resultado ── */
-  .evaluador-widget .resultado-card { background: var(--white); border: 1px solid var(--line); padding: 36px 34px; margin-bottom: 20px; box-shadow: var(--shadow); }
-  .evaluador-widget .resultado-empresa { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--red); margin-bottom: 10px; }
-  .evaluador-widget .eleg-apto { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.25rem; color: var(--navy); margin-bottom: 16px; line-height: 1.4; }
-  .evaluador-widget .veredicto-texto { font-size: 0.98rem; line-height: 1.65; color: var(--navy); }
+  #i40-evaluador .resultado-card { background: var(--white); border: 1px solid var(--line); border-top: 3px solid var(--red); padding: 38px 36px; margin-bottom: 22px; box-shadow: var(--shadow); }
+  #i40-evaluador .resultado-empresa { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--red); margin-bottom: 10px; }
+  #i40-evaluador .eleg-apto { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.25rem; color: var(--navy); margin-bottom: 16px; line-height: 1.4; }
+  #i40-evaluador .veredicto-texto { font-size: 0.98rem; line-height: 1.65; color: var(--navy); }
 
-  .evaluador-widget .concurrencia-block { background: var(--cream); border-left: 4px solid var(--red); padding: 26px 28px; margin-bottom: 20px; box-shadow: var(--shadow); }
-  .evaluador-widget .concurrencia-block p { font-size: 0.94rem; line-height: 1.6; color: var(--navy); margin-bottom: 12px; }
-  .evaluador-widget .concurrencia-block p:last-child { margin-bottom: 0; }
+  #i40-evaluador .concurrencia-block { background: var(--cream); border-left: 4px solid var(--red); padding: 26px 28px; margin-bottom: 20px; box-shadow: var(--shadow); }
+  #i40-evaluador .concurrencia-block p { font-size: 0.94rem; line-height: 1.6; color: var(--navy); margin-bottom: 12px; }
+  #i40-evaluador .concurrencia-block p:last-child { margin-bottom: 0; }
 
-  .evaluador-widget .score-display { display: flex; gap: 20px; flex-wrap: wrap; margin: 24px 0 4px; }
-  .evaluador-widget .score-box { flex: 1 1 auto; background: var(--cream); padding: 22px 24px; text-align: center; }
-  .evaluador-widget .score-box .score-num { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 3rem; color: var(--navy); line-height: 1; }
-  .evaluador-widget .score-box .score-label { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(29,37,76,0.6); margin-top: 8px; }
-  .evaluador-widget .score-box.potencial .score-num { color: var(--red); }
+  #i40-evaluador .score-display { display: flex; gap: 20px; flex-wrap: wrap; margin: 24px 0 4px; }
+  #i40-evaluador .score-box { flex: 1 1 auto; background: var(--cream); padding: 22px 24px; text-align: center; }
+  #i40-evaluador .score-box .score-num { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 3rem; color: var(--navy); line-height: 1; }
+  #i40-evaluador .score-box .score-label { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(29,37,76,0.6); margin-top: 8px; }
+  #i40-evaluador .score-box.potencial .score-num { color: var(--red); }
 
-  .evaluador-widget .score-bar-wrap { height: 10px; background: var(--navy-10); margin: 22px 0 8px; }
-  .evaluador-widget .score-bar-inner { height: 100%; background: var(--navy); transition: width 0.6s ease; width: 0%; }
+  #i40-evaluador .score-bar-wrap { height: 10px; background: var(--navy-10); margin: 22px 0 8px; }
+  #i40-evaluador .score-bar-inner { height: 100%; background: var(--navy); transition: width 0.6s ease; width: 0%; }
 
-  .evaluador-widget .calc-block { background: var(--white); border: 1px solid var(--line); padding: 30px 32px; margin-bottom: 20px; box-shadow: var(--shadow); }
-  .evaluador-widget .calc-block h3 { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.1rem; color: var(--navy); margin-bottom: 10px; }
-  .evaluador-widget .calc-formula { font-size: 0.85rem; color: rgba(29,37,76,0.62); margin-bottom: 20px; line-height: 1.55; }
-  .evaluador-widget .calc-block .field { margin-bottom: 0; }
-  .evaluador-widget .calc-result { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.8rem; color: var(--red); margin-top: 16px; }
+  #i40-evaluador .calc-block { background: var(--white); border: 1px solid var(--line); padding: 30px 32px; margin-bottom: 20px; box-shadow: var(--shadow); }
+  #i40-evaluador .calc-block h3 { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.1rem; color: var(--navy); margin-bottom: 10px; }
+  #i40-evaluador .calc-formula { font-size: 0.85rem; color: rgba(29,37,76,0.62); margin-bottom: 20px; line-height: 1.55; }
+  #i40-evaluador .calc-block .field { margin-bottom: 0; }
+  #i40-evaluador .calc-result { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.8rem; color: var(--red); margin-top: 16px; }
 
-  .evaluador-widget .cta-block { background: var(--navy); color: var(--white); padding: 34px; margin-bottom: 20px; box-shadow: var(--shadow); }
-  .evaluador-widget .cta-block h2 { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.4rem; margin-bottom: 12px; line-height: 1.3; }
-  .evaluador-widget .cta-block .cta-desc { font-size: 0.93rem; opacity: 0.88; line-height: 1.65; margin-bottom: 18px; }
-  .evaluador-widget .cta-block .cta-contacto { font-size: 0.96rem; font-weight: 500; line-height: 1.6; }
-  .evaluador-widget .cta-block a { color: var(--white); }
+  #i40-evaluador .cta-block { background: var(--navy); color: var(--white); border-top: 3px solid var(--red); padding: 36px; margin-bottom: 22px; box-shadow: var(--shadow); }
+  #i40-evaluador .cta-block h2 { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.4rem; margin-bottom: 12px; line-height: 1.3; }
+  #i40-evaluador .cta-block .cta-desc { font-size: 0.93rem; opacity: 0.88; line-height: 1.65; margin-bottom: 18px; }
+  #i40-evaluador .cta-block .cta-contacto { font-size: 0.96rem; font-weight: 500; line-height: 1.6; }
+  #i40-evaluador .cta-block a { color: var(--white); }
 
-  .evaluador-widget .nota-fuente { font-size: 0.74rem; color: rgba(29,37,76,0.5); margin-top: 28px; line-height: 1.55; }
-  .evaluador-widget .form-error { color: var(--red); font-size: 0.83rem; margin-top: 11px; display: none; }
-
-  /* ── Footer ── */
-  .evaluador-widget .site-footer { background: var(--navy); color: rgba(255,255,255,0.55); text-align: center; padding: 18px 24px; font-size: 0.75rem; line-height: 1.8; }
-  .evaluador-widget .site-footer a { color: rgba(255,255,255,0.55); }
-  .evaluador-widget .site-footer a:hover { color: var(--white); }
+  #i40-evaluador .nota-fuente { font-size: 0.74rem; color: rgba(29,37,76,0.5); margin-top: 28px; line-height: 1.55; }
+  #i40-evaluador .form-error { color: var(--red); font-size: 0.83rem; margin-top: 11px; display: none; }
 
   @media (max-width: 480px) {
-    .evaluador-widget .container { padding: 32px 18px 70px; }
-    .evaluador-widget .intro-titulo { font-size: 1.55rem; }
-    .evaluador-widget .strip { gap: 8px; }
-    .evaluador-widget .strip-item { padding: 10px 14px; }
-    .evaluador-widget .score-display { gap: 12px; }
-    .evaluador-widget .score-box .score-num { font-size: 2.4rem; }
-    .evaluador-widget .pregunta-block { padding: 20px 18px; }
+    #i40-evaluador .container { padding: 36px 20px 72px; }
+    #i40-evaluador .intro-titulo { font-size: 1.55rem; }
+    #i40-evaluador .strip { gap: 8px; }
+    #i40-evaluador .strip-item { padding: 10px 14px; }
+    #i40-evaluador .score-display { gap: 12px; }
+    #i40-evaluador .score-box .score-num { font-size: 2.4rem; }
+    #i40-evaluador .pregunta-block { padding: 24px 20px 22px; }
+    #i40-evaluador .resultado-card { padding: 26px 20px; }
+    #i40-evaluador .cta-block { padding: 26px 20px; }
+    #i40-evaluador .bloqueo-panel { padding: 28px 22px; }
   }
 </style>
 
-<div class="evaluador-widget">
+<div class="evaluador-widget" id="i40-evaluador">
 
-<header class="site-header">
-  <img src="{{LOGO_SRC}}" height="28" style="object-fit:contain;" alt="Innóvate 4.0" />
-  <span class="header-tag">Evaluador de encaje</span>
-</header>
+<div class="widget-topbar">
+  <span class="widget-topbar-tag">Evaluador de encaje</span>
+</div>
 
 <div class="progress-bar-wrap" id="progress-bar-wrap" style="display:none">
   <div class="progress-bar-inner" id="progress-bar-inner"></div>
@@ -295,14 +302,6 @@
 <main class="container">
   <div id="screen-content"></div>
 </main>
-
-<footer class="site-footer">
-  © Innóvate 4.0 Estrategia Empresarial, S.L. &nbsp;|&nbsp;
-  <a href="https://innovate40.es/aviso-legal/" target="_blank" rel="noopener">Aviso legal</a>
-  &nbsp;|&nbsp;
-  <a href="mailto:proyectos2@innovate40.es">proyectos2@innovate40.es</a>
-  &nbsp;|&nbsp; 960 66 66 10
-</footer>
 
 </div>
 

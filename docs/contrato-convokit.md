@@ -1,7 +1,31 @@
 # Contrato de salida ConvoKit → MemorAI (Salida 4)
 
-Versión propuesta: `2.2` · Julio 2026
+Versión propuesta: `2.4` · Julio 2026
 
+> Cambios 2.3 → 2.4, tras comparar el md interno de ConvoKit con su JSON
+> para la misma convocatoria (INNOVA-CV): el md contiene un bloque "QUÉ
+> BUSCA EL EVALUADOR" por apartado que se perdía íntegro en la conversión.
+> Se añade el campo opcional `contexto_evaluador` en cada apartado para
+> conservarlo. La comparación también confirmó que la pérdida del apartado
+> B.5.5 ocurrió en el conversor md → JSON (el md lo tenía completo) y que
+> los placeholders "[PEGA AQUÍ...]" nacen en la redacción del md, no en la
+> conversión.
+>
+> Cambios 2.2 → 2.3, tras contrastar el tercer JSON real (INNOVA-CV /
+> INNOVATeiC-CV) contra la memoria oficial en Word: faltaba un apartado
+> completo (B.5.5, "Adquisición de activos materiales" — confirmado por
+> nombre en el propio texto de B.5.2 de la memoria oficial), varios
+> `prompt` contenían placeholders literales de "pega aquí" pensados para un
+> copiado manual que MemorAI no hace, `campos_proyecto` seguía vacío pese a
+> tener candidatos claros (grado de innovación, entorno/prioridad S3-CV,
+> ubicación, fechas de proyecto, auditor+ROAC pedidos dos veces cada uno), y
+> la lista de documentación obligatoria de la convocatoria (certificado
+> CNAE, ficha PROPER, recibo SS, declaración DNSH...) no tenía dónde encajar
+> porque no está ligada a ningún apartado concreto. Se prohíben los
+> placeholders de copiar-pegar en `prompt`, se añade `documentos_convocatoria[]`
+> y se refuerza la checklist para exigir un contraste apartado a apartado
+> contra el índice de la memoria oficial.
+>
 > Cambios 2.0 → 2.1, tras revisar el primer JSON real (INPYME 2026):
 > solo apartados hoja (sin bloque padre duplicado), nuevo bloque
 > `parametros_convocatoria` con valor incluido, bloque `tres_ofertas`
@@ -52,11 +76,20 @@ Todo eso es información que ConvoKit ya tiene al generar el apartado.
 ## Ámbito: cualquier convocatoria
 
 Este contrato es **agnóstico del tipo de ayuda**. Los ejemplos que aparecen
-(inversión industrial) son ilustrativos, no plantilla. Los tipos de input y los
-flags reflejan la estructura de MemorAI (perfil de empresa reutilizable, cuenta
-justificativa, cálculo de rentabilidad), no la de ninguna convocatoria concreta.
-Para convocatorias que no encajen en algún concepto, el contrato prevé escape
-explícito:
+(inversión industrial, INPYME, EMPYME, INNOVA-CV/INNOVATeiC-CV...) son
+ilustrativos, no plantilla: cada uno documenta un fallo real detectado en un
+JSON concreto para explicar el porqué de una regla, pero la regla en sí debe
+leerse en genérico y aplicarse igual a una convocatoria de I+D+i, de empleo,
+de internacionalización o de cualquier otro tipo, aunque no se haya visto
+un ejemplo real de ese tipo todavía. Ningún nombre de campo, id sugerido ni
+número citado en un "caso real" es obligatorio replicarlo tal cual en otra
+convocatoria: lo obligatorio es el mecanismo (usar el mismo id cuando el
+dato se repite, mover constantes a `parametros_convocatoria`, contrastar el
+índice de apartados contra la memoria oficial...), no el ejemplo concreto.
+Los tipos de input y los flags reflejan la estructura de MemorAI (perfil de
+empresa reutilizable, cuenta justificativa, cálculo de rentabilidad), no la
+de ninguna convocatoria concreta. Para convocatorias que no encajen en algún
+concepto, el contrato prevé escape explícito:
 
 - Sin baremo por puntos → `puntos_max: null`.
 - Sin distinción mínimo/completo → todos los inputs con `nivel: "minimo"`.
@@ -67,6 +100,26 @@ explícito:
 
 ConvoKit nunca debe omitir un apartado ni inventar estructura para cumplir el
 esquema: si algo no aplica, se usa el valor de escape correspondiente.
+
+### Contenido mínimo: fallar en voz alta, nunca entregar una cáscara vacía
+
+Los valores de escape existen para bloques concretos que de verdad no
+aplican, **no para vaciar el JSON entero**. Todo JSON entregado debe cumplir
+un mínimo de viabilidad:
+
+- `convocatoria.nombre`, `anio`, `organismo` y `fecha_generacion` siempre
+  informados — no existe convocatoria sin nombre.
+- `apartados[]` con al menos un apartado — una convocatoria sin ningún
+  contenido de memoria que redactar no necesita la Salida 4.
+
+Si ConvoKit no puede extraer ese mínimo (bases ilegibles, memoria no
+encontrada, error de procesamiento), debe **detenerse y reportar el error
+con su causa**, nunca emitir un JSON esquemáticamente válido pero vacío.
+Un esqueleto vacío es el peor resultado posible: parece un éxito, se
+importa sin ruido y el fallo se descubre tarde. Caso real: se recibió un
+JSON v2.2 con todos los bloques en valor de escape a la vez (nombre `""`,
+año `null`, cero apartados, cero campos) — inservible pero silencioso.
+MemorAI rechaza estos JSON en la subida.
 
 ## Estructura raíz
 
@@ -87,6 +140,7 @@ La raíz es un **objeto**, no un array:
   "apartados": [ ... ],
   "tres_ofertas": { ... },
   "parametros_convocatoria": [ ... ],
+  "documentos_convocatoria": [ ... ],
   "datos_aplicativo": [ ... ]
 }
 ```
@@ -159,6 +213,7 @@ consultor habría tenido que teclear el mismo dato tres veces.
   "codigo": "A.3",
   "nombre": "Viabilidad económica del proyecto",
   "puntos_max": 15,
+  "contexto_evaluador": "El evaluador comprueba que la rentabilidad esté justificada con al menos una ratio y su método, que las fuentes de financiación estén desglosadas y que el payback tenga cálculo explícito. Umbral mínimo del bloque: 15 puntos.",
   "prompt": "Redacta el apartado de viabilidad económica...",
   "inputs": [
     {
@@ -244,6 +299,28 @@ consultor habría tenido que teclear el mismo dato tres veces.
     "solicítalo antes de continuar" o "pide al consultor que aporte X". La
     única vía para dato ausente es el marcador `[DATO PENDIENTE: descripción]`
     en el lugar del texto donde correspondería.
+13. **Prohibidos los placeholders de "pega aquí" dentro del `prompt`.** Nunca
+    escribir cosas como `[PEGA AQUÍ: opción de innovación seleccionada...]`
+    o `[ADJUNTA O PEGA AQUÍ: listado de empleados...]` en el texto del
+    `prompt`. MemorAI no copia nada a mano dentro del prompt: los datos del
+    proyecto se envían aparte, en un bloque separado que MemorAI construye
+    automáticamente a partir de `inputs[]`. Un `prompt` con estos
+    placeholders llega a Claude sin resolver y contamina el borrador. El
+    `prompt` debe poder leerse y ejecutarse tal cual, dando por hecho que los
+    datos de `inputs[]` llegarán en un bloque aparte, nunca insertados en su
+    interior.
+14. **Cada apartado narrativo real de la memoria oficial tiene su entrada en
+    `apartados[]`, sin excepción**, aunque no puntúe y aunque su contenido
+    parezca solo tabular o de verificación (ver checklist, punto 10).
+15. **`contexto_evaluador` (opcional, recomendado)**: campo de texto por
+    apartado con lo que el evaluador comprueba en él — criterios de
+    puntuación, condiciones de elegibilidad del gasto, advertencias de la
+    convocatoria ("no computará si no está argumentado...", umbrales). Si
+    el proceso interno de ConvoKit ya genera este análisis (bloque "QUÉ
+    BUSCA EL EVALUADOR" o equivalente), se vuelca aquí tal cual en lugar de
+    descartarse. MemorAI lo muestra al consultor como guía junto a la
+    sección; **no** se envía a Claude (lo que Claude necesita saber del
+    evaluador debe estar en el `prompt`).
 
 ## Distinción memoria vs. formulario/aplicativo (crítico)
 
@@ -371,6 +448,43 @@ Si `parametros_convocatoria` se entrega vacío (`[]`) en una convocatoria que
 tiene plazos, límites o topes en las bases —prácticamente siempre los
 tiene—, es señal de que no se ha aplicado este test y el JSON se devolverá.
 
+## Documentación general de la convocatoria (`documentos_convocatoria[]`)
+
+Documentos que hay que adjuntar a **toda** solicitud de esta convocatoria,
+con independencia de cualquier apartado concreto de la memoria: certificados
+de organismos oficiales, fichas de alta en plataformas de la administración,
+declaraciones responsables normalizadas. No encajan en `documentos_requeridos`
+(que es por apartado) ni son un dato que rellena el consultor
+(`datos_aplicativo`): son papeles a reunir y adjuntar, iguales para
+cualquier expediente de esta convocatoria.
+
+Caso real que motiva esto (INNOVA-CV / INNOVATeiC-CV): la memoria oficial
+exige, para cualquier solicitud, el certificado de situación en el censo de
+actividades económicas (AEAT), la ficha de alta en PROPER, el recibo de
+liquidación de cotizaciones de la Seguridad Social (para acreditar mínimo de
+empleados), la declaración DNSH y la declaración de cumplimiento de la Ley
+contra la morosidad. Ninguno de estos documentos estaba en ningún apartado
+del JSON: se perdían por completo.
+
+```json
+{
+  "nombre": "Certificado de situación en el censo de actividades económicas (AEAT)",
+  "fuente": "cliente",
+  "obligatorio": true,
+  "nota": "Debe constar al menos un CNAE admitido según el anexo de la convocatoria"
+}
+```
+
+- `fuente`: mismo vocabulario que `documentos_requeridos`
+  (`cliente | perfil_estrategico | generado`).
+- `obligatorio`: booleano. Si depende de una condición ("si procede", "si
+  tiene Plan de Igualdad"), `obligatorio: false` y la condición va en `nota`.
+- `nota`: opcional, condición o matiz de las bases.
+- Si alguna de estas condiciones coincide con un parámetro de
+  `parametros_convocatoria` (p. ej. un mínimo de empleados en nómina que
+  también limita elegibilidad), referenciarlo en `nota`, no duplicar el
+  número.
+
 ### Datos de aplicativo (`datos_aplicativo[]`)
 
 Solo datos que **el consultor teclea por expediente** en el formulario
@@ -455,17 +569,37 @@ anterior — repetirlo significa que el JSON se devuelve.
 9. `tres_ofertas` y `campos_proyecto`/`parametros_convocatoria`: presentes
    siempre, aunque sea con el valor de escape (`umbral: null`, arrays
    vacíos si de verdad no aplican tras el punto 5).
+10. **Contrastar el índice de `apartados[]` contra el índice de la memoria
+    oficial, epígrafe por epígrafe.** Si la memoria tiene un B.5.5 y el JSON
+    salta de B.5.4 a B.5.6, falta un apartado. Esto aplica también a
+    apartados que parezcan "solo tabla" o "solo verificación": si tienen su
+    propio encabezado en la memoria oficial, tienen su propia entrada en
+    `apartados[]`.
+11. ¿Algún `prompt` contiene un placeholder de "pega aquí" o "adjunta aquí"
+    pensado para copiar información a mano? → eliminarlo; los datos van en
+    `inputs[]`, nunca incrustados en el texto del `prompt`.
+12. ¿Hay documentos que la convocatoria exige para cualquier solicitud
+    (certificados oficiales, fichas de alta en plataformas, declaraciones
+    responsables normalizadas) que no están ligados a ningún apartado
+    concreto? → van en `documentos_convocatoria`, no se pierden.
+13. **Contenido mínimo**: ¿`convocatoria.nombre` informado y `apartados[]`
+    con al menos una entrada? Si no, algo ha fallado en la extracción:
+    detenerse y reportar la causa, nunca entregar el esqueleto vacío.
 
 ## Validación
 
 MemorAI rechazará en la subida (HTTP 400 con detalle) los JSON `2.x` que
-incumplan: raíz no-objeto, `version_esquema` ausente, códigos repetidos,
+incumplan: raíz no-objeto, `version_esquema` ausente,
+`convocatoria.nombre` vacío o `apartados[]` vacío (esqueleto sin
+contenido), códigos repetidos,
 apartado padre emitido junto a sus subapartados, `ref_campo_empresa` o
 `ref_campo_proyecto` huérfano, tipos de input fuera del vocabulario
 (incluido `dato_proyecto` sin `ref_campo_proyecto`), `tres_ofertas` ausente o
 con `umbral` no numérico (salvo `null`), parámetros de
-`parametros_convocatoria` sin `valor`, `tipo_dato`/`ambito` de
+`parametros_convocatoria` sin `valor`, entradas de `documentos_convocatoria`
+sin `nombre`/`fuente`/`obligatorio`, `tipo_dato`/`ambito` de
 `datos_aplicativo` fuera del vocabulario, `opciones` ausente en un dato
-`seleccion`, o placeholders de la lista negra. El formato `1.x` (array
-plano) seguirá aceptándose con el pipeline actual de deduplicación y
-clasificación durante la transición.
+`seleccion`, un `prompt` que contenga las cadenas `PEGA AQUÍ` o `ADJUNTA
+AQUÍ` (u otro placeholder de copiar-pegar), o placeholders de la lista
+negra. El formato `1.x` (array plano) seguirá aceptándose con el pipeline
+actual de deduplicación y clasificación durante la transición.

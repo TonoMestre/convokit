@@ -50,14 +50,21 @@ El objetivo es que el texto resulte indistinguible del que escribiría una perso
 # convocatoria, campos_empresa, apartados, datos_aplicativo}, no un array.
 # Pipeline (orquestado en main.py, _generate_output_4):
 #   1. SECTION_EXTRACTOR_PROMPT       -> metadatos de convocatoria + lista de secciones
-#   2. SECTION_PROMPT_SYSTEM          -> markdown de cada apartado (una llamada por apartado)
-#   3. OUTPUT_4_JSON_EXTRACTOR        -> JSON tipado de ese apartado (una llamada por apartado)
+#   2. SECTION_PROMPT_SYSTEM          -> markdown de cada apartado (una llamada por apartado;
+#      con reintento si el markdown contiene placeholders de "pega aquí")
+#   3. OUTPUT_4_JSON_EXTRACTOR        -> JSON tipado de ese apartado, incluido contexto_evaluador
+#      (una llamada por apartado, con reintento si falla — nunca se descarta en silencio)
 #   4. OUTPUT_4_CAMPOS_EMPRESA_CONSOLIDATOR -> dedup del catálogo de datos de empresa
-#   5. OUTPUT_4_FICHA_EXTRACTOR       -> parametros_convocatoria + tres_ofertas + datos_aplicativo
+#   5. OUTPUT_4_FICHA_EXTRACTOR       -> parametros_convocatoria + tres_ofertas +
+#      datos_aplicativo + documentos_convocatoria
 #      (una sola llamada: el test decisivo parametro-vs-dato se aplica dato a dato;
 #      separados, el extractor de datos_aplicativo volcaba constantes de las bases)
 #   6. OUTPUT_4_CAMPOS_PROYECTO_CONSOLIDATOR -> dedup de datos de proyecto repetidos
 #      entre apartados o entre un apartado y el formulario (campos_proyecto)
+# Antes de devolver el resultado, _generate_output_4 verifica que ningún código de
+# sección se haya perdido y que el root cumpla el contenido mínimo del contrato
+# (convocatoria.nombre y al menos un apartado); si no, detiene la generación con un
+# error explícito en vez de persistir un JSON incompleto o vacío.
 # ---------------------------------------------------------------------------
 
 OUTPUT_6_CONFIG_PROMPT = _RULE_ESTILO_HUMANO + "\n\n" + """Eres un extractor de datos de convocatorias de ayudas públicas. Tu única tarea es analizar los documentos aportados y devolver un objeto JSON de configuración para el evaluador de encaje interactivo. Las reglas de estilo de arriba aplican a los textos del JSON (veredictos, intro, CTA, ayudas).
@@ -334,7 +341,8 @@ Reparte lo que el consultor debe aportar en estos tres bloques, en este orden. S
 5. Dar instrucciones precisas de qué redactar, con qué extensión orientativa, y qué argumentos maximizan la puntuación según los criterios del baremo.
 6. Pedir que señale con [DATO PENDIENTE: descripción] cualquier información que falte, en lugar de inventarla.
 Escrito en segunda persona dirigiéndose a Claude.
-IMPORTANTE — GENERACIÓN EN UN SOLO DISPARO: el prompt se envía a Claude una única vez, sin conversación posterior. PROHIBIDAS las instrucciones conversacionales del tipo "solicítalo antes de continuar", "pide al consultor que aporte X" o "señálalo al principio de tu respuesta". El ÚNICO mecanismo para un dato ausente es el marcador [DATO PENDIENTE: descripción] en el lugar del texto donde correspondería.]
+IMPORTANTE — GENERACIÓN EN UN SOLO DISPARO: el prompt se envía a Claude una única vez, sin conversación posterior. PROHIBIDAS las instrucciones conversacionales del tipo "solicítalo antes de continuar", "pide al consultor que aporte X" o "señálalo al principio de tu respuesta". El ÚNICO mecanismo para un dato ausente es el marcador [DATO PENDIENTE: descripción] en el lugar del texto donde correspondería.
+PROHIBIDO ABSOLUTO — PLACEHOLDERS DE COPIAR-PEGAR: nunca escribas huecos como "[PEGA AQUÍ: opción de innovación seleccionada]", "[ADJUNTA O PEGA AQUÍ: listado de empleados]" o "[lista aquí los documentos aportados]". La aplicación que ejecuta este prompt (MemorAI) NUNCA copia nada a mano dentro del texto: los datos del apartado (los mismos que has repartido arriba en "QUÉ DEBES APORTAR ANTES DE GENERAR") llegan a Claude en un bloque de datos SEPARADO, construido automáticamente a partir de esa lista — no dentro de este prompt. Escribe el prompt dando por hecho que esos datos ya estarán disponibles en ese bloque aparte cuando se ejecute: pide que se usen ("utiliza los datos de [tema] ya aportados"), nunca que se "peguen" o "adjunten" dentro de este texto. Este prompt debe leerse como una instrucción ejecutable de principio a fin, sin ningún hueco de relleno manual. [DATO PENDIENTE: descripción] es la ÚNICA marca de hueco permitida, y solo para información que de verdad no consta en ningún sitio — nunca para un dato que sí existe pero llega por el bloque aparte.]
 ```"""
 
 
@@ -415,6 +423,7 @@ Devuelve ÚNICAMENTE un objeto JSON válido (un objeto, no un array), sin texto 
   "codigo": "II.C",
   "nombre": "Nombre exacto del apartado",
   "puntos_max": 40,
+  "contexto_evaluador": "Texto completo de \"QUÉ BUSCA EL EVALUADOR\", copiado tal cual",
   "requiere_calculo_rentabilidad": false,
   "usa_tabla_inversiones": false,
   "inputs": [
@@ -429,6 +438,7 @@ Devuelve ÚNICAMENTE un objeto JSON válido (un objeto, no un array), sin texto 
 Reglas de extracción:
 
 - "puntos_max": número entero de la cabecera, o null si es criterio excluyente o no consta.
+- "contexto_evaluador": copia LITERAL y COMPLETA del contenido de "QUÉ BUSCA EL EVALUADOR" (sin resumir, sin reescribir). Si esa sección viene vacía o falta, omite el campo "contexto_evaluador" por completo (no generes cadena vacía).
 - "requiere_calculo_rentabilidad" / "usa_tabla_inversiones": copia literal del Sí/No de las dos líneas de flags (true si Sí, false si No).
 - "inputs": un objeto por cada ítem real de las tres sublistas de "QUÉ DEBES APORTAR" (una sublista ausente no genera ítems), más un input adicional por cada flag activo. Nunca omitas un ítem ni lo dupliques. Nunca generes un input a partir de una sublista vacía o con un placeholder tipo "ninguno"/"no aplica".
   - Ítems de "Datos generales de empresa": "tipo": "dato_empresa", "nivel": "minimo". Añade "ref_campo_empresa" con un id provisional en kebab-case derivado del nombre del dato (una consolidación posterior unificará este id con el mismo dato de otros apartados; no te preocupes por la coherencia entre apartados).
@@ -474,7 +484,7 @@ Reglas:
 - No inventes datos de empresa que no estén representados en las propuestas recibidas."""
 
 
-OUTPUT_4_FICHA_EXTRACTOR = """Eres un extractor de la ficha estructurada de una convocatoria de ayudas públicas. Recibirás los documentos completos de la convocatoria y la lista de datos de empresa ya cubiertos por la memoria. Debes devolver TRES bloques en un único objeto JSON: "parametros_convocatoria", "tres_ofertas" y "datos_aplicativo".
+OUTPUT_4_FICHA_EXTRACTOR = """Eres un extractor de la ficha estructurada de una convocatoria de ayudas públicas. Recibirás los documentos completos de la convocatoria y la lista de datos de empresa ya cubiertos por la memoria. Debes devolver CUATRO bloques en un único objeto JSON: "parametros_convocatoria", "tres_ofertas", "datos_aplicativo" y "documentos_convocatoria".
 
 TEST DECISIVO — aplícalo DATO POR DATO antes de decidir dónde va cada cosa:
 
@@ -539,6 +549,23 @@ Esquema de cada elemento:
 - "obligatorio": true si las bases o el formulario lo exigen siempre, false si es opcional o condicional.
 - "id": slug kebab-case descriptivo del dato, solo ASCII (sin acentos ni eñes).
 
+--- PARTE 4: documentos_convocatoria ---
+
+Documentos que hay que adjuntar a TODA solicitud de esta convocatoria, con independencia de cualquier apartado concreto de la memoria: certificados de organismos oficiales, fichas de alta en plataformas de la administración, declaraciones responsables normalizadas (ej. certificado de situación en el censo de actividades económicas, ficha de alta en un registro/plataforma del organismo, recibo de liquidación de cotizaciones de la Seguridad Social, declaración DNSH, declaración de cumplimiento de morosidad). Son papeles a reunir y adjuntar, iguales para cualquier expediente de esta convocatoria — no confundir con `documentos_requeridos` (que es específico de un apartado de la memoria) ni con `datos_aplicativo` (que es un dato que se teclea, no un documento a adjuntar).
+
+Esquema de cada elemento:
+{
+  "nombre": "Certificado de situación en el censo de actividades económicas (AEAT)",
+  "fuente": "cliente",
+  "obligatorio": true,
+  "nota": "Debe constar al menos un CNAE admitido según el anexo de la convocatoria"
+}
+
+- "fuente": uno de "cliente", "perfil_estrategico", "generado".
+- "obligatorio": booleano. Si depende de una condición ("si procede", "si tiene Plan de Igualdad"), "obligatorio": false y la condición va en "nota".
+- "nota": opcional, condición o matiz de las bases.
+- REGLA ABSOLUTA — NO INVENCIÓN: solo documentos que las bases o la convocatoria exijan explícitamente para cualquier solicitud. No inventes documentos genéricos "típicos" de otras convocatorias.
+
 --- FORMATO DE SALIDA ---
 
 Devuelve ÚNICAMENTE un objeto JSON válido, sin texto adicional, sin bloques de código markdown:
@@ -546,12 +573,13 @@ Devuelve ÚNICAMENTE un objeto JSON válido, sin texto adicional, sin bloques de
 {
   "parametros_convocatoria": [ ... ],
   "tres_ofertas": {"umbral": 15000, "exencion_gasto_antes_resolucion": true, "condiciones_exencion": "..."},
-  "datos_aplicativo": [ ... ]
+  "datos_aplicativo": [ ... ],
+  "documentos_convocatoria": [ ... ]
 }
 
 - "umbral": importe en euros como número (nunca string). Si la convocatoria no exige tres ofertas en ningún caso: "umbral": null.
 
-AUTORREVISIÓN antes de responder: recorre tu lista de "datos_aplicativo" una vez más y pregunta, por cada entrada, "¿el valor de esto ya está escrito en las bases?". Si la respuesta es sí, muévela a "parametros_convocatoria" con su valor. Este error se ha cometido dos veces; no lo repitas."""
+AUTORREVISIÓN antes de responder: recorre tu lista de "datos_aplicativo" una vez más y pregunta, por cada entrada, "¿el valor de esto ya está escrito en las bases?". Si la respuesta es sí, muévela a "parametros_convocatoria" con su valor. Este error se ha cometido dos veces; no lo repitas. Repasa también los documentos en busca de exigencias documentales que apliquen a CUALQUIER solicitud (no solo a un apartado): si encuentras alguna y no está en "documentos_convocatoria", añádela."""
 
 
 OUTPUT_4_CAMPOS_PROYECTO_CONSOLIDATOR = """Eres un consolidador de datos de proyecto para convocatorias de ayudas públicas.

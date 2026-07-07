@@ -6,15 +6,15 @@ devolverlos al frontend para su descarga.
 
 Esquemas:
 
-  Salida 4 — contrato de exportación v2.2 (docs/contrato-convokit.md).
+  Salida 4 — contrato de exportación v2.4 (docs/contrato-convokit.md).
   La raíz es un OBJETO, no un array:
     {
-      "version_esquema": "2.2",
+      "version_esquema": "2.4",
       "convocatoria": {"nombre", "anio", "organismo", "tipo_ayuda", "fecha_generacion"},
       "campos_empresa": [{"id", "nombre", "descripcion", "formato", ...}],
       "campos_proyecto": [{"id", "nombre", "descripcion", "formato", ...}],
       "apartados": [{
-        "codigo", "nombre", "puntos_max", "prompt",
+        "codigo", "nombre", "puntos_max", "prompt", "contexto_evaluador"?,
         "requiere_calculo_rentabilidad", "usa_tabla_inversiones",
         "inputs": [{"id", "label", "tipo", "nivel", "ayuda"?,
                     "ref_campo_empresa"?, "ref_campo_proyecto"?}],
@@ -22,6 +22,7 @@ Esquemas:
       }],
       "tres_ofertas": {"umbral", "exencion_gasto_antes_resolucion", "condiciones_exencion"},
       "parametros_convocatoria": [{"id", "label", "valor", "unidad"?, "nota"?}],
+      "documentos_convocatoria": [{"nombre", "fuente", "obligatorio", "nota"?}],
       "datos_aplicativo": [{"id", "label", "tipo_dato", "ambito", "obligatorio", "opciones"?}
                            | {"ref_campo_proyecto", "obligatorio"}],
     }
@@ -155,7 +156,7 @@ def _normalize_apartado(item: dict, campo_ids: set[str], campo_proyecto_ids: set
         ) if n
     ]
     docs = [n for n in (_normalize_documento_requerido(x) for x in (item.get("documentos_requeridos") or [])) if n]
-    return {
+    normalized = {
         "codigo": codigo,
         "nombre": item.get("nombre") or "",
         "puntos_max": item.get("puntos_max"),
@@ -165,6 +166,11 @@ def _normalize_apartado(item: dict, campo_ids: set[str], campo_proyecto_ids: set
         "inputs": inputs,
         "documentos_requeridos": docs,
     }
+    # Contrato v2.4, regla 15: opcional, solo si viene informado (nunca cadena vacía).
+    contexto_evaluador = (item.get("contexto_evaluador") or "").strip()
+    if contexto_evaluador:
+        normalized["contexto_evaluador"] = contexto_evaluador
+    return normalized
 
 
 def _normalize_campo_empresa(item: dict) -> dict | None:
@@ -210,6 +216,26 @@ def _normalize_dato_aplicativo(item: dict, campo_proyecto_ids: set[str]) -> dict
     if tipo_dato == "seleccion":
         opciones = item.get("opciones")
         normalized["opciones"] = opciones if isinstance(opciones, list) else []
+    return normalized
+
+
+def _normalize_documento_convocatoria(item: dict) -> dict | None:
+    """Documento exigido para CUALQUIER solicitud de la convocatoria (contrato v2.4),
+    independiente de cualquier apartado concreto — distinto de documentos_requeridos
+    (que es por apartado)."""
+    if not isinstance(item, dict):
+        return None
+    nombre = item.get("nombre") or ""
+    if not nombre or _is_placeholder(nombre):
+        return None
+    fuente = item.get("fuente") if item.get("fuente") in _DOC_FUENTES else "cliente"
+    normalized = {
+        "nombre": nombre,
+        "fuente": fuente,
+        "obligatorio": bool(item.get("obligatorio", False)),
+    }
+    if item.get("nota"):
+        normalized["nota"] = item["nota"]
     return normalized
 
 
@@ -284,7 +310,7 @@ def _dedupe_codigos(apartados: list[dict]) -> None:
 
 def export_output_4(raw_json: str | None) -> dict:
     """
-    Normaliza y devuelve el objeto raíz de la salida 4 (contrato v2.2).
+    Normaliza y devuelve el objeto raíz de la salida 4 (contrato v2.4).
     Garantiza vocabularios cerrados, ids solo ASCII, apartados solo hoja,
     labels sin cifras de las bases incrustadas, descarta placeholders de la
     lista negra, elimina referencias huérfanas a campos_empresa y
@@ -339,14 +365,21 @@ def export_output_4(raw_json: str | None) -> dict:
         n for n in (_normalize_parametro(x) for x in (data.get("parametros_convocatoria") or [])) if n
     ]
 
+    documentos_convocatoria = [
+        n for n in (
+            _normalize_documento_convocatoria(x) for x in (data.get("documentos_convocatoria") or [])
+        ) if n
+    ]
+
     return {
-        "version_esquema": "2.2",
+        "version_esquema": "2.4",
         "convocatoria": convocatoria,
         "campos_empresa": campos_empresa,
         "campos_proyecto": campos_proyecto,
         "apartados": apartados,
         "tres_ofertas": _normalize_tres_ofertas(data.get("tres_ofertas")),
         "parametros_convocatoria": parametros_convocatoria,
+        "documentos_convocatoria": documentos_convocatoria,
         "datos_aplicativo": datos_aplicativo,
     }
 

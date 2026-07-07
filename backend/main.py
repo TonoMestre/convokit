@@ -592,13 +592,13 @@ def _extract_ficha_convocatoria(
     full_context: str,
     campos_empresa: list[dict],
     _track: Callable | None = None,
-) -> tuple[list[dict], dict, list[dict]]:
+) -> tuple[list[dict], dict, list[dict], list[dict]]:
     """
     Extrae en UNA llamada parametros_convocatoria (constantes con valor),
-    tres_ofertas y datos_aplicativo (contrato v2.2). Una sola llamada fuerza a
-    aplicar el test decisivo dato a dato: con extractores separados, las
-    constantes de las bases acababan sistemáticamente en datos_aplicativo
-    (falló en INPYME y en EMPYME).
+    tres_ofertas, datos_aplicativo y documentos_convocatoria (contrato v2.4).
+    Una sola llamada fuerza a aplicar el test decisivo dato a dato: con
+    extractores separados, las constantes de las bases acababan
+    sistemáticamente en datos_aplicativo (falló en INPYME y en EMPYME).
 
     Checklist punto 5: si parametros_convocatoria llega vacío —prácticamente
     ninguna convocatoria carece de plazos o límites—, se reintenta una vez con
@@ -639,15 +639,17 @@ def _extract_ficha_convocatoria(
             data = retry
 
     if data is None:
-        return [], dict(_TRES_OFERTAS_DEFAULT), []
+        return [], dict(_TRES_OFERTAS_DEFAULT), [], []
 
     parametros = data.get("parametros_convocatoria")
     tres_ofertas = data.get("tres_ofertas")
     datos_aplicativo = data.get("datos_aplicativo")
+    documentos_convocatoria = data.get("documentos_convocatoria")
     return (
         parametros if isinstance(parametros, list) else [],
         tres_ofertas if isinstance(tres_ofertas, dict) else dict(_TRES_OFERTAS_DEFAULT),
         datos_aplicativo if isinstance(datos_aplicativo, list) else [],
+        documentos_convocatoria if isinstance(documentos_convocatoria, list) else [],
     )
 
 
@@ -746,6 +748,16 @@ _TRES_OFERTAS_DEFAULT = {
     "condiciones_exencion": "",
 }
 
+# Contrato v2.4, regla 13 / checklist punto 11: placeholders de copiar-pegar
+# detectados en JSON reales entregados (INNOVA-CV: seis apariciones en un solo
+# md). Detección determinista sobre el markdown de la sección, antes de
+# convertirla a JSON — más barato y más fiable que pedirle a Claude que se
+# autocorrija sin verificación.
+_PASTE_PLACEHOLDER_RE = re.compile(
+    r"\[\s*(?:PEGA|ADJUNTA)(?:\s+O\s+(?:PEGA|ADJUNTA))?\s+AQU[IÍ]|\[\s*LISTA\s+AQU[IÍ]",
+    re.IGNORECASE,
+)
+
 
 def _generate_output_4(
     client: anthropic.Anthropic,
@@ -758,23 +770,28 @@ def _generate_output_4(
 ) -> tuple[str, dict]:
     """
     Generación multi-llamada de la salida 4. Produce el objeto raíz del
-    contrato de exportación v2.2 (docs/contrato-convokit.md): version_esquema,
+    contrato de exportación v2.4 (docs/contrato-convokit.md): version_esquema,
     convocatoria, campos_empresa, campos_proyecto, apartados, tres_ofertas,
-    parametros_convocatoria, datos_aplicativo.
+    parametros_convocatoria, documentos_convocatoria, datos_aplicativo.
 
     Flujo:
     1. Extraer metadatos de la convocatoria y lista de secciones
        (solo hojas: los bloques padre con subapartados se descartan).
-    2. Generar cada sección con contexto reducido: markdown + JSON tipado
-       (inputs con tipo/nivel, flags de rentabilidad/inversión).
+    2. Generar cada sección con contexto reducido: markdown (con reintento si
+       contiene placeholders de copiar-pegar) + JSON tipado, incluido
+       contexto_evaluador (con reintento si la extracción falla; nunca se
+       descarta en silencio — ver "Contenido mínimo" del contrato).
        Pausa entre secciones para reducir carga en la API.
     3. Desambiguar códigos de apartado repetidos.
     4. Consolidar el catálogo de campos_empresa (dedup semántico entre apartados).
     5. Extraer la ficha de la convocatoria en una llamada (test decisivo dato a
-       dato): parametros_convocatoria (con valor), tres_ofertas y datos_aplicativo.
+       dato): parametros_convocatoria (con valor), tres_ofertas,
+       datos_aplicativo y documentos_convocatoria.
     6. Consolidar campos_proyecto: datos de proyecto pedidos en más de un sitio
        (varios apartados, o apartado + formulario) se definen una vez y se
        referencian con dato_proyecto/ref_campo_proyecto.
+    Antes de devolver, verifica el contenido mínimo (nombre de convocatoria y
+    al menos un apartado); si falta, detiene la generación con la causa.
     """
     model = model or pricing.MODEL_PER_OUTPUT[4]
     full_context = extractors.build_context(documents_json)
@@ -852,23 +869,88 @@ def _generate_output_4(
                     time.sleep(15 * (attempt + 1))
                 else:
                     raw_section = f"<!-- Error generando sección {seccion['codigo']}: {exc} -->"
+
+        # Contrato v2.4 regla 13 / checklist punto 11: si el md trae un
+        # placeholder de copiar-pegar, regenerar una vez con nota correctiva
+        # explícita. Si persiste, detener la generación con la causa en vez de
+        # dejarlo pasar (caso real: 6 apariciones en un mismo md de INNOVA-CV
+        # pese a que el prompt ya lo prohibía).
+        if _PASTE_PLACEHOLDER_RE.search(raw_section):
+            try:
+                retry_section = _claude(
+                    client,
+                    system=p.SECTION_PROMPT_SYSTEM,
+                    user=user_msg + (
+                        "\n\nAVISO: tu respuesta anterior contenía un placeholder de "
+                        "copiar-pegar (\"[PEGA AQUÍ...]\", \"[ADJUNTA...AQUÍ...]\" o "
+                        "similar), prohibido en la INSTRUCCIÓN A CLAUDE. Los datos de "
+                        "\"QUÉ DEBES APORTAR\" llegan a Claude en un bloque aparte durante "
+                        "la ejecución real; nunca se pegan dentro del prompt. Reescribe la "
+                        "sección completa sin ningún hueco de ese tipo."
+                    ),
+                    max_tokens=8192,
+                    model=model,
+                    _track=_track,
+                )
+            except Exception:
+                retry_section = raw_section
+            if not _PASTE_PLACEHOLDER_RE.search(retry_section):
+                raw_section = retry_section
+            else:
+                raise HTTPException(
+                    status_code=502,
+                    detail=(
+                        f"El apartado {seccion['codigo']} sigue conteniendo un "
+                        "placeholder de copiar-pegar tras reintentarlo. Regenera la "
+                        "salida 4; si se repite, revisa la plantilla de memoria de "
+                        "esta convocatoria."
+                    ),
+                )
+
         markdown_parts.append(raw_section or "")
 
-        # Extraer JSON tipado de esta sección individualmente (evita truncar con el markdown completo)
-        try:
-            raw_json_sec = _claude(
-                client,
-                system=p.OUTPUT_4_JSON_EXTRACTOR,
-                user=raw_section,
-                max_tokens=4096,
-                model=pricing.MODELS["haiku"],
-                _track=_track,
+        # Extraer JSON tipado de esta sección individualmente (evita truncar con el
+        # markdown completo). Con reintento: dos incidentes reales (DIGITALIZA CV
+        # 2025 vacío entero, INNOVA-CV con el apartado B.5.5 perdido) llegaron a
+        # MemorAI porque un fallo transitorio aquí se descartaba en silencio
+        # (`except: pass`). Ahora, si los 3 intentos fallan, se detiene la
+        # generación entera con la causa exacta en vez de entregar un JSON
+        # incompleto o vacío (contrato v2.4, "Contenido mínimo").
+        parsed_sec = None
+        json_error = "sin detalle"
+        for attempt in range(3):
+            try:
+                raw_json_sec = _claude(
+                    client,
+                    system=p.OUTPUT_4_JSON_EXTRACTOR,
+                    user=raw_section,
+                    max_tokens=4096,
+                    model=pricing.MODELS["haiku"],
+                    _track=_track,
+                )
+                candidate = _parse_json(raw_json_sec)
+                if isinstance(candidate, dict):
+                    parsed_sec = candidate
+                    break
+                json_error = "la respuesta no era un objeto JSON"
+            except Exception as exc:
+                json_error = str(exc)
+            if attempt < 2:
+                time.sleep(5 * (attempt + 1))
+
+        if parsed_sec is None:
+            raise HTTPException(
+                status_code=502,
+                detail=(
+                    f"No se pudo extraer el JSON del apartado {seccion['codigo']} "
+                    f"tras 3 intentos ({json_error}). Regenera la salida 4."
+                ),
             )
-            parsed_sec = _parse_json(raw_json_sec)
-            if isinstance(parsed_sec, dict):
-                apartados.append(parsed_sec)
-        except Exception:
-            pass  # sección sin JSON válido: se omite, el markdown queda intacto
+        # El código es siempre el de la fuente de verdad (secciones, paso 1), nunca
+        # el que Claude reescriba al extraer el JSON: evita que un apartado acabe
+        # con un código distinto al de su sección y "desaparezca" del índice.
+        parsed_sec["codigo"] = seccion["codigo"]
+        apartados.append(parsed_sec)
 
         if _progress_cb:
             _progress_cb(i + 1, len(secciones))
@@ -882,8 +964,8 @@ def _generate_output_4(
     campos_empresa = _consolidate_campos_empresa(client, apartados, _track=_track)
 
     # Paso 5: ficha de la convocatoria en una llamada (test decisivo dato a dato)
-    parametros_convocatoria, tres_ofertas, datos_aplicativo = _extract_ficha_convocatoria(
-        client, full_context, campos_empresa, _track=_track
+    parametros_convocatoria, tres_ofertas, datos_aplicativo, documentos_convocatoria = (
+        _extract_ficha_convocatoria(client, full_context, campos_empresa, _track=_track)
     )
 
     # Paso 6: consolidar datos de proyecto repetidos (remapea apartados y
@@ -892,10 +974,30 @@ def _generate_output_4(
         client, apartados, datos_aplicativo, _track=_track
     )
 
+    convocatoria_nombre = conv_meta.get("nombre") or conv_name
+
+    # Contrato v2.4, "Contenido mínimo": nunca persistir una cáscara vacía.
+    # Caso real (DIGITALIZA CV 2025): un JSON con nombre "", año null y cero
+    # apartados se entregó sin ningún aviso — parecía un éxito y era inservible.
+    # Si el mínimo no se cumple, detenerse aquí con la causa en vez de devolver
+    # el esqueleto; MemorAI lo habría rechazado igualmente, pero en silencio
+    # para el consultor.
+    if not (convocatoria_nombre or "").strip():
+        raise HTTPException(
+            status_code=502,
+            detail="No se pudo identificar el nombre de la convocatoria. "
+                   "Revisa que los documentos incluyan el nombre oficial y regenera la salida 4.",
+        )
+    if not apartados:
+        raise HTTPException(
+            status_code=502,
+            detail="No se generó ningún apartado de la memoria. Regenera la salida 4.",
+        )
+
     root = {
-        "version_esquema": "2.2",
+        "version_esquema": "2.4",
         "convocatoria": {
-            "nombre": conv_meta.get("nombre") or conv_name,
+            "nombre": convocatoria_nombre,
             "anio": conv_meta.get("anio"),
             "organismo": conv_meta.get("organismo") or "",
             "tipo_ayuda": conv_meta.get("tipo_ayuda") or "otro",
@@ -906,6 +1008,7 @@ def _generate_output_4(
         "apartados": apartados,
         "tres_ofertas": tres_ofertas,
         "parametros_convocatoria": parametros_convocatoria,
+        "documentos_convocatoria": documentos_convocatoria,
         "datos_aplicativo": datos_aplicativo,
     }
 

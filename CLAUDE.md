@@ -152,10 +152,10 @@ Claves de `entregables_json`:
   entre la salida 6 standalone y el evaluador embebido en la salida 3 para no generarlo
   (ni redactar sus preguntas) dos veces
 - `"4"` — markdown set de prompts
-- `"4_json"` — objeto JSON, contrato de exportación v2.2 (ver docs/contrato-convokit.md
+- `"4_json"` — objeto JSON, contrato de exportación v2.4 (ver docs/contrato-convokit.md
   y la sección "Salida 4" más abajo). No es un array: la raíz es
   `{version_esquema, convocatoria, campos_empresa, campos_proyecto, apartados,
-  tres_ofertas, parametros_convocatoria, datos_aplicativo}`.
+  tres_ofertas, parametros_convocatoria, documentos_convocatoria, datos_aplicativo}`.
 - `"4_instruccion"` — instrucción libre del usuario
 - `"5"` — markdown lista de documentación + correo
 - `"5_json"` — JSON array de documentos (ver esquema en PRD sección 12)
@@ -451,20 +451,20 @@ lo ya persistido en BD con lo generado en el mismo lote (`{**entregables_persist
 Sin `"7_json"`: a diferencia de las salidas 4 y 5, esta no alimenta la App de Memorias.
 Es un documento de trabajo para el consultor, no un contrato de datos.
 
-## Salida 4 — Set de prompts (arquitectura multi-llamada, contrato v2.2)
+## Salida 4 — Set de prompts (arquitectura multi-llamada, contrato v2.4)
 
 El JSON de exportación de la salida 4 (`4_json`) sigue el contrato `docs/contrato-convokit.md`
-(versión `2.2`), pensado para que la App de Memorias lo importe sin post-proceso de IA ni
+(versión `2.4`), pensado para que la App de Memorias lo importe sin post-proceso de IA ni
 revisión manual. La raíz es un OBJETO, no un array:
 
 ```json
 {
-  "version_esquema": "2.2",
+  "version_esquema": "2.4",
   "convocatoria": {"nombre", "anio", "organismo", "tipo_ayuda", "fecha_generacion"},
   "campos_empresa": [{"id", "nombre", "descripcion", "formato"}],
   "campos_proyecto": [{"id", "nombre", "descripcion", "formato"}],
   "apartados": [{
-    "codigo", "nombre", "puntos_max", "prompt",
+    "codigo", "nombre", "puntos_max", "prompt", "contexto_evaluador"?,
     "requiere_calculo_rentabilidad", "usa_tabla_inversiones",
     "inputs": [{"id", "label", "tipo", "nivel", "ayuda"?,
                 "ref_campo_empresa"?, "ref_campo_proyecto"?}],
@@ -472,10 +472,49 @@ revisión manual. La raíz es un OBJETO, no un array:
   }],
   "tres_ofertas": {"umbral", "exencion_gasto_antes_resolucion", "condiciones_exencion"},
   "parametros_convocatoria": [{"id", "label", "valor", "unidad"?, "nota"?}],
+  "documentos_convocatoria": [{"nombre", "fuente", "obligatorio", "nota"?}],
   "datos_aplicativo": [{"id", "label", "tipo_dato", "ambito", "obligatorio", "opciones"?}
                        | {"ref_campo_proyecto", "obligatorio"}]
 }
 ```
+
+Reglas clave del v2.3/v2.4, tras contrastar el JSON real de INNOVA-CV/INNOVATeiC-CV
+contra la memoria oficial en Word (además de las reglas del v2.0/v2.1/v2.2):
+
+- **Fallar en voz alta, nunca entregar una cáscara vacía ("Contenido mínimo")**: caso real
+  (DIGITALIZA CV 2025) — un JSON con `nombre: ""`, `anio: null` y cero apartados se
+  entregó sin ningún aviso, parecía un éxito y era inservible. `_generate_output_4`
+  ahora lanza un error explícito (nunca devuelve el objeto) si `convocatoria.nombre`
+  queda vacío o `apartados` queda vacío tras generar.
+- **La extracción JSON por sección nunca se descarta en silencio**: caso real (INNOVA-CV)
+  — el md interno tenía 20 secciones completas, el JSON entregado solo 19: el apartado
+  B.5.5 "Adquisición de activos materiales" se perdió porque su extracción JSON falló y
+  el código hacía `except Exception: pass`. Ahora reintenta 3 veces (mismo patrón de
+  backoff que la generación del markdown) y, si aun así falla, **detiene toda la
+  generación** con un error que nombra el apartado y la causa — nunca entrega un JSON
+  con apartados de menos. El `codigo` de cada apartado se fuerza siempre al de la
+  sección de origen (paso 1), nunca al que reescriba el extractor, para que un apartado
+  no pueda "cambiar de código" y desaparecer del índice.
+- **Prohibidos los placeholders de copiar-pegar** (`[PEGA AQUÍ: ...]`, `[ADJUNTA O PEGA
+  AQUÍ: ...]`, `[lista aquí los documentos...]`) dentro del `prompt`: caso real
+  (INNOVA-CV) — seis apariciones en un mismo md pese a que el prompt ya lo prohibía en
+  texto. MemorAI no copia nada a mano dentro del prompt: los datos de `inputs[]` viajan
+  en un bloque aparte. Detección determinista (`_PASTE_PLACEHOLDER_RE` en main.py) sobre
+  el markdown de cada sección: si aparece, se regenera la sección una vez con una nota
+  correctiva explícita; si persiste, se detiene la generación con la causa.
+- **`contexto_evaluador` (opcional) por apartado**: el md interno ya genera un bloque
+  "QUÉ BUSCA EL EVALUADOR" que antes se descartaba al convertir a JSON. Ahora
+  `OUTPUT_4_JSON_EXTRACTOR` lo copia literal a este campo; MemorAI lo muestra al
+  consultor como guía junto a la sección y nunca lo envía a Claude (lo que Claude
+  necesita saber del evaluador va en el `prompt`, como siempre).
+- **`documentos_convocatoria[]`** (bloque raíz nuevo): documentos que hay que adjuntar a
+  TODA solicitud de la convocatoria, sin ligar a ningún apartado concreto (certificados
+  oficiales, fichas de alta en plataformas, declaraciones responsables normalizadas).
+  Caso real (INNOVA-CV): certificado AEAT, ficha PROPER, recibo de cotizaciones SS,
+  declaración DNSH y de morosidad no encajaban en ningún apartado y se perdían por
+  completo. Se extraen en la misma llamada que `parametros_convocatoria`/`tres_ofertas`/
+  `datos_aplicativo` (`OUTPUT_4_FICHA_EXTRACTOR`), con vocabulario `fuente` igual que
+  `documentos_requeridos`.
 
 Reglas clave del v2.2 (además de las del v2.0/v2.1):
 
@@ -554,8 +593,11 @@ Todo el pipeline vive en `_generate_output_4` (`backend/main.py`):
    puntuación) en vez de listas libres.
 3. **Extracción JSON por sección** (`OUTPUT_4_JSON_EXTRACTOR`): inmediatamente después de
    generar el markdown de cada sección, una llamada a Haiku extrae el objeto JSON tipado
-   de ese apartado (max_tokens = 4096). Esto evita enviar 60 K chars en una sola llamada.
-   Los `ref_campo_empresa` que produce esta llamada son IDs provisionales por apartado.
+   de ese apartado, incluido `contexto_evaluador` (max_tokens = 4096). Esto evita enviar
+   60 K chars en una sola llamada. Los `ref_campo_empresa` que produce esta llamada son
+   IDs provisionales por apartado. Con reintento (3 intentos, backoff 5/10/15s): si los
+   3 fallan, se detiene toda la generación con la causa — nunca se descarta el apartado
+   en silencio (ver "Reglas clave del v2.3/v2.4" arriba).
 4. **Desambiguación de códigos** (Python, sin llamada a Claude): si dos apartados comparten
    `codigo`, se añade un sufijo numérico (`-2`, `-3`...) para garantizar unicidad.
 5. **Consolidación de `campos_empresa`** (`OUTPUT_4_CAMPOS_EMPRESA_CONSOLIDATOR`): una
@@ -566,23 +608,27 @@ Todo el pipeline vive en `_generate_output_4` (`backend/main.py`):
    generado en llamadas aisladas.
 6. **Ficha de la convocatoria** (`OUTPUT_4_FICHA_EXTRACTOR`): UNA llamada a Haiku sobre
    el contexto completo extrae juntos `parametros_convocatoria` (constantes con valor),
-   `tres_ofertas` y `datos_aplicativo`, aplicando el test decisivo dato a dato. Es una
-   sola llamada a propósito: con extractores separados las constantes de las bases
-   acababan en `datos_aplicativo`. Si `parametros_convocatoria` sale vacío, `main.py`
-   reintenta una vez con aviso explícito.
+   `tres_ofertas`, `datos_aplicativo` y `documentos_convocatoria`, aplicando el test
+   decisivo dato a dato. Es una sola llamada a propósito: con extractores separados las
+   constantes de las bases acababan en `datos_aplicativo`. Si `parametros_convocatoria`
+   sale vacío, `main.py` reintenta una vez con aviso explícito.
 7. **Consolidación de `campos_proyecto`** (`OUTPUT_4_CAMPOS_PROYECTO_CONSOLIDATOR`): una
    llamada a Haiku recibe todos los inputs `texto_libre` de todos los apartados más los
    `datos_aplicativo`, detecta los datos de proyecto pedidos en más de un sitio y
    devuelve el catálogo + remapeos que `main.py` aplica in place (inputs →
    `dato_proyecto`/`ref_campo_proyecto`; entradas de datos_aplicativo → referencia).
 
+Antes de devolver el resultado, `_generate_output_4` verifica el contenido mínimo del
+contrato (`convocatoria.nombre` y al menos un apartado) y lanza un error explícito si
+falta — nunca persiste un JSON vacío o incompleto (ver "Reglas clave del v2.3/v2.4").
+
 `exporters.export_output_4` normaliza el objeto final antes de servirlo: fuerza los
 vocabularios cerrados, ids solo ASCII, apartados solo hoja, labels sin cifras de las
 bases incrustadas, descarta placeholders de la lista negra ("no aplica", "ya incluido",
 "ver otro apartado"...), elimina `ref_campo_empresa`/`ref_campo_proyecto` huérfanos
 (un `dato_proyecto` con ref huérfana se degrada a `texto_libre`), deduplica
-`datos_aplicativo` contra los catálogos y garantiza `tres_ofertas` bien tipado
-(umbral numérico o null).
+`datos_aplicativo` contra los catálogos, normaliza `documentos_convocatoria` y garantiza
+`tres_ofertas` bien tipado (umbral numérico o null).
 
 ## Las dos apps (importante)
 
@@ -590,9 +636,9 @@ ConvoKit es la primera de dos aplicaciones. La segunda (App de Memorias) redacta
 técnicas y cuentas justificativas a partir de los datos reales de cada empresa.
 
 Las salidas 4 y 5 exportan JSON estructurado precisamente para alimentar la App de Memorias:
-- Salida 4 produce el perfil de convocatoria (contrato `docs/contrato-convokit.md` v2.2:
+- Salida 4 produce el perfil de convocatoria (contrato `docs/contrato-convokit.md` v2.4:
   convocatoria, campos_empresa, campos_proyecto, apartados, tres_ofertas,
-  parametros_convocatoria, datos_aplicativo).
+  parametros_convocatoria, documentos_convocatoria, datos_aplicativo).
 - Salida 5 produce el árbol de documentos (esquema en PRD sección 12).
 
 El esquema de ambos JSON no debe modificarse sin coordinarlo con el modelo de datos de la

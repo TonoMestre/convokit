@@ -1,12 +1,22 @@
 # Contrato de salida ConvoKit → MemorAI (Salida 4)
 
-Versión propuesta: `2.1` · Julio 2026
+Versión propuesta: `2.2` · Julio 2026
 
 > Cambios 2.0 → 2.1, tras revisar el primer JSON real (INPYME 2026):
 > solo apartados hoja (sin bloque padre duplicado), nuevo bloque
 > `parametros_convocatoria` con valor incluido, bloque `tres_ofertas`
 > estructurado, `datos_aplicativo` restringido a lo que rellena el
 > consultor, ids solo ASCII y prompts sin instrucciones conversacionales.
+>
+> Cambios 2.1 → 2.2, tras revisar el segundo JSON real (EMPYME 2026): la
+> regla 1bis se cumplió, pero `parametros_convocatoria` llegó vacío mientras
+> `datos_aplicativo` seguía cargado de constantes de la convocatoria (mismo
+> fallo de 2.0, no corregido). Se añade un **test decisivo** para esa
+> frontera, se prohíben cifras incrustadas en labels sin su parámetro
+> correspondiente, se añade el catálogo `campos_proyecto[]` para datos de
+> proyecto repetidos entre apartados (caso real: "sector en auge" pedido tres
+> veces en la misma convocatoria) y una **checklist de autorrevisión**
+> obligatoria antes de entregar cualquier JSON.
 
 Este documento define el formato que ConvoKit debe producir para que MemorAI
 pueda importar una convocatoria sin post-procesado con IA ni revisión manual.
@@ -73,6 +83,7 @@ La raíz es un **objeto**, no un array:
     "fecha_generacion": "2026-07-06"
   },
   "campos_empresa": [ ... ],
+  "campos_proyecto": [ ... ],
   "apartados": [ ... ],
   "tres_ofertas": { ... },
   "parametros_convocatoria": [ ... ],
@@ -106,6 +117,40 @@ el nombre.
   "datos-economicos" y "cifras-economicas" como campos separados.
 - `formato`: `texto | tabla_historica | numero`. Para `tabla_historica`,
   añadir `variables` (lista) y `num_anios` sugeridos.
+
+## Catálogo de campos de proyecto (`campos_proyecto[]`)
+
+Mismo mecanismo que `campos_empresa`, pero para datos **específicos de este
+expediente** (no reutilizables con otro cliente) que aun así se piden en más
+de un sitio dentro de la misma convocatoria: en varios apartados, o en un
+apartado y también en `datos_aplicativo`.
+
+Caso real que motiva esto: en EMPYME 2026 el "sector de actividad en auge"
+se pedía como `texto_libre` en el apartado C.1, otra vez como `texto_libre`
+en C.2, y una tercera vez como `seleccion` en `datos_aplicativo`. El
+consultor habría tenido que teclear el mismo dato tres veces.
+
+```json
+{
+  "id": "sector-auge",
+  "nombre": "Sector de actividad en auge de la convocatoria",
+  "descripcion": "Uno de los doce sectores listados en las bases, o justificación si no encaja en ninguno. Se usa en C.1, C.2 y en el formulario telemático.",
+  "formato": "texto"
+}
+```
+
+- **Regla de oro, igual que en `campos_empresa`**: un mismo dato de proyecto
+  usado en más de un sitio de la convocatoria se define **una vez** aquí y se
+  referencia desde donde haga falta. Nunca se redefine con otro `id` o como
+  `texto_libre` suelto en cada apartado.
+- Los apartados lo referencian con un input `tipo: "dato_proyecto"` y
+  `ref_campo_proyecto` (ver regla 3 más abajo).
+- Si el mismo dato también hace falta en el formulario telemático, la
+  entrada de `datos_aplicativo` lo referencia con `ref_campo_proyecto` en
+  vez de redefinir `id`/`label` (ver sección de `datos_aplicativo`).
+- No usar `campos_proyecto` para lo que solo aparece una vez en toda la
+  convocatoria: eso sigue siendo un input `texto_libre` normal dentro del
+  apartado, o una entrada normal de `datos_aplicativo`.
 
 ## Apartados (`apartados[]`)
 
@@ -161,9 +206,13 @@ el nombre.
 2. **`prompt` no vacío** y autocontenido: no debe referirse a "el apartado
    anterior" ni depender de contexto que MemorAI no envía.
 3. **Cada input va tipado** con `tipo`:
-   - `texto_libre`: dato específico del proyecto que redacta el consultor.
+   - `texto_libre`: dato específico del proyecto que redacta el consultor y
+     que **solo se pide una vez** en toda la convocatoria.
    - `dato_empresa`: dato general de la empresa → obligatorio
      `ref_campo_empresa` apuntando a un `id` de `campos_empresa`.
+   - `dato_proyecto`: dato específico del proyecto que se repite en más de
+     un sitio de la convocatoria → obligatorio `ref_campo_proyecto`
+     apuntando a un `id` de `campos_proyecto`.
    - `inversion`: lo cubre la cuenta justificativa del expediente (tabla única
      de partidas). No pedir tablas de inversión como texto libre.
    - `rentabilidad`: lo cubre el cálculo estructurado (VAN/TIR/payback).
@@ -283,6 +332,45 @@ resto se muestra como ficha informativa de solo lectura de la convocatoria.
   las bases (límite de minimis, dotación presupuestaria, umbrales pyme...)
   va aquí, con su valor.
 
+### Test decisivo: `parametros_convocatoria` vs. `datos_aplicativo`
+
+Esta frontera ha fallado dos veces seguidas (INPYME y EMPYME): cosas que son
+constantes de las bases se han seguido colando en `datos_aplicativo` en vez
+de `parametros_convocatoria`, incluso con el campo ya presente en el
+esquema. Aplicar siempre esta pregunta, dato por dato, antes de decidir
+dónde va:
+
+> **¿Este valor es el mismo para cualquier empresa que presente esta
+> convocatoria, o cada solicitante declara el suyo?**
+> - Mismo valor para todos → `parametros_convocatoria`, con el valor.
+> - Cada solicitante aporta uno distinto → `datos_aplicativo`, sin valor.
+
+Ejemplos reales mal clasificados en el JSON de EMPYME 2026 que deben ir en
+`parametros_convocatoria` (ConvoKit ya conoce el valor al leer las bases,
+es el mismo para las 200 empresas que se presenten):
+`limite-maximo-subvencion-beneficiario`, `limite-minimis-tres-anos`,
+`salario-bruto-maximo-mensual`, `fecha-publicacion-convocatoria`,
+`url-tramite-telematico`, `plazo-subsanacion-dias`, `plazo-resolucion-meses`,
+`extension-maxima-proyecto-hojas`, `tamanio-fuente-proyecto`,
+`validez-certificados-meses`, `periodo-conservacion-documentos-anos`,
+`periodo-subvencionable-inicio`, `periodo-subvencionable-fin`,
+`plazo-presentacion-inicio`, `plazo-presentacion-fin`.
+
+Frente a esto, `importe-subvencion-solicitado` o
+`numero-empleados-contratados` sí son `datos_aplicativo` correctos: cada
+empresa solicita un importe distinto y contrata un número distinto de
+personas.
+
+**Prohibido incrustar cifras de las bases dentro de un `label`** (p. ej.
+`"Porcentaje de subvención solicitado (máximo 70%)"`). Si hay un tope, ese
+tope va como su propio parámetro en `parametros_convocatoria`
+(`limite-porcentaje-subvencion: 70`); el `label` del dato que sí varía por
+solicitante se queda sin el número (`"Porcentaje de subvención solicitado"`).
+
+Si `parametros_convocatoria` se entrega vacío (`[]`) en una convocatoria que
+tiene plazos, límites o topes en las bases —prácticamente siempre los
+tiene—, es señal de que no se ha aplicado este test y el JSON se devolverá.
+
 ### Datos de aplicativo (`datos_aplicativo[]`)
 
 Solo datos que **el consultor teclea por expediente** en el formulario
@@ -322,6 +410,9 @@ las bases: esas van en `parametros_convocatoria` con su valor.
   concreta). Si un dato de ámbito `empresa` coincide semánticamente con uno
   del catálogo `campos_empresa` de otra convocatoria previa del mismo tipo,
   ConvoKit debe usar el mismo `id` cuando sea razonable.
+- Si el dato ya está definido en `campos_proyecto` porque también se pide en
+  algún apartado, la entrada aquí lleva `ref_campo_proyecto` en vez de
+  `label`/`tipo_dato` propios — no se redefine dos veces.
 - **Nunca generan un apartado ni un `prompt`**: MemorAI los presenta como un
   panel de captura de datos (checklist), no los envía a Claude para redactar,
   y no forman parte de las secciones exportadas al Word de la memoria — sirven
@@ -329,17 +420,52 @@ las bases: esas van en `parametros_convocatoria` con su valor.
   convocatoria por su cuenta.
 - Si un dato aparece tanto en la memoria narrativa como en el formulario
   (ej. la razón social encabeza la memoria y también el formulario), va como
-  `dato_empresa` referenciado desde el apartado **y no** se duplica en
-  `datos_aplicativo`.
+  `dato_empresa` (o `dato_proyecto`) referenciado desde el apartado **y no**
+  se duplica en `datos_aplicativo`.
+- **Nunca es una constante de las bases.** Antes de añadir una entrada aquí,
+  aplicar el test decisivo de la sección anterior: si el valor es el mismo
+  para cualquier solicitante, es `parametros_convocatoria`, no esto.
+
+## Checklist de autorrevisión (obligatoria antes de entregar el JSON)
+
+ConvoKit debe repasar esta lista sobre su propio JSON antes de darlo por
+bueno. Cada punto corresponde a un fallo real ya detectado en una entrega
+anterior — repetirlo significa que el JSON se devuelve.
+
+1. ¿Algún apartado con subapartados propios aparece también como bloque
+   agregado (padre + hijos a la vez)? → dejar solo las hojas.
+2. ¿Algún input `texto_libre` pide un dato que ya existe en `campos_empresa`
+   con otro nombre? → convertir a `dato_empresa` + `ref_campo_empresa`.
+3. ¿Algún dato de proyecto (no de empresa) se pide en más de un apartado, o
+   en un apartado y también en `datos_aplicativo`, con `id`/`label`
+   distintos cada vez? → moverlo a `campos_proyecto` y referenciarlo con
+   `dato_proyecto` / `ref_campo_proyecto`.
+4. Por cada entrada de `datos_aplicativo`: aplicar el test decisivo
+   (¿mismo valor para cualquier solicitante?). Si la respuesta es sí, no
+   debería estar aquí sino en `parametros_convocatoria`.
+5. Si `parametros_convocatoria` queda vacío, confirmar explícitamente que
+   las bases no contienen ningún plazo, límite, umbral o intensidad de
+   ayuda — algo muy raro. Si existen y se dejaron fuera, añadirlos.
+6. ¿Algún `label` lleva una cifra de las bases incrustada entre paréntesis
+   (`"máximo X"`, `"hasta Y%"`)? → esa cifra sale del label y entra como su
+   propio parámetro en `parametros_convocatoria`.
+7. ¿Algún `id` lleva tilde o eñe? → pasar a ASCII.
+8. ¿Algún `prompt` da por hecho que puede pedir algo "antes de continuar" o
+   esperar respuesta del consultor? → sustituir por `[DATO PENDIENTE: ...]`.
+9. `tres_ofertas` y `campos_proyecto`/`parametros_convocatoria`: presentes
+   siempre, aunque sea con el valor de escape (`umbral: null`, arrays
+   vacíos si de verdad no aplican tras el punto 5).
 
 ## Validación
 
 MemorAI rechazará en la subida (HTTP 400 con detalle) los JSON `2.x` que
 incumplan: raíz no-objeto, `version_esquema` ausente, códigos repetidos,
-apartado padre emitido junto a sus subapartados, `ref_campo_empresa`
-huérfano, tipos de input fuera del vocabulario, `tres_ofertas` ausente o con
-`umbral` no numérico (salvo `null`), parámetros de `parametros_convocatoria`
-sin `valor`, `tipo_dato`/`ambito` de `datos_aplicativo` fuera del
-vocabulario, `opciones` ausente en un dato `seleccion`, o placeholders de la
-lista negra. El formato `1.x` (array plano) seguirá aceptándose con el
-pipeline actual de deduplicación y clasificación durante la transición.
+apartado padre emitido junto a sus subapartados, `ref_campo_empresa` o
+`ref_campo_proyecto` huérfano, tipos de input fuera del vocabulario
+(incluido `dato_proyecto` sin `ref_campo_proyecto`), `tres_ofertas` ausente o
+con `umbral` no numérico (salvo `null`), parámetros de
+`parametros_convocatoria` sin `valor`, `tipo_dato`/`ambito` de
+`datos_aplicativo` fuera del vocabulario, `opciones` ausente en un dato
+`seleccion`, o placeholders de la lista negra. El formato `1.x` (array
+plano) seguirá aceptándose con el pipeline actual de deduplicación y
+clasificación durante la transición.

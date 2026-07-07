@@ -487,32 +487,157 @@ def _consolidate_campos_empresa(
     return campos_empresa if isinstance(campos_empresa, list) else []
 
 
-def _extract_datos_aplicativo(
+def _extract_ficha_convocatoria(
     client: anthropic.Anthropic,
     full_context: str,
     campos_empresa: list[dict],
     _track: Callable | None = None,
-) -> list[dict]:
-    """Extrae los datos de aplicativo/formulario (no narrativos) del contexto completo."""
+) -> tuple[list[dict], dict, list[dict]]:
+    """
+    Extrae en UNA llamada parametros_convocatoria (constantes con valor),
+    tres_ofertas y datos_aplicativo (contrato v2.2). Una sola llamada fuerza a
+    aplicar el test decisivo dato a dato: con extractores separados, las
+    constantes de las bases acababan sistemáticamente en datos_aplicativo
+    (falló en INPYME y en EMPYME).
+
+    Checklist punto 5: si parametros_convocatoria llega vacío —prácticamente
+    ninguna convocatoria carece de plazos o límites—, se reintenta una vez con
+    un recordatorio explícito.
+    """
     campos_conocidos = [{"id": c.get("id"), "nombre": c.get("nombre")} for c in campos_empresa]
     user_msg = (
         f"Documentos de la convocatoria:\n\n{full_context}\n\n"
-        "Datos de empresa ya cubiertos como contenido de memoria (no los dupliques aquí):\n"
+        "Datos de empresa ya cubiertos como contenido de memoria (no los dupliques en datos_aplicativo):\n"
         f"{json.dumps(campos_conocidos, ensure_ascii=False)}"
     )
+
+    def _call(extra: str = "") -> dict | None:
+        try:
+            raw = _claude(
+                client,
+                system=p.OUTPUT_4_FICHA_EXTRACTOR,
+                user=user_msg + extra,
+                max_tokens=8192,
+                model=pricing.MODELS["haiku"],
+                _track=_track,
+            )
+            data = _parse_json(raw)
+            return data if isinstance(data, dict) else None
+        except Exception:
+            return None
+
+    data = _call()
+    if data is not None and not (data.get("parametros_convocatoria") or []):
+        retry = _call(
+            "\n\nAVISO: en tu respuesta anterior parametros_convocatoria quedó vacío. "
+            "Las bases de casi cualquier convocatoria contienen plazos de presentación, "
+            "importes máximos, porcentajes de ayuda o límites de minimis. Repasa los "
+            "documentos y extrae esos parámetros con su valor; deja [] solo si de verdad "
+            "no consta ninguno."
+        )
+        if retry is not None and (retry.get("parametros_convocatoria") or []):
+            data = retry
+
+    if data is None:
+        return [], dict(_TRES_OFERTAS_DEFAULT), []
+
+    parametros = data.get("parametros_convocatoria")
+    tres_ofertas = data.get("tres_ofertas")
+    datos_aplicativo = data.get("datos_aplicativo")
+    return (
+        parametros if isinstance(parametros, list) else [],
+        tres_ofertas if isinstance(tres_ofertas, dict) else dict(_TRES_OFERTAS_DEFAULT),
+        datos_aplicativo if isinstance(datos_aplicativo, list) else [],
+    )
+
+
+def _consolidate_campos_proyecto(
+    client: anthropic.Anthropic,
+    apartados: list[dict],
+    datos_aplicativo: list[dict],
+    _track: Callable | None = None,
+) -> list[dict]:
+    """
+    Contrato v2.2: detecta datos DE PROYECTO pedidos en más de un sitio de la
+    convocatoria (varios apartados, o un apartado y también el formulario) y
+    los consolida en el catálogo campos_proyecto. Remapea in place:
+    - inputs texto_libre repetidos -> tipo dato_proyecto + ref_campo_proyecto
+    - entradas de datos_aplicativo repetidas -> {ref_campo_proyecto, obligatorio}
+      (sin redefinir label/tipo_dato)
+    Caso real que lo motiva: "sector en auge" pedido tres veces en EMPYME 2026.
+    """
+    inputs_texto_libre = []
+    for apartado in apartados:
+        for inp in apartado.get("inputs", []):
+            if inp.get("tipo") == "texto_libre":
+                inputs_texto_libre.append({
+                    "codigo_apartado": apartado.get("codigo", ""),
+                    "id_input": inp.get("id", ""),
+                    "label": inp.get("label", ""),
+                    "ayuda": inp.get("ayuda", ""),
+                })
+
+    datos_resumen = [
+        {k: d[k] for k in ("id", "label", "tipo_dato", "opciones") if k in d}
+        for d in datos_aplicativo if isinstance(d, dict)
+    ]
+
+    if not inputs_texto_libre:
+        return []
+
     try:
         raw = _claude(
             client,
-            system=p.OUTPUT_4_DATOS_APLICATIVO_EXTRACTOR,
-            user=user_msg,
-            max_tokens=4096,
+            system=p.OUTPUT_4_CAMPOS_PROYECTO_CONSOLIDATOR,
+            user=json.dumps(
+                {"inputs_texto_libre": inputs_texto_libre, "datos_aplicativo": datos_resumen},
+                ensure_ascii=False,
+            ),
+            max_tokens=3000,
             model=pricing.MODELS["haiku"],
             _track=_track,
         )
         data = _parse_json(raw)
-        return data if isinstance(data, list) else []
     except Exception:
         return []
+
+    if not isinstance(data, dict):
+        return []
+
+    campos_proyecto = data.get("campos_proyecto") or []
+    if not isinstance(campos_proyecto, list) or not campos_proyecto:
+        return []
+    campo_ids = {c.get("id") for c in campos_proyecto if isinstance(c, dict)}
+
+    remap_inputs = {
+        (r.get("codigo_apartado"), r.get("id_input")): r.get("id_final")
+        for r in (data.get("remapeo_inputs") or []) if isinstance(r, dict)
+    }
+    for apartado in apartados:
+        codigo = apartado.get("codigo", "")
+        for inp in apartado.get("inputs", []):
+            if inp.get("tipo") != "texto_libre":
+                continue
+            id_final = remap_inputs.get((codigo, inp.get("id", "")))
+            if id_final and id_final in campo_ids:
+                inp["tipo"] = "dato_proyecto"
+                inp["ref_campo_proyecto"] = id_final
+
+    remap_datos = {
+        r.get("id"): r.get("id_final")
+        for r in (data.get("remapeo_datos_aplicativo") or []) if isinstance(r, dict)
+    }
+    for i, dato in enumerate(datos_aplicativo):
+        if not isinstance(dato, dict):
+            continue
+        id_final = remap_datos.get(dato.get("id"))
+        if id_final and id_final in campo_ids:
+            datos_aplicativo[i] = {
+                "ref_campo_proyecto": id_final,
+                "obligatorio": bool(dato.get("obligatorio", False)),
+            }
+
+    return campos_proyecto
 
 
 _TRES_OFERTAS_DEFAULT = {
@@ -520,36 +645,6 @@ _TRES_OFERTAS_DEFAULT = {
     "exencion_gasto_antes_resolucion": False,
     "condiciones_exencion": "",
 }
-
-
-def _extract_parametros_y_tres_ofertas(
-    client: anthropic.Anthropic,
-    full_context: str,
-    _track: Callable | None = None,
-) -> tuple[list[dict], dict]:
-    """Extrae parametros_convocatoria (constantes con valor) y tres_ofertas (contrato v2.1)."""
-    try:
-        raw = _claude(
-            client,
-            system=p.OUTPUT_4_PARAMETROS_EXTRACTOR,
-            user=f"Documentos de la convocatoria:\n\n{full_context}",
-            max_tokens=4096,
-            model=pricing.MODELS["haiku"],
-            _track=_track,
-        )
-        data = _parse_json(raw)
-    except Exception:
-        return [], dict(_TRES_OFERTAS_DEFAULT)
-
-    if not isinstance(data, dict):
-        return [], dict(_TRES_OFERTAS_DEFAULT)
-
-    parametros = data.get("parametros_convocatoria")
-    tres_ofertas = data.get("tres_ofertas")
-    return (
-        parametros if isinstance(parametros, list) else [],
-        tres_ofertas if isinstance(tres_ofertas, dict) else dict(_TRES_OFERTAS_DEFAULT),
-    )
 
 
 def _generate_output_4(
@@ -563,8 +658,8 @@ def _generate_output_4(
 ) -> tuple[str, dict]:
     """
     Generación multi-llamada de la salida 4. Produce el objeto raíz del
-    contrato de exportación v2.1 (docs/contrato-convokit.md): version_esquema,
-    convocatoria, campos_empresa, apartados, tres_ofertas,
+    contrato de exportación v2.2 (docs/contrato-convokit.md): version_esquema,
+    convocatoria, campos_empresa, campos_proyecto, apartados, tres_ofertas,
     parametros_convocatoria, datos_aplicativo.
 
     Flujo:
@@ -575,8 +670,11 @@ def _generate_output_4(
        Pausa entre secciones para reducir carga en la API.
     3. Desambiguar códigos de apartado repetidos.
     4. Consolidar el catálogo de campos_empresa (dedup semántico entre apartados).
-    5. Extraer los datos_aplicativo del contexto completo (bases/formulario).
-    6. Extraer parametros_convocatoria (con valor) y tres_ofertas.
+    5. Extraer la ficha de la convocatoria en una llamada (test decisivo dato a
+       dato): parametros_convocatoria (con valor), tres_ofertas y datos_aplicativo.
+    6. Consolidar campos_proyecto: datos de proyecto pedidos en más de un sitio
+       (varios apartados, o apartado + formulario) se definen una vez y se
+       referencian con dato_proyecto/ref_campo_proyecto.
     """
     model = model or pricing.MODEL_PER_OUTPUT[4]
     full_context = extractors.build_context(documents_json)
@@ -683,16 +781,19 @@ def _generate_output_4(
     # Paso 4: consolidar catálogo de campos_empresa y remapear referencias
     campos_empresa = _consolidate_campos_empresa(client, apartados, _track=_track)
 
-    # Paso 5: extraer datos_aplicativo del contexto completo
-    datos_aplicativo = _extract_datos_aplicativo(client, full_context, campos_empresa, _track=_track)
+    # Paso 5: ficha de la convocatoria en una llamada (test decisivo dato a dato)
+    parametros_convocatoria, tres_ofertas, datos_aplicativo = _extract_ficha_convocatoria(
+        client, full_context, campos_empresa, _track=_track
+    )
 
-    # Paso 6: parametros_convocatoria (con valor) + tres_ofertas
-    parametros_convocatoria, tres_ofertas = _extract_parametros_y_tres_ofertas(
-        client, full_context, _track=_track
+    # Paso 6: consolidar datos de proyecto repetidos (remapea apartados y
+    # datos_aplicativo in place)
+    campos_proyecto = _consolidate_campos_proyecto(
+        client, apartados, datos_aplicativo, _track=_track
     )
 
     root = {
-        "version_esquema": "2.1",
+        "version_esquema": "2.2",
         "convocatoria": {
             "nombre": conv_meta.get("nombre") or conv_name,
             "anio": conv_meta.get("anio"),
@@ -701,6 +802,7 @@ def _generate_output_4(
             "fecha_generacion": date.today().isoformat(),
         },
         "campos_empresa": campos_empresa,
+        "campos_proyecto": campos_proyecto,
         "apartados": apartados,
         "tres_ofertas": tres_ofertas,
         "parametros_convocatoria": parametros_convocatoria,

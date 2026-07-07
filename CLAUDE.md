@@ -150,10 +150,10 @@ Claves de `entregables_json`:
   entre la salida 6 standalone y el evaluador embebido en la salida 3 para no generarlo
   (ni redactar sus preguntas) dos veces
 - `"4"` — markdown set de prompts
-- `"4_json"` — objeto JSON, contrato de exportación v2.1 (ver docs/contrato-convokit.md
+- `"4_json"` — objeto JSON, contrato de exportación v2.2 (ver docs/contrato-convokit.md
   y la sección "Salida 4" más abajo). No es un array: la raíz es
-  `{version_esquema, convocatoria, campos_empresa, apartados, tres_ofertas,
-  parametros_convocatoria, datos_aplicativo}`.
+  `{version_esquema, convocatoria, campos_empresa, campos_proyecto, apartados,
+  tres_ofertas, parametros_convocatoria, datos_aplicativo}`.
 - `"4_instruccion"` — instrucción libre del usuario
 - `"5"` — markdown lista de documentación + correo
 - `"5_json"` — JSON array de documentos (ver esquema en PRD sección 12)
@@ -379,28 +379,57 @@ que nunca debe tocar `html`/`body` porque también se usa como fragmento embebid
 standalone es un documento propio y necesita ese reset para no dejar un marco en blanco
 alrededor del fondo crema del widget.
 
-## Salida 4 — Set de prompts (arquitectura multi-llamada, contrato v2.1)
+## Salida 4 — Set de prompts (arquitectura multi-llamada, contrato v2.2)
 
 El JSON de exportación de la salida 4 (`4_json`) sigue el contrato `docs/contrato-convokit.md`
-(versión `2.1`), pensado para que la App de Memorias lo importe sin post-proceso de IA ni
+(versión `2.2`), pensado para que la App de Memorias lo importe sin post-proceso de IA ni
 revisión manual. La raíz es un OBJETO, no un array:
 
 ```json
 {
-  "version_esquema": "2.1",
+  "version_esquema": "2.2",
   "convocatoria": {"nombre", "anio", "organismo", "tipo_ayuda", "fecha_generacion"},
   "campos_empresa": [{"id", "nombre", "descripcion", "formato"}],
+  "campos_proyecto": [{"id", "nombre", "descripcion", "formato"}],
   "apartados": [{
     "codigo", "nombre", "puntos_max", "prompt",
     "requiere_calculo_rentabilidad", "usa_tabla_inversiones",
-    "inputs": [{"id", "label", "tipo", "nivel", "ayuda"?, "ref_campo_empresa"?}],
+    "inputs": [{"id", "label", "tipo", "nivel", "ayuda"?,
+                "ref_campo_empresa"?, "ref_campo_proyecto"?}],
     "documentos_requeridos": [{"nombre", "fuente"}]
   }],
   "tres_ofertas": {"umbral", "exencion_gasto_antes_resolucion", "condiciones_exencion"},
   "parametros_convocatoria": [{"id", "label", "valor", "unidad"?, "nota"?}],
-  "datos_aplicativo": [{"id", "label", "tipo_dato", "ambito", "obligatorio", "opciones"?}]
+  "datos_aplicativo": [{"id", "label", "tipo_dato", "ambito", "obligatorio", "opciones"?}
+                       | {"ref_campo_proyecto", "obligatorio"}]
 }
 ```
+
+Reglas clave del v2.2 (además de las del v2.0/v2.1):
+
+- **Test decisivo `parametros_convocatoria` vs `datos_aplicativo`** (falló en INPYME y
+  EMPYME; es la regla más importante): *¿este valor es el mismo para cualquier empresa
+  que presente esta convocatoria, o cada solicitante declara el suyo?* Mismo valor para
+  todos → `parametros_convocatoria` CON el valor; distinto por solicitante →
+  `datos_aplicativo` sin valor. Límites, plazos institucionales, reglas de formato del
+  documento, URLs institucionales y dotaciones son SIEMPRE parámetros. Para forzar el
+  test dato a dato, parámetros + tres_ofertas + datos_aplicativo se extraen en UNA sola
+  llamada (`OUTPUT_4_FICHA_EXTRACTOR`); si `parametros_convocatoria` sale vacío se
+  reintenta una vez con aviso explícito (prácticamente toda convocatoria tiene plazos
+  o límites).
+- **Catálogo `campos_proyecto[]`** + input `dato_proyecto`/`ref_campo_proyecto`: un dato
+  de proyecto pedido en más de un sitio (varios apartados, o apartado + formulario) se
+  define una vez y se referencia desde cada aparición (caso real: "sector en auge"
+  pedido tres veces en EMPYME). Una entrada de `datos_aplicativo` que referencia el
+  catálogo lleva `{ref_campo_proyecto, obligatorio}` sin redefinir label/tipo_dato.
+  Consolidación en `_consolidate_campos_proyecto` (`OUTPUT_4_CAMPOS_PROYECTO_CONSOLIDATOR`).
+- **Labels sin cifras de las bases**: prohibido "(máximo 70%)" en un label — el tope es
+  su propio parámetro. Regla en prompts + limpieza determinista en exporters
+  (`_strip_embedded_limits`: solo paréntesis que empiezan por máximo/mínimo/hasta/tope/
+  límite y contienen un dígito).
+- **Checklist de autorrevisión** del contrato: los puntos automatizables están
+  implementados en Python (hojas, ASCII, refs huérfanas, dedup, bloques siempre
+  presentes, reintento si parámetros vacío); el resto va reforzado en los prompts.
 
 Reglas clave del v2.1 (además de las del v2.0):
 - **Solo apartados hoja** (regla 1bis): si la memoria estructura un bloque en
@@ -463,19 +492,25 @@ Todo el pipeline vive en `_generate_output_4` (`backend/main.py`):
    `ref_campo_empresa` de cada apartado. Esto resuelve que "datos económicos" en un
    apartado y "cifras financieras" en otro apunten al mismo campo aunque se hayan
    generado en llamadas aisladas.
-6. **Extracción de `datos_aplicativo`** (`OUTPUT_4_DATOS_APLICATIVO_EXTRACTOR`): una
-   llamada a Haiku sobre el contexto completo (no solo la plantilla de memoria) identifica
-   los datos que el consultor teclea por expediente, evitando duplicar lo que ya está en
-   `campos_empresa` y excluyendo las constantes de las bases (van al paso 7).
-7. **Extracción de `parametros_convocatoria` + `tres_ofertas`**
-   (`OUTPUT_4_PARAMETROS_EXTRACTOR`): una llamada a Haiku sobre el contexto completo
-   extrae las constantes de las bases con su valor y el bloque `tres_ofertas`.
+6. **Ficha de la convocatoria** (`OUTPUT_4_FICHA_EXTRACTOR`): UNA llamada a Haiku sobre
+   el contexto completo extrae juntos `parametros_convocatoria` (constantes con valor),
+   `tres_ofertas` y `datos_aplicativo`, aplicando el test decisivo dato a dato. Es una
+   sola llamada a propósito: con extractores separados las constantes de las bases
+   acababan en `datos_aplicativo`. Si `parametros_convocatoria` sale vacío, `main.py`
+   reintenta una vez con aviso explícito.
+7. **Consolidación de `campos_proyecto`** (`OUTPUT_4_CAMPOS_PROYECTO_CONSOLIDATOR`): una
+   llamada a Haiku recibe todos los inputs `texto_libre` de todos los apartados más los
+   `datos_aplicativo`, detecta los datos de proyecto pedidos en más de un sitio y
+   devuelve el catálogo + remapeos que `main.py` aplica in place (inputs →
+   `dato_proyecto`/`ref_campo_proyecto`; entradas de datos_aplicativo → referencia).
 
 `exporters.export_output_4` normaliza el objeto final antes de servirlo: fuerza los
-vocabularios cerrados, ids solo ASCII, apartados solo hoja, descarta placeholders de la
-lista negra ("no aplica", "ya incluido", "ver otro apartado"...), elimina
-`ref_campo_empresa` huérfanos, deduplica `datos_aplicativo` contra `campos_empresa` y
-garantiza `tres_ofertas` bien tipado (umbral numérico o null).
+vocabularios cerrados, ids solo ASCII, apartados solo hoja, labels sin cifras de las
+bases incrustadas, descarta placeholders de la lista negra ("no aplica", "ya incluido",
+"ver otro apartado"...), elimina `ref_campo_empresa`/`ref_campo_proyecto` huérfanos
+(un `dato_proyecto` con ref huérfana se degrada a `texto_libre`), deduplica
+`datos_aplicativo` contra los catálogos y garantiza `tres_ofertas` bien tipado
+(umbral numérico o null).
 
 ## Las dos apps (importante)
 
@@ -483,9 +518,9 @@ ConvoKit es la primera de dos aplicaciones. La segunda (App de Memorias) redacta
 técnicas y cuentas justificativas a partir de los datos reales de cada empresa.
 
 Las salidas 4 y 5 exportan JSON estructurado precisamente para alimentar la App de Memorias:
-- Salida 4 produce el perfil de convocatoria (contrato `docs/contrato-convokit.md` v2.1:
-  convocatoria, campos_empresa, apartados, tres_ofertas, parametros_convocatoria,
-  datos_aplicativo).
+- Salida 4 produce el perfil de convocatoria (contrato `docs/contrato-convokit.md` v2.2:
+  convocatoria, campos_empresa, campos_proyecto, apartados, tres_ofertas,
+  parametros_convocatoria, datos_aplicativo).
 - Salida 5 produce el árbol de documentos (esquema en PRD sección 12).
 
 El esquema de ambos JSON no debe modificarse sin coordinarlo con el modelo de datos de la

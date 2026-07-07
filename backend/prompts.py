@@ -52,8 +52,11 @@ El objetivo es que el texto resulte indistinguible del que escribiría una perso
 #   2. SECTION_PROMPT_SYSTEM          -> markdown de cada apartado (una llamada por apartado)
 #   3. OUTPUT_4_JSON_EXTRACTOR        -> JSON tipado de ese apartado (una llamada por apartado)
 #   4. OUTPUT_4_CAMPOS_EMPRESA_CONSOLIDATOR -> dedup del catálogo de datos de empresa
-#   5. OUTPUT_4_DATOS_APLICATIVO_EXTRACTOR   -> datos que el consultor teclea por expediente
-#   6. OUTPUT_4_PARAMETROS_EXTRACTOR  -> parametros_convocatoria (con valor) + tres_ofertas
+#   5. OUTPUT_4_FICHA_EXTRACTOR       -> parametros_convocatoria + tres_ofertas + datos_aplicativo
+#      (una sola llamada: el test decisivo parametro-vs-dato se aplica dato a dato;
+#      separados, el extractor de datos_aplicativo volcaba constantes de las bases)
+#   6. OUTPUT_4_CAMPOS_PROYECTO_CONSOLIDATOR -> dedup de datos de proyecto repetidos
+#      entre apartados o entre un apartado y el formulario (campos_proyecto)
 # ---------------------------------------------------------------------------
 
 OUTPUT_6_CONFIG_PROMPT = _RULE_ESTILO_HUMANO + "\n\n" + """Eres un extractor de datos de convocatorias de ayudas públicas. Tu única tarea es analizar los documentos aportados y devolver un objeto JSON de configuración para el evaluador de encaje interactivo. Las reglas de estilo de arriba aplican a los textos del JSON (veredictos, intro, CTA, ayudas).
@@ -435,7 +438,8 @@ Reglas de extracción:
   - Los tipos "rentabilidad" e "inversion" nunca llevan "tipo": "documento": ese dato nunca es un archivo a adjuntar, así que tampoco debe aparecer en "documentos_requeridos".
 - "documentos_requeridos": SOLO los inputs de tipo "documento" de arriba, con {"nombre": label del input, "fuente": "cliente"}. Usa "fuente": "generado" únicamente cuando el propio texto indique que el documento lo genera o rellena Innóvate 4.0 a partir de datos ya disponibles, no el cliente.
 - "prompt": string con el texto completo dentro del bloque de código de "INSTRUCCIÓN A CLAUDE", sin los backticks. Si no hay bloque de código, string vacío.
-- IDS SOLO ASCII: todos los "id" y "ref_campo_empresa" en kebab-case sin acentos, eñes ni caracteres no ASCII ("experiencia-minima-anios", nunca "experiencia-minima-años")."""
+- IDS SOLO ASCII: todos los "id" y "ref_campo_empresa" en kebab-case sin acentos, eñes ni caracteres no ASCII ("experiencia-minima-anios", nunca "experiencia-minima-años").
+- LABELS SIN CIFRAS DE LAS BASES: un "label" nunca lleva topes o límites incrustados entre paréntesis ("(máximo 70%)", "(hasta 15.000 euros)"). Si el límite aporta contexto útil al consultor, va en "ayuda", nunca en "label"."""
 
 
 OUTPUT_4_CAMPOS_EMPRESA_CONSOLIDATOR = """Eres un consolidador de catálogo de datos de empresa para convocatorias de ayudas públicas.
@@ -468,41 +472,24 @@ Reglas:
 - No inventes datos de empresa que no estén representados en las propuestas recibidas."""
 
 
-OUTPUT_4_DATOS_APLICATIVO_EXTRACTOR = """Eres un extractor de datos de convocatorias de ayudas públicas. Tu tarea es identificar los "datos de aplicativo": datos que EL CONSULTOR TECLEA POR EXPEDIENTE en el formulario telemático de solicitud y que la aplicación no puede conocer de antemano (la URL de la web del cliente, el número de empleados a contratar, el municipio de la inversión, si los contratos serán indefinidos...).
+OUTPUT_4_FICHA_EXTRACTOR = """Eres un extractor de la ficha estructurada de una convocatoria de ayudas públicas. Recibirás los documentos completos de la convocatoria y la lista de datos de empresa ya cubiertos por la memoria. Debes devolver TRES bloques en un único objeto JSON: "parametros_convocatoria", "tres_ofertas" y "datos_aplicativo".
 
-REGLA DE DECISIÓN en dos pasos:
-1. ¿La respuesta esperada es una frase o un párrafo argumentado? → NO es un dato de aplicativo (es contenido de memoria narrativa; no lo incluyas).
-2. ¿El valor es una CONSTANTE de las bases o la convocatoria (un plazo, un límite, un umbral, una intensidad de ayuda, la dotación presupuestaria, el límite de minimis, la puntuación mínima...)? → TAMPOCO es un dato de aplicativo: esas constantes se extraen aparte como parámetros de convocatoria y no debes incluirlas aquí. Un dato de aplicativo es SIEMPRE algo que varía por cliente/expediente y que el consultor teclea.
+TEST DECISIVO — aplícalo DATO POR DATO antes de decidir dónde va cada cosa:
 
-Ante la duda: si el valor ya está escrito en las bases, NO va aquí. Si el valor depende del cliente o del proyecto concreto, SÍ va aquí.
+> ¿Este valor es el mismo para cualquier empresa que presente esta convocatoria, o cada solicitante declara el suyo?
+> - Mismo valor para todos → "parametros_convocatoria", CON el valor leído literalmente de los documentos.
+> - Cada solicitante aporta uno distinto → "datos_aplicativo", sin valor.
 
-REGLA ABSOLUTA — NO INVENCIÓN: solo incluye datos que las bases, la convocatoria o el formulario mencionen explícitamente como exigidos al solicitante. No inventes campos de formulario que no consten en los documentos aportados.
+Categorías que son SIEMPRE parámetros de convocatoria (mismo valor para las 200 empresas que se presenten; ConvoKit ya conoce el valor al leer las bases y pedírselo al consultor sería absurdo):
+- Límites e intensidades: importe máximo de subvención por beneficiario, porcentaje máximo de ayuda, límite de minimis, salario máximo subvencionable, presupuesto mínimo del proyecto, límites de partidas concretas (ingeniería, auditoría...).
+- Plazos institucionales: presentación (inicio y fin), subsanación, resolución, justificación, periodo subvencionable (inicio y fin), fecha de publicación.
+- Reglas de formato del documento: extensión máxima en hojas, tamaño de fuente.
+- URLs institucionales: sede electrónica, trámite telemático.
+- Otros: dotación presupuestaria, umbrales de tamaño pyme, puntuación mínima, validez de certificados, periodo de conservación de documentos.
 
-NO DUPLIQUES datos que ya están cubiertos como "campos_empresa" de la memoria (se te proporciona esa lista a continuación del documento). Si un dato aparece tanto en la memoria narrativa como en el formulario (ej. la razón social encabeza la memoria y también el formulario), NO lo repitas aquí: ya está cubierto como dato de empresa referenciado desde un apartado.
+Categorías que son datos de aplicativo (cada solicitante declara el suyo; el consultor lo teclea por expediente): importe de subvención solicitado, número de empleados a contratar, URL de la web del cliente, municipio de la inversión, si dispone de plan de igualdad, si los contratos serán indefinidos.
 
-Devuelve ÚNICAMENTE un array JSON, sin texto adicional, sin bloques de código markdown. Esquema de cada elemento:
-
-{
-  "id": "empleados-a-contratar",
-  "label": "Número de empleados a contratar con esta ayuda",
-  "tipo_dato": "numero",
-  "ambito": "proyecto",
-  "obligatorio": true
-}
-
-- "tipo_dato": uno de "texto_corto", "numero", "booleano", "fecha", "url", "seleccion". Para "seleccion" añade "opciones": array de strings con la lista cerrada extraída de los documentos.
-- "ambito": "empresa" si el dato es reutilizable entre expedientes futuros del mismo cliente (ej. la URL de la web, el NIF), "proyecto" si es específico de esta solicitud concreta (ej. empleados a contratar con esta ayuda).
-- "obligatorio": true si las bases o el formulario lo exigen siempre, false si es opcional o condicional.
-- "id": slug kebab-case descriptivo del dato, solo ASCII (sin acentos ni eñes).
-
-Si no identificas ningún dato de aplicativo en los documentos, devuelve un array vacío []."""
-
-
-OUTPUT_4_PARAMETROS_EXTRACTOR = """Eres un extractor de parámetros de convocatorias de ayudas públicas. Tu tarea tiene dos partes: extraer los parámetros de la convocatoria (constantes de las bases) y pronunciarte sobre la regla de las tres ofertas.
-
---- PARTE 1: PARÁMETROS DE CONVOCATORIA ---
-
-Extrae las CONSTANTES que las bases y la convocatoria establecen: plazos, límites, umbrales, intensidades de ayuda, dotación presupuestaria, presupuesto mínimo del proyecto, límite de minimis, umbrales de tamaño pyme, límites de partidas concretas (ingeniería, auditoría...), puntuación mínima, fechas de ejecución y justificación. LLEVAN SIEMPRE EL VALOR INCLUIDO, leído literalmente de los documentos: son información de las bases, nunca algo que el consultor deba teclear.
+--- PARTE 1: parametros_convocatoria ---
 
 Esquema de cada parámetro:
 {
@@ -516,30 +503,90 @@ Esquema de cada parámetro:
 - "valor": número, booleano, fecha ISO ("2026-11-30") o texto corto, según el parámetro. NUNCA lo omitas: un parámetro sin valor no se incluye.
 - "unidad": "%", "EUR", "años", "meses", "días", "empleados"... u omítela si no aplica.
 - "nota": opcional, matices de las bases que el número no captura.
-- IDS CANÓNICOS: cuando el parámetro exista en la convocatoria, usa exactamente estos ids: "presupuesto-minimo", "limite-ingenieria-porcentaje", "limite-ingenieria-euros", "limite-auditoria", "puesta-funcionamiento-inicio", "plazo-justificacion", "intensidad-ayuda", "limite-maximo-ayuda". Para el resto (dotación, umbrales pyme, plazo de resolución, puntuación mínima, plazos de presentación...) usa un id libre descriptivo en kebab-case solo ASCII.
+- IDS CANÓNICOS: cuando el parámetro exista en la convocatoria, usa exactamente estos ids: "presupuesto-minimo", "limite-ingenieria-porcentaje", "limite-ingenieria-euros", "limite-auditoria", "puesta-funcionamiento-inicio", "plazo-justificacion", "intensidad-ayuda", "limite-maximo-ayuda". Para el resto usa un id libre descriptivo en kebab-case solo ASCII.
 - REGLA ABSOLUTA — NO INVENCIÓN: solo parámetros cuyo valor conste literalmente en los documentos. No inventes ni estimes valores.
+- IMPORTANTE: prácticamente toda convocatoria tiene plazos, límites o topes en sus bases. Si tu lista queda vacía, repasa los documentos buscando: plazo de presentación, importe máximo de ayuda, porcentaje de subvención, minimis, periodo subvencionable, dotación. Devolver [] solo si de verdad no consta ninguno.
 
---- PARTE 2: REGLA DE LAS TRES OFERTAS ---
+--- PARTE 2: tres_ofertas ---
 
 Determina si la convocatoria exige presentar tres ofertas/presupuestos comparativos por proveedor y concepto a partir de cierto importe (las bases pueden remitir al art. 31.3 de la Ley 38/2003 General de Subvenciones; en ese caso el umbral legal es 15000 EUR para suministros/servicios y 40000 EUR para obras — usa el que aplique al objeto de la convocatoria).
 
 Debes pronunciarte SIEMPRE sobre la exención por gasto anterior a la resolución: si las bases permiten no aportar las tres ofertas cuando el gasto se ha ejecutado y facturado antes de la resolución de concesión (p. ej. admitiendo la factura de la inversión ya realizada). Si las bases no dicen nada al respecto: "exencion_gasto_antes_resolucion": false y "condiciones_exencion": "".
+
+--- PARTE 3: datos_aplicativo ---
+
+Solo datos que EL CONSULTOR TECLEA POR EXPEDIENTE en el formulario telemático y que la aplicación no puede conocer de antemano. Reglas:
+
+1. ¿La respuesta esperada es una frase o un párrafo argumentado? → NO es un dato de aplicativo (es contenido de memoria narrativa; no lo incluyas).
+2. Aplica el TEST DECISIVO de arriba: si el valor es el mismo para cualquier solicitante, va en la parte 1, no aquí.
+3. NO DUPLIQUES datos ya cubiertos como "campos_empresa" de la memoria (lista proporcionada tras los documentos). Si un dato aparece tanto en la memoria narrativa como en el formulario, NO lo repitas aquí.
+4. PROHIBIDO incrustar cifras de las bases en los "label" (ej. "Porcentaje de subvención solicitado (máximo 70%)"). Si hay un tope, ese tope es su propio parámetro en la parte 1 y el label queda limpio ("Porcentaje de subvención solicitado").
+5. REGLA ABSOLUTA — NO INVENCIÓN: solo datos que los documentos mencionen explícitamente como exigidos al solicitante.
+
+Esquema de cada elemento:
+{
+  "id": "empleados-a-contratar",
+  "label": "Número de empleados a contratar con esta ayuda",
+  "tipo_dato": "numero",
+  "ambito": "proyecto",
+  "obligatorio": true
+}
+
+- "tipo_dato": uno de "texto_corto", "numero", "booleano", "fecha", "url", "seleccion". Para "seleccion" añade "opciones": array de strings con la lista cerrada extraída de los documentos.
+- "ambito": "empresa" si el dato es reutilizable entre expedientes futuros del mismo cliente (ej. la URL de la web, el NIF), "proyecto" si es específico de esta solicitud concreta.
+- "obligatorio": true si las bases o el formulario lo exigen siempre, false si es opcional o condicional.
+- "id": slug kebab-case descriptivo del dato, solo ASCII (sin acentos ni eñes).
 
 --- FORMATO DE SALIDA ---
 
 Devuelve ÚNICAMENTE un objeto JSON válido, sin texto adicional, sin bloques de código markdown:
 
 {
-  "parametros_convocatoria": [ ...parámetros de la parte 1... ],
-  "tres_ofertas": {
-    "umbral": 15000,
-    "exencion_gasto_antes_resolucion": true,
-    "condiciones_exencion": "Texto literal de las condiciones de las bases, o cadena vacía"
-  }
+  "parametros_convocatoria": [ ... ],
+  "tres_ofertas": {"umbral": 15000, "exencion_gasto_antes_resolucion": true, "condiciones_exencion": "..."},
+  "datos_aplicativo": [ ... ]
 }
 
 - "umbral": importe en euros como número (nunca string). Si la convocatoria no exige tres ofertas en ningún caso: "umbral": null.
-- Si no identificas ningún parámetro, "parametros_convocatoria": []."""
+
+AUTORREVISIÓN antes de responder: recorre tu lista de "datos_aplicativo" una vez más y pregunta, por cada entrada, "¿el valor de esto ya está escrito en las bases?". Si la respuesta es sí, muévela a "parametros_convocatoria" con su valor. Este error se ha cometido dos veces; no lo repitas."""
+
+
+OUTPUT_4_CAMPOS_PROYECTO_CONSOLIDATOR = """Eres un consolidador de datos de proyecto para convocatorias de ayudas públicas.
+
+Recibirás un objeto JSON con dos listas:
+- "inputs_texto_libre": todos los inputs de texto libre de todos los apartados de la memoria, con la forma {"codigo_apartado", "id_input", "label", "ayuda"}.
+- "datos_aplicativo": los datos del formulario telemático, con la forma {"id", "label", "tipo_dato", "opciones"?}.
+
+Tu tarea: identificar los datos DE PROYECTO que se piden en MÁS DE UN sitio de la misma convocatoria — en dos o más apartados, o en un apartado y también en el formulario — aunque cada aparición use palabras o ids distintos. Cada dato repetido se convierte en UNA entrada del catálogo "campos_proyecto", y todas sus apariciones se remapean a ese id único, para que el consultor lo rellene una sola vez.
+
+REGLAS:
+- Solo datos pedidos en 2 o más sitios. Lo que aparece una sola vez NO va al catálogo (se queda como estaba).
+- Son datos específicos de este expediente (no reutilizables con otro cliente). Los datos generales de empresa ya se deduplican por otro mecanismo; no los toques aquí.
+- Si una de las apariciones es una "seleccion" con lista cerrada de opciones, recoge esa lista dentro de la "descripcion" del campo del catálogo (ej. "Uno de los doce sectores listados en las bases: ...").
+- "descripcion" debe indicar en qué sitios se usa el dato (ej. "Se usa en C.1, C.2 y en el formulario telemático").
+- No inventes datos ni agrupes conceptos genuinamente distintos solo porque se parezcan superficialmente.
+- Ids en kebab-case solo ASCII.
+
+Devuelve ÚNICAMENTE un objeto JSON válido, sin texto adicional, sin bloques de código markdown:
+
+{
+  "campos_proyecto": [
+    {"id": "sector-auge", "nombre": "Sector de actividad en auge de la convocatoria", "descripcion": "Uno de los doce sectores listados en las bases. Se usa en C.1, C.2 y en el formulario telemático.", "formato": "texto"}
+  ],
+  "remapeo_inputs": [
+    {"codigo_apartado": "C.1", "id_input": "sector-actividad", "id_final": "sector-auge"},
+    {"codigo_apartado": "C.2", "id_input": "sector-auge-justificacion", "id_final": "sector-auge"}
+  ],
+  "remapeo_datos_aplicativo": [
+    {"id": "sector-actividad-auge", "id_final": "sector-auge"}
+  ]
+}
+
+- "formato": "texto" para datos descriptivos, "numero" para una cifra única, "tabla_historica" para series de varios ejercicios.
+- "remapeo_inputs" y "remapeo_datos_aplicativo" solo contienen las apariciones de datos que SÍ se consolidan; el resto de inputs y datos no aparecen en la respuesta.
+
+Si no hay ningún dato de proyecto repetido: {"campos_proyecto": [], "remapeo_inputs": [], "remapeo_datos_aplicativo": []}"""
 
 
 SYSTEM_PROMPTS: dict[int, str] = {

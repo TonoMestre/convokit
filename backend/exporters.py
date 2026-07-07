@@ -6,21 +6,24 @@ devolverlos al frontend para su descarga.
 
 Esquemas:
 
-  Salida 4 — contrato de exportación v2.1 (docs/contrato-convokit.md).
+  Salida 4 — contrato de exportación v2.2 (docs/contrato-convokit.md).
   La raíz es un OBJETO, no un array:
     {
-      "version_esquema": "2.1",
+      "version_esquema": "2.2",
       "convocatoria": {"nombre", "anio", "organismo", "tipo_ayuda", "fecha_generacion"},
       "campos_empresa": [{"id", "nombre", "descripcion", "formato", ...}],
+      "campos_proyecto": [{"id", "nombre", "descripcion", "formato", ...}],
       "apartados": [{
         "codigo", "nombre", "puntos_max", "prompt",
         "requiere_calculo_rentabilidad", "usa_tabla_inversiones",
-        "inputs": [{"id", "label", "tipo", "nivel", "ayuda"?, "ref_campo_empresa"?}],
+        "inputs": [{"id", "label", "tipo", "nivel", "ayuda"?,
+                    "ref_campo_empresa"?, "ref_campo_proyecto"?}],
         "documentos_requeridos": [{"nombre", "fuente"}],
       }],
       "tres_ofertas": {"umbral", "exencion_gasto_antes_resolucion", "condiciones_exencion"},
       "parametros_convocatoria": [{"id", "label", "valor", "unidad"?, "nota"?}],
-      "datos_aplicativo": [{"id", "label", "tipo_dato", "ambito", "obligatorio", "opciones"?}],
+      "datos_aplicativo": [{"id", "label", "tipo_dato", "ambito", "obligatorio", "opciones"?}
+                           | {"ref_campo_proyecto", "obligatorio"}],
     }
 
   Salida 5 — lista de documentación:
@@ -41,7 +44,7 @@ _PLACEHOLDER_BLACKLIST = {
     "ver otro apartado", "ya las tienes", "ya las tienes.",
 }
 
-_INPUT_TIPOS = {"texto_libre", "dato_empresa", "inversion", "rentabilidad", "documento"}
+_INPUT_TIPOS = {"texto_libre", "dato_empresa", "dato_proyecto", "inversion", "rentabilidad", "documento"}
 _NIVELES = {"minimo", "completo"}
 _DOC_FUENTES = {"cliente", "perfil_estrategico", "generado"}
 _CAMPO_FORMATOS = {"texto", "tabla_historica", "numero"}
@@ -58,7 +61,7 @@ def _is_placeholder(text: str) -> bool:
 
 
 def _ascii_slug(value: str) -> str:
-    """Fuerza ids kebab-case solo ASCII (contrato v2.1, regla 11):
+    """Fuerza ids kebab-case solo ASCII (contrato v2.2, regla 11):
     'experiencia-minima-años' -> 'experiencia-minima-anios' (ñ->n via NFKD)."""
     if not value:
         return value
@@ -68,6 +71,21 @@ def _ascii_slug(value: str) -> str:
     ascii_text = normalized.encode("ascii", "ignore").decode("ascii")
     ascii_text = re.sub(r"[^a-zA-Z0-9]+", "-", ascii_text).strip("-").lower()
     return ascii_text or value
+
+
+# Contrato v2.2, checklist punto 6: prohibido incrustar cifras de las bases en un
+# label ("(máximo 70%)", "(hasta 15.000 euros)"). El tope va como su propio
+# parámetro en parametros_convocatoria; aquí se limpia el label de forma
+# conservadora: solo paréntesis que empiezan por una palabra de límite Y
+# contienen un dígito.
+_LABEL_LIMIT_RE = re.compile(
+    r"\s*\((?:m[aá]x(?:imo|\.)?|m[ií]n(?:imo|\.)?|hasta|tope|l[ií]mite)[^)]*\d[^)]*\)",
+    re.IGNORECASE,
+)
+
+
+def _strip_embedded_limits(label: str) -> str:
+    return _LABEL_LIMIT_RE.sub("", label or "").strip()
 
 
 def _parse(raw: str | None, default):
@@ -80,10 +98,10 @@ def _parse(raw: str | None, default):
         return default
 
 
-def _normalize_input(item: dict, campo_ids: set[str]) -> dict | None:
+def _normalize_input(item: dict, campo_ids: set[str], campo_proyecto_ids: set[str]) -> dict | None:
     if not isinstance(item, dict):
         return None
-    label = item.get("label") or ""
+    label = _strip_embedded_limits(item.get("label") or "")
     if not label or _is_placeholder(label):
         return None
     tipo = item.get("tipo") if item.get("tipo") in _INPUT_TIPOS else "texto_libre"
@@ -100,6 +118,14 @@ def _normalize_input(item: dict, campo_ids: set[str]) -> dict | None:
         ref = _ascii_slug(item.get("ref_campo_empresa") or "")
         if ref and ref in campo_ids:
             normalized["ref_campo_empresa"] = ref
+    elif tipo == "dato_proyecto":
+        ref = _ascii_slug(item.get("ref_campo_proyecto") or "")
+        if ref and ref in campo_proyecto_ids:
+            normalized["ref_campo_proyecto"] = ref
+        else:
+            # dato_proyecto sin ref valido incumple el contrato (MemorAI lo
+            # rechazaria); se degrada a texto_libre.
+            normalized["tipo"] = "texto_libre"
     return normalized
 
 
@@ -116,13 +142,18 @@ def _normalize_documento_requerido(doc) -> dict | None:
     return {"nombre": nombre, "fuente": fuente}
 
 
-def _normalize_apartado(item: dict, campo_ids: set[str]) -> dict | None:
+def _normalize_apartado(item: dict, campo_ids: set[str], campo_proyecto_ids: set[str]) -> dict | None:
     if not isinstance(item, dict):
         return None
     codigo = item.get("codigo") or ""
     if not codigo:
         return None
-    inputs = [n for n in (_normalize_input(x, campo_ids) for x in (item.get("inputs") or [])) if n]
+    inputs = [
+        n for n in (
+            _normalize_input(x, campo_ids, campo_proyecto_ids)
+            for x in (item.get("inputs") or [])
+        ) if n
+    ]
     docs = [n for n in (_normalize_documento_requerido(x) for x in (item.get("documentos_requeridos") or [])) if n]
     return {
         "codigo": codigo,
@@ -152,10 +183,19 @@ def _normalize_campo_empresa(item: dict) -> dict | None:
     return campo
 
 
-def _normalize_dato_aplicativo(item: dict) -> dict | None:
+def _normalize_dato_aplicativo(item: dict, campo_proyecto_ids: set[str]) -> dict | None:
     if not isinstance(item, dict):
         return None
-    label = item.get("label") or ""
+
+    # Entrada por referencia a campos_proyecto (dato pedido tambien en la memoria):
+    # no redefine label/tipo_dato, solo apunta al catalogo.
+    ref = _ascii_slug(item.get("ref_campo_proyecto") or "")
+    if ref:
+        if ref not in campo_proyecto_ids:
+            return None
+        return {"ref_campo_proyecto": ref, "obligatorio": bool(item.get("obligatorio", False))}
+
+    label = _strip_embedded_limits(item.get("label") or "")
     if not label or _is_placeholder(label):
         return None
     tipo_dato = item.get("tipo_dato") if item.get("tipo_dato") in _TIPOS_DATO else "texto_corto"
@@ -244,10 +284,11 @@ def _dedupe_codigos(apartados: list[dict]) -> None:
 
 def export_output_4(raw_json: str | None) -> dict:
     """
-    Normaliza y devuelve el objeto raíz de la salida 4 (contrato v2.1).
+    Normaliza y devuelve el objeto raíz de la salida 4 (contrato v2.2).
     Garantiza vocabularios cerrados, ids solo ASCII, apartados solo hoja,
-    descarta placeholders de la lista negra, elimina referencias huérfanas a
-    campos_empresa y deduplica datos_aplicativo contra el catálogo de empresa.
+    labels sin cifras de las bases incrustadas, descarta placeholders de la
+    lista negra, elimina referencias huérfanas a campos_empresa y
+    campos_proyecto, y deduplica datos_aplicativo contra ambos catálogos.
     """
     data = _parse(raw_json, {})
     if not isinstance(data, dict):
@@ -268,17 +309,30 @@ def export_output_4(raw_json: str | None) -> dict:
     ]
     campo_ids = {c["id"] for c in campos_empresa}
 
+    # campos_proyecto usa el mismo esquema que campos_empresa
+    campos_proyecto = [
+        n for n in (_normalize_campo_empresa(c) for c in (data.get("campos_proyecto") or [])) if n
+    ]
+    campo_proyecto_ids = {c["id"] for c in campos_proyecto}
+
     apartados = [
-        n for n in (_normalize_apartado(a, campo_ids) for a in (data.get("apartados") or [])) if n
+        n for n in (
+            _normalize_apartado(a, campo_ids, campo_proyecto_ids)
+            for a in (data.get("apartados") or [])
+        ) if n
     ]
     apartados = _drop_parent_apartados(apartados)
     _dedupe_codigos(apartados)
 
     # No duplicar entre datos_aplicativo y memoria: si el id ya existe en el
     # catálogo de campos_empresa, el dato ya está cubierto como dato_empresa.
+    # (Las entradas por referencia a campos_proyecto no llevan "id" propio.)
     datos_aplicativo = [
-        n for n in (_normalize_dato_aplicativo(d) for d in (data.get("datos_aplicativo") or []))
-        if n and n["id"] not in campo_ids
+        n for n in (
+            _normalize_dato_aplicativo(d, campo_proyecto_ids)
+            for d in (data.get("datos_aplicativo") or [])
+        )
+        if n and n.get("id") not in campo_ids
     ]
 
     parametros_convocatoria = [
@@ -286,9 +340,10 @@ def export_output_4(raw_json: str | None) -> dict:
     ]
 
     return {
-        "version_esquema": "2.1",
+        "version_esquema": "2.2",
         "convocatoria": convocatoria,
         "campos_empresa": campos_empresa,
+        "campos_proyecto": campos_proyecto,
         "apartados": apartados,
         "tres_ofertas": _normalize_tres_ofertas(data.get("tres_ofertas")),
         "parametros_convocatoria": parametros_convocatoria,

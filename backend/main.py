@@ -397,6 +397,27 @@ def _generate_output_6(
 # Generación de salida 4
 # ---------------------------------------------------------------------------
 
+def _drop_parent_sections(secciones: list[dict]) -> list[dict]:
+    """
+    Contract v2.1 rule 1bis: emit only leaf sections. If a block code is a
+    hierarchical prefix of another section's code (e.g. "I" when "I.A" exists),
+    the parent block is dropped — otherwise MemorAI would create duplicated
+    sections and the consultant would write the same block twice.
+    """
+    codigos = [str(s.get("codigo") or "") for s in secciones]
+
+    def is_parent(codigo: str) -> bool:
+        if not codigo:
+            return False
+        return any(
+            other != codigo and other.startswith(codigo)
+            and len(other) > len(codigo) and not other[len(codigo)].isalnum()
+            for other in codigos
+        )
+
+    return [s for s in secciones if not is_parent(str(s.get("codigo") or ""))]
+
+
 def _dedupe_apartado_codigos(apartados: list[dict]) -> None:
     """Desambigua códigos de apartado repetidos añadiendo un sufijo numérico, in place."""
     seen: dict[str, int] = {}
@@ -494,6 +515,43 @@ def _extract_datos_aplicativo(
         return []
 
 
+_TRES_OFERTAS_DEFAULT = {
+    "umbral": None,
+    "exencion_gasto_antes_resolucion": False,
+    "condiciones_exencion": "",
+}
+
+
+def _extract_parametros_y_tres_ofertas(
+    client: anthropic.Anthropic,
+    full_context: str,
+    _track: Callable | None = None,
+) -> tuple[list[dict], dict]:
+    """Extrae parametros_convocatoria (constantes con valor) y tres_ofertas (contrato v2.1)."""
+    try:
+        raw = _claude(
+            client,
+            system=p.OUTPUT_4_PARAMETROS_EXTRACTOR,
+            user=f"Documentos de la convocatoria:\n\n{full_context}",
+            max_tokens=4096,
+            model=pricing.MODELS["haiku"],
+            _track=_track,
+        )
+        data = _parse_json(raw)
+    except Exception:
+        return [], dict(_TRES_OFERTAS_DEFAULT)
+
+    if not isinstance(data, dict):
+        return [], dict(_TRES_OFERTAS_DEFAULT)
+
+    parametros = data.get("parametros_convocatoria")
+    tres_ofertas = data.get("tres_ofertas")
+    return (
+        parametros if isinstance(parametros, list) else [],
+        tres_ofertas if isinstance(tres_ofertas, dict) else dict(_TRES_OFERTAS_DEFAULT),
+    )
+
+
 def _generate_output_4(
     client: anthropic.Anthropic,
     conv_name: str,
@@ -505,17 +563,20 @@ def _generate_output_4(
 ) -> tuple[str, dict]:
     """
     Generación multi-llamada de la salida 4. Produce el objeto raíz del
-    contrato de exportación v2.0 (docs/contrato-convokit.md): version_esquema,
-    convocatoria, campos_empresa, apartados, datos_aplicativo.
+    contrato de exportación v2.1 (docs/contrato-convokit.md): version_esquema,
+    convocatoria, campos_empresa, apartados, tres_ofertas,
+    parametros_convocatoria, datos_aplicativo.
 
     Flujo:
-    1. Extraer metadatos de la convocatoria y lista de secciones.
+    1. Extraer metadatos de la convocatoria y lista de secciones
+       (solo hojas: los bloques padre con subapartados se descartan).
     2. Generar cada sección con contexto reducido: markdown + JSON tipado
        (inputs con tipo/nivel, flags de rentabilidad/inversión).
        Pausa entre secciones para reducir carga en la API.
     3. Desambiguar códigos de apartado repetidos.
     4. Consolidar el catálogo de campos_empresa (dedup semántico entre apartados).
     5. Extraer los datos_aplicativo del contexto completo (bases/formulario).
+    6. Extraer parametros_convocatoria (con valor) y tres_ofertas.
     """
     model = model or pricing.MODEL_PER_OUTPUT[4]
     full_context = extractors.build_context(documents_json)
@@ -545,6 +606,9 @@ def _generate_output_4(
             status_code=422,
             detail="No se encontraron apartados en la plantilla de memoria.",
         )
+
+    # Regla 1bis (red de seguridad determinista): solo apartados hoja
+    secciones = _drop_parent_sections(secciones)
 
     # Paso 2: generar markdown + JSON tipado por sección con contexto reducido
     header = (
@@ -622,8 +686,13 @@ def _generate_output_4(
     # Paso 5: extraer datos_aplicativo del contexto completo
     datos_aplicativo = _extract_datos_aplicativo(client, full_context, campos_empresa, _track=_track)
 
+    # Paso 6: parametros_convocatoria (con valor) + tres_ofertas
+    parametros_convocatoria, tres_ofertas = _extract_parametros_y_tres_ofertas(
+        client, full_context, _track=_track
+    )
+
     root = {
-        "version_esquema": "2.0",
+        "version_esquema": "2.1",
         "convocatoria": {
             "nombre": conv_meta.get("nombre") or conv_name,
             "anio": conv_meta.get("anio"),
@@ -633,6 +702,8 @@ def _generate_output_4(
         },
         "campos_empresa": campos_empresa,
         "apartados": apartados,
+        "tres_ofertas": tres_ofertas,
+        "parametros_convocatoria": parametros_convocatoria,
         "datos_aplicativo": datos_aplicativo,
     }
 

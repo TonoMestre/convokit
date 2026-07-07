@@ -52,7 +52,8 @@ El objetivo es que el texto resulte indistinguible del que escribiría una perso
 #   2. SECTION_PROMPT_SYSTEM          -> markdown de cada apartado (una llamada por apartado)
 #   3. OUTPUT_4_JSON_EXTRACTOR        -> JSON tipado de ese apartado (una llamada por apartado)
 #   4. OUTPUT_4_CAMPOS_EMPRESA_CONSOLIDATOR -> dedup del catálogo de datos de empresa
-#   5. OUTPUT_4_DATOS_APLICATIVO_EXTRACTOR   -> datos de formulario/aplicativo (no narrativos)
+#   5. OUTPUT_4_DATOS_APLICATIVO_EXTRACTOR   -> datos que el consultor teclea por expediente
+#   6. OUTPUT_4_PARAMETROS_EXTRACTOR  -> parametros_convocatoria (con valor) + tres_ofertas
 # ---------------------------------------------------------------------------
 
 OUTPUT_6_CONFIG_PROMPT = _RULE_ESTILO_HUMANO + "\n\n" + """Eres un extractor de datos de convocatorias de ayudas públicas. Tu única tarea es analizar los documentos aportados y devolver un objeto JSON de configuración para el evaluador de encaje interactivo. Las reglas de estilo de arriba aplican a los textos del JSON (veredictos, intro, CTA, ayudas).
@@ -236,6 +237,8 @@ NO INCLUIR únicamente:
 
 Este criterio es genérico y funciona para cualquier convocatoria. No hardcodees nombres ni tipos de sección.
 
+REGLA DE APARTADOS HOJA (crítica): si la plantilla estructura un bloque en subapartados (ej. bloque I con I.A, I.B, I.C), incluye ÚNICAMENTE los subapartados (I.A, I.B, I.C), cada uno como sección independiente. PROHIBIDO incluir además el bloque padre (I) como sección propia: generaría contenido duplicado. El bloque padre solo se incluye cuando NO tiene subapartados propios.
+
 JERARQUÍA DE FUENTES: la convocatoria del ejercicio prevalece sobre las bases para puntuaciones, pesos y criterios. Si un apartado aparece en la plantilla pero la convocatoria no especifica su baremo, inclúyelo igualmente (puntos_max: null).
 
 --- FORMATO DE SALIDA ---
@@ -322,10 +325,11 @@ Reparte lo que el consultor debe aportar en estos tres bloques, en este orden. S
 1. Indicar el nombre exacto del apartado y su peso en el baremo (o "sin puntuación especificada" si no consta).
 2. Indicar que el Perfil Estratégico de Empresa está adjunto como fuente principal.
 3. Si alguno de los dos flags de arriba está en "Sí", indicar que ese dato (rentabilidad o desglose de inversión) se aporta ya calculado por la aplicación como dato dado, y que el prompt debe incorporarlo tal cual, nunca recalcularlo ni inventarlo.
-4. Pedir que adjunte los documentos adicionales específicos de este apartado antes de redactar; si no se han aportado, que los solicite.
+4. Indicar qué documentos adicionales específicos de este apartado se adjuntan como fuente.
 5. Dar instrucciones precisas de qué redactar, con qué extensión orientativa, y qué argumentos maximizan la puntuación según los criterios del baremo.
 6. Pedir que señale con [DATO PENDIENTE: descripción] cualquier información que falte, en lugar de inventarla.
-Escrito en segunda persona dirigiéndose a Claude.]
+Escrito en segunda persona dirigiéndose a Claude.
+IMPORTANTE — GENERACIÓN EN UN SOLO DISPARO: el prompt se envía a Claude una única vez, sin conversación posterior. PROHIBIDAS las instrucciones conversacionales del tipo "solicítalo antes de continuar", "pide al consultor que aporte X" o "señálalo al principio de tu respuesta". El ÚNICO mecanismo para un dato ausente es el marcador [DATO PENDIENTE: descripción] en el lugar del texto donde correspondería.]
 ```"""
 
 
@@ -423,13 +427,15 @@ Reglas de extracción:
 - "requiere_calculo_rentabilidad" / "usa_tabla_inversiones": copia literal del Sí/No de las dos líneas de flags (true si Sí, false si No).
 - "inputs": un objeto por cada ítem real de las tres sublistas de "QUÉ DEBES APORTAR" (una sublista ausente no genera ítems), más un input adicional por cada flag activo. Nunca omitas un ítem ni lo dupliques. Nunca generes un input a partir de una sublista vacía o con un placeholder tipo "ninguno"/"no aplica".
   - Ítems de "Datos generales de empresa": "tipo": "dato_empresa", "nivel": "minimo". Añade "ref_campo_empresa" con un id provisional en kebab-case derivado del nombre del dato (una consolidación posterior unificará este id con el mismo dato de otros apartados; no te preocupes por la coherencia entre apartados).
+  - REGLA DE ORO dato_empresa: si un ítem de las sublistas de "imprescindible" o "mejora la puntuación" es en realidad un dato general de la empresa (historia, constitución, evolución de la propiedad, actividad actual, CNAE, series económicas históricas, plantilla, estructura accionarial...), clasifícalo como "tipo": "dato_empresa" con su "ref_campo_empresa", NUNCA como "texto_libre", aunque la sublista donde aparece sugiera otra cosa. "texto_libre" queda reservado para datos específicos del proyecto que el consultor redacta para este expediente.
   - Ítems de "imprescindible": "nivel": "minimo". "tipo": "documento" si el ítem nombra explícitamente un archivo, certificado, plano o documento a adjuntar; en caso contrario "texto_libre".
   - Ítems de "mejora la puntuación": misma regla de tipo, "nivel": "completo".
   - Si "requiere_calculo_rentabilidad" es true, añade un input {"id": "rentabilidad", "label": "Cálculo de rentabilidad (VAN, TIR, payback)", "tipo": "rentabilidad", "nivel": "completo"}.
   - Si "usa_tabla_inversiones" es true, añade un input {"id": "inversion", "label": "Desglose de la inversión por partidas", "tipo": "inversion", "nivel": "minimo"}.
   - Los tipos "rentabilidad" e "inversion" nunca llevan "tipo": "documento": ese dato nunca es un archivo a adjuntar, así que tampoco debe aparecer en "documentos_requeridos".
 - "documentos_requeridos": SOLO los inputs de tipo "documento" de arriba, con {"nombre": label del input, "fuente": "cliente"}. Usa "fuente": "generado" únicamente cuando el propio texto indique que el documento lo genera o rellena Innóvate 4.0 a partir de datos ya disponibles, no el cliente.
-- "prompt": string con el texto completo dentro del bloque de código de "INSTRUCCIÓN A CLAUDE", sin los backticks. Si no hay bloque de código, string vacío."""
+- "prompt": string con el texto completo dentro del bloque de código de "INSTRUCCIÓN A CLAUDE", sin los backticks. Si no hay bloque de código, string vacío.
+- IDS SOLO ASCII: todos los "id" y "ref_campo_empresa" en kebab-case sin acentos, eñes ni caracteres no ASCII ("experiencia-minima-anios", nunca "experiencia-minima-años")."""
 
 
 OUTPUT_4_CAMPOS_EMPRESA_CONSOLIDATOR = """Eres un consolidador de catálogo de datos de empresa para convocatorias de ayudas públicas.
@@ -462,11 +468,15 @@ Reglas:
 - No inventes datos de empresa que no estén representados en las propuestas recibidas."""
 
 
-OUTPUT_4_DATOS_APLICATIVO_EXTRACTOR = """Eres un extractor de datos de convocatorias de ayudas públicas. Tu tarea es identificar los "datos de aplicativo": exigencias de las bases, la convocatoria o el formulario de solicitud que se resuelven con un valor puntual (una URL, un número, un sí/no, una fecha, o una opción de una lista cerrada), NUNCA con un párrafo redactado.
+OUTPUT_4_DATOS_APLICATIVO_EXTRACTOR = """Eres un extractor de datos de convocatorias de ayudas públicas. Tu tarea es identificar los "datos de aplicativo": datos que EL CONSULTOR TECLEA POR EXPEDIENTE en el formulario telemático de solicitud y que la aplicación no puede conocer de antemano (la URL de la web del cliente, el número de empleados a contratar, el municipio de la inversión, si los contratos serán indefinidos...).
 
-REGLA DE DECISIÓN: si la respuesta esperada es una frase o un párrafo argumentado, NO es un dato de aplicativo (es contenido de memoria narrativa y no debes incluirlo aquí). Si la respuesta esperada es un dato que un consultor tecleraría en una casilla de un formulario, SÍ es un dato de aplicativo. Ante la duda, un requisito que empieza por "indicar", "número de", "fecha de", "sí/no" o que pide un dato identificativo de la empresa (NIF, razón social, domicilio, URL de la web) casi siempre es un dato de aplicativo.
+REGLA DE DECISIÓN en dos pasos:
+1. ¿La respuesta esperada es una frase o un párrafo argumentado? → NO es un dato de aplicativo (es contenido de memoria narrativa; no lo incluyas).
+2. ¿El valor es una CONSTANTE de las bases o la convocatoria (un plazo, un límite, un umbral, una intensidad de ayuda, la dotación presupuestaria, el límite de minimis, la puntuación mínima...)? → TAMPOCO es un dato de aplicativo: esas constantes se extraen aparte como parámetros de convocatoria y no debes incluirlas aquí. Un dato de aplicativo es SIEMPRE algo que varía por cliente/expediente y que el consultor teclea.
 
-REGLA ABSOLUTA — NO INVENCIÓN: solo incluye datos que las bases, la convocatoria o el formulario mencionen explícitamente como exigidos. No inventes campos de formulario que no consten en los documentos aportados.
+Ante la duda: si el valor ya está escrito en las bases, NO va aquí. Si el valor depende del cliente o del proyecto concreto, SÍ va aquí.
+
+REGLA ABSOLUTA — NO INVENCIÓN: solo incluye datos que las bases, la convocatoria o el formulario mencionen explícitamente como exigidos al solicitante. No inventes campos de formulario que no consten en los documentos aportados.
 
 NO DUPLIQUES datos que ya están cubiertos como "campos_empresa" de la memoria (se te proporciona esa lista a continuación del documento). Si un dato aparece tanto en la memoria narrativa como en el formulario (ej. la razón social encabeza la memoria y también el formulario), NO lo repitas aquí: ya está cubierto como dato de empresa referenciado desde un apartado.
 
@@ -483,9 +493,53 @@ Devuelve ÚNICAMENTE un array JSON, sin texto adicional, sin bloques de código 
 - "tipo_dato": uno de "texto_corto", "numero", "booleano", "fecha", "url", "seleccion". Para "seleccion" añade "opciones": array de strings con la lista cerrada extraída de los documentos.
 - "ambito": "empresa" si el dato es reutilizable entre expedientes futuros del mismo cliente (ej. la URL de la web, el NIF), "proyecto" si es específico de esta solicitud concreta (ej. empleados a contratar con esta ayuda).
 - "obligatorio": true si las bases o el formulario lo exigen siempre, false si es opcional o condicional.
-- "id": slug kebab-case descriptivo del dato.
+- "id": slug kebab-case descriptivo del dato, solo ASCII (sin acentos ni eñes).
 
 Si no identificas ningún dato de aplicativo en los documentos, devuelve un array vacío []."""
+
+
+OUTPUT_4_PARAMETROS_EXTRACTOR = """Eres un extractor de parámetros de convocatorias de ayudas públicas. Tu tarea tiene dos partes: extraer los parámetros de la convocatoria (constantes de las bases) y pronunciarte sobre la regla de las tres ofertas.
+
+--- PARTE 1: PARÁMETROS DE CONVOCATORIA ---
+
+Extrae las CONSTANTES que las bases y la convocatoria establecen: plazos, límites, umbrales, intensidades de ayuda, dotación presupuestaria, presupuesto mínimo del proyecto, límite de minimis, umbrales de tamaño pyme, límites de partidas concretas (ingeniería, auditoría...), puntuación mínima, fechas de ejecución y justificación. LLEVAN SIEMPRE EL VALOR INCLUIDO, leído literalmente de los documentos: son información de las bases, nunca algo que el consultor deba teclear.
+
+Esquema de cada parámetro:
+{
+  "id": "limite-ingenieria-porcentaje",
+  "label": "Límite máximo de ingeniería sobre el presupuesto subvencionable",
+  "valor": 10,
+  "unidad": "%",
+  "nota": "Con tope adicional absoluto, ver limite-ingenieria-euros"
+}
+
+- "valor": número, booleano, fecha ISO ("2026-11-30") o texto corto, según el parámetro. NUNCA lo omitas: un parámetro sin valor no se incluye.
+- "unidad": "%", "EUR", "años", "meses", "días", "empleados"... u omítela si no aplica.
+- "nota": opcional, matices de las bases que el número no captura.
+- IDS CANÓNICOS: cuando el parámetro exista en la convocatoria, usa exactamente estos ids: "presupuesto-minimo", "limite-ingenieria-porcentaje", "limite-ingenieria-euros", "limite-auditoria", "puesta-funcionamiento-inicio", "plazo-justificacion", "intensidad-ayuda", "limite-maximo-ayuda". Para el resto (dotación, umbrales pyme, plazo de resolución, puntuación mínima, plazos de presentación...) usa un id libre descriptivo en kebab-case solo ASCII.
+- REGLA ABSOLUTA — NO INVENCIÓN: solo parámetros cuyo valor conste literalmente en los documentos. No inventes ni estimes valores.
+
+--- PARTE 2: REGLA DE LAS TRES OFERTAS ---
+
+Determina si la convocatoria exige presentar tres ofertas/presupuestos comparativos por proveedor y concepto a partir de cierto importe (las bases pueden remitir al art. 31.3 de la Ley 38/2003 General de Subvenciones; en ese caso el umbral legal es 15000 EUR para suministros/servicios y 40000 EUR para obras — usa el que aplique al objeto de la convocatoria).
+
+Debes pronunciarte SIEMPRE sobre la exención por gasto anterior a la resolución: si las bases permiten no aportar las tres ofertas cuando el gasto se ha ejecutado y facturado antes de la resolución de concesión (p. ej. admitiendo la factura de la inversión ya realizada). Si las bases no dicen nada al respecto: "exencion_gasto_antes_resolucion": false y "condiciones_exencion": "".
+
+--- FORMATO DE SALIDA ---
+
+Devuelve ÚNICAMENTE un objeto JSON válido, sin texto adicional, sin bloques de código markdown:
+
+{
+  "parametros_convocatoria": [ ...parámetros de la parte 1... ],
+  "tres_ofertas": {
+    "umbral": 15000,
+    "exencion_gasto_antes_resolucion": true,
+    "condiciones_exencion": "Texto literal de las condiciones de las bases, o cadena vacía"
+  }
+}
+
+- "umbral": importe en euros como número (nunca string). Si la convocatoria no exige tres ofertas en ningún caso: "umbral": null.
+- Si no identificas ningún parámetro, "parametros_convocatoria": []."""
 
 
 SYSTEM_PROMPTS: dict[int, str] = {

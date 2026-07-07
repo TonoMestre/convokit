@@ -1,6 +1,12 @@
 # Contrato de salida ConvoKit → MemorAI (Salida 4)
 
-Versión propuesta: `2.0` · Julio 2026
+Versión propuesta: `2.1` · Julio 2026
+
+> Cambios 2.0 → 2.1, tras revisar el primer JSON real (INPYME 2026):
+> solo apartados hoja (sin bloque padre duplicado), nuevo bloque
+> `parametros_convocatoria` con valor incluido, bloque `tres_ofertas`
+> estructurado, `datos_aplicativo` restringido a lo que rellena el
+> consultor, ids solo ASCII y prompts sin instrucciones conversacionales.
 
 Este documento define el formato que ConvoKit debe producir para que MemorAI
 pueda importar una convocatoria sin post-procesado con IA ni revisión manual.
@@ -68,6 +74,8 @@ La raíz es un **objeto**, no un array:
   },
   "campos_empresa": [ ... ],
   "apartados": [ ... ],
+  "tres_ofertas": { ... },
+  "parametros_convocatoria": [ ... ],
   "datos_aplicativo": [ ... ]
 }
 ```
@@ -142,6 +150,14 @@ el nombre.
 1. **`codigo` único** en todo el array. Es el identificador de emparejamiento
    entre sección y apartado en MemorAI. Si la convocatoria oficial repite
    numeración, desambiguar con sufijo (`B.2-tecnica`, `B.2-economica`).
+1bis. **Solo apartados hoja, nunca bloque padre + hijos a la vez.** Si la
+   memoria oficial estructura un bloque en subapartados (I → I.A, I.B, I.C),
+   ConvoKit emite **solo los subapartados** (I.A, I.B, I.C), cada uno con su
+   prompt. Prohibido emitir además un apartado `I` con un prompt que redacte
+   el bloque completo: MemorAI crearía secciones duplicadas y el consultor
+   redactaría todo dos veces. El bloque padre solo se emite cuando no tiene
+   subapartados propios. Si MemorAI necesita el título del bloque para el
+   Word, lo deduce del prefijo del código.
 2. **`prompt` no vacío** y autocontenido: no debe referirse a "el apartado
    anterior" ni depender de contexto que MemorAI no envía.
 3. **Cada input va tipado** con `tipo`:
@@ -172,6 +188,13 @@ el nombre.
    `[IMAGEN: nombre-descriptivo]`.
 10. **Formato del archivo**: UTF-8, JSON puro sin envolver en ```` ```json ````,
     `puntos_max` numérico o `null` (nunca "15 puntos" como string).
+11. **Ids solo ASCII**: kebab-case sin acentos ni eñes
+    (`experiencia-minima-anios`, no `experiencia-minima-años`).
+12. **Prompts para generación en un solo disparo**: MemorAI envía el prompt a
+    Claude una única vez, sin conversación. Prohibidas instrucciones del tipo
+    "solicítalo antes de continuar" o "pide al consultor que aporte X". La
+    única vía para dato ausente es el marcador `[DATO PENDIENTE: descripción]`
+    en el lugar del texto donde correspondería.
 
 ## Distinción memoria vs. formulario/aplicativo (crítico)
 
@@ -196,7 +219,76 @@ nunca un apartado. Ante la duda, un input que empieza por "indicar", "número
 de", "fecha de", "sí/no" o pide un dato ya identificativo de la empresa casi
 siempre es un dato de aplicativo, no redacción.
 
+## Regla de las tres ofertas (`tres_ofertas`)
+
+Objeto obligatorio a nivel raíz. ConvoKit lo extrae de las bases (o de la Ley
+38/2003 art. 31.3 si las bases remiten a ella). MemorAI lo usa para avisar al
+consultor, partida a partida, cuando un gasto exige presentar tres
+presupuestos comparativos.
+
+```json
+{
+  "tres_ofertas": {
+    "umbral": 15000,
+    "exencion_gasto_antes_resolucion": true,
+    "condiciones_exencion": "Las bases eximen de las tres ofertas cuando el gasto se ha ejecutado y facturado antes de la resolución de concesión; en ese caso se aporta la factura de la inversión realizada."
+  }
+}
+```
+
+- `umbral`: importe en euros (por proveedor y concepto) a partir del cual se
+  exigen tres ofertas. Numérico, nunca string.
+- `exencion_gasto_antes_resolucion`: booleano. `true` si la convocatoria
+  permite no aportar las tres ofertas cuando el gasto se realiza antes de la
+  resolución de la ayuda (p. ej. admitiendo la factura de la inversión ya
+  ejecutada). **ConvoKit debe pronunciarse siempre**: si las bases no dicen
+  nada, `false`.
+- `condiciones_exencion`: texto con las condiciones exactas de las bases
+  (cuándo aplica, qué documento sustituye a las ofertas). Cadena vacía si
+  `exencion_gasto_antes_resolucion` es `false`.
+- Si la convocatoria no exige tres ofertas en ningún caso: `umbral: null`.
+
+## Parámetros de convocatoria (`parametros_convocatoria[]`)
+
+Constantes que ConvoKit lee de las bases: plazos, límites, umbrales,
+intensidades de ayuda. **Llevan siempre el valor incluido** — es información
+de las bases, no algo que el consultor deba teclear. MemorAI los importa como
+datos internos: los que corresponden a límites cuantitativos generan avisos
+automáticos (nunca bloqueos) sobre el expediente o la partida afectada; el
+resto se muestra como ficha informativa de solo lectura de la convocatoria.
+
+```json
+{
+  "id": "limite-ingenieria-porcentaje",
+  "label": "Límite máximo de ingeniería sobre el presupuesto subvencionable",
+  "valor": 10,
+  "unidad": "%",
+  "nota": "Con tope adicional absoluto, ver limite-ingenieria-euros"
+}
+```
+
+- `valor`: número, booleano, fecha ISO (`"2026-11-30"`) o texto corto, según
+  el parámetro. **Nunca se omite**: un parámetro sin valor no aporta nada.
+- `unidad`: `"%" | "EUR" | "años" | "meses" | "días" | "empleados"`... u
+  omitida si no aplica.
+- `nota`: opcional, matices de las bases que el número no captura.
+- Parámetros que MemorAI usa como límite con aviso automático (usar estos
+  ids exactos cuando existan en la convocatoria): `presupuesto-minimo`,
+  `limite-ingenieria-porcentaje`, `limite-ingenieria-euros`,
+  `limite-auditoria`, `puesta-funcionamiento-inicio`, `plazo-justificacion`,
+  `intensidad-ayuda`, `limite-maximo-ayuda`. El resto (dotación, umbrales
+  pyme, plazo de resolución, puntuación mínima, plazos de presentación...)
+  se admite con id libre y queda como ficha informativa.
+- Lo que antes iba en `datos_aplicativo` siendo en realidad un parámetro de
+  las bases (límite de minimis, dotación presupuestaria, umbrales pyme...)
+  va aquí, con su valor.
+
 ### Datos de aplicativo (`datos_aplicativo[]`)
+
+Solo datos que **el consultor teclea por expediente** en el formulario
+telemático y que ConvoKit no puede conocer (URL de la web del cliente,
+empleados a contratar, municipio de la inversión...). Nunca constantes de
+las bases: esas van en `parametros_convocatoria` con su valor.
 
 ```json
 {
@@ -242,10 +334,12 @@ siempre es un dato de aplicativo, no redacción.
 
 ## Validación
 
-MemorAI rechazará en la subida (HTTP 400 con detalle) los JSON `2.0` que
+MemorAI rechazará en la subida (HTTP 400 con detalle) los JSON `2.x` que
 incumplan: raíz no-objeto, `version_esquema` ausente, códigos repetidos,
-`ref_campo_empresa` huérfano, tipos de input fuera del vocabulario,
-`tipo_dato`/`ambito` de `datos_aplicativo` fuera del vocabulario, `opciones`
-ausente en un dato `seleccion`, o placeholders de la lista negra. El formato
-`1.x` (array plano) seguirá aceptándose con el pipeline actual de
-deduplicación y clasificación durante la transición.
+apartado padre emitido junto a sus subapartados, `ref_campo_empresa`
+huérfano, tipos de input fuera del vocabulario, `tres_ofertas` ausente o con
+`umbral` no numérico (salvo `null`), parámetros de `parametros_convocatoria`
+sin `valor`, `tipo_dato`/`ambito` de `datos_aplicativo` fuera del
+vocabulario, `opciones` ausente en un dato `seleccion`, o placeholders de la
+lista negra. El formato `1.x` (array plano) seguirá aceptándose con el
+pipeline actual de deduplicación y clasificación durante la transición.

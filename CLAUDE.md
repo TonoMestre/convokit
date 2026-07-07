@@ -150,9 +150,10 @@ Claves de `entregables_json`:
   entre la salida 6 standalone y el evaluador embebido en la salida 3 para no generarlo
   (ni redactar sus preguntas) dos veces
 - `"4"` — markdown set de prompts
-- `"4_json"` — objeto JSON, contrato de exportación v2.0 (ver docs/contrato-convokit.md
+- `"4_json"` — objeto JSON, contrato de exportación v2.1 (ver docs/contrato-convokit.md
   y la sección "Salida 4" más abajo). No es un array: la raíz es
-  `{version_esquema, convocatoria, campos_empresa, apartados, datos_aplicativo}`.
+  `{version_esquema, convocatoria, campos_empresa, apartados, tres_ofertas,
+  parametros_convocatoria, datos_aplicativo}`.
 - `"4_instruccion"` — instrucción libre del usuario
 - `"5"` — markdown lista de documentación + correo
 - `"5_json"` — JSON array de documentos (ver esquema en PRD sección 12)
@@ -355,15 +356,15 @@ que nunca debe tocar `html`/`body` porque también se usa como fragmento embebid
 standalone es un documento propio y necesita ese reset para no dejar un marco en blanco
 alrededor del fondo crema del widget.
 
-## Salida 4 — Set de prompts (arquitectura multi-llamada, contrato v2.0)
+## Salida 4 — Set de prompts (arquitectura multi-llamada, contrato v2.1)
 
 El JSON de exportación de la salida 4 (`4_json`) sigue el contrato `docs/contrato-convokit.md`
-(versión `2.0`), pensado para que la App de Memorias lo importe sin post-proceso de IA ni
+(versión `2.1`), pensado para que la App de Memorias lo importe sin post-proceso de IA ni
 revisión manual. La raíz es un OBJETO, no un array:
 
 ```json
 {
-  "version_esquema": "2.0",
+  "version_esquema": "2.1",
   "convocatoria": {"nombre", "anio", "organismo", "tipo_ayuda", "fecha_generacion"},
   "campos_empresa": [{"id", "nombre", "descripcion", "formato"}],
   "apartados": [{
@@ -372,14 +373,40 @@ revisión manual. La raíz es un OBJETO, no un array:
     "inputs": [{"id", "label", "tipo", "nivel", "ayuda"?, "ref_campo_empresa"?}],
     "documentos_requeridos": [{"nombre", "fuente"}]
   }],
+  "tres_ofertas": {"umbral", "exencion_gasto_antes_resolucion", "condiciones_exencion"},
+  "parametros_convocatoria": [{"id", "label", "valor", "unidad"?, "nota"?}],
   "datos_aplicativo": [{"id", "label", "tipo_dato", "ambito", "obligatorio", "opciones"?}]
 }
 ```
 
+Reglas clave del v2.1 (además de las del v2.0):
+- **Solo apartados hoja** (regla 1bis): si la memoria estructura un bloque en
+  subapartados (I → I.A, I.B), se emiten SOLO los subapartados, nunca el bloque padre
+  además. Red de seguridad determinista en `_drop_parent_sections` (main.py, sobre las
+  secciones detectadas) y `_drop_parent_apartados` (exporters.py).
+- **`tres_ofertas` obligatorio** a nivel raíz: umbral en euros (numérico o `null`) a
+  partir del cual se exigen tres presupuestos comparativos, y pronunciamiento SIEMPRE
+  sobre la exención por gasto ejecutado antes de la resolución (si las bases callan:
+  `false` + cadena vacía).
+- **`parametros_convocatoria`**: constantes de las bases (plazos, límites, umbrales,
+  intensidades, minimis, dotación...) SIEMPRE con el valor incluido. Lo que antes caía
+  en `datos_aplicativo` siendo constante de las bases va aquí.
+- **`datos_aplicativo` restringido**: solo datos que el consultor teclea por expediente
+  (URL de la web, empleados a contratar, municipio...). Nunca constantes de las bases.
+- **Ids solo ASCII** (kebab-case sin acentos ni eñes; `años` → `anios`). Red de
+  seguridad `_ascii_slug` en exporters.py.
+- **Prompts en un solo disparo**: sin instrucciones conversacionales ("solicítalo antes
+  de continuar"); único mecanismo para dato ausente: `[DATO PENDIENTE: descripción]`.
+- **Regla de oro `dato_empresa`**: un input que es dato general de empresa (historia,
+  CNAE, series económicas...) va tipado `dato_empresa` con `ref_campo_empresa`, aunque
+  aparezca en la sublista de "imprescindible" del markdown; nunca como `texto_libre`
+  duplicando el catálogo.
+
 `apartados` contiene SOLO contenido narrativo real de la memoria (lo que el consultor
 redacta). Cualquier exigencia de las bases o del formulario telemático que se resuelva con
-un valor puntual (URL, número, sí/no, fecha, selección) va en `datos_aplicativo`, nunca
-como apartado: `datos_aplicativo` no genera prompt ni se envía a Claude para redactar.
+un valor puntual (URL, número, sí/no, fecha, selección) va en `datos_aplicativo` (si la
+teclea el consultor) o en `parametros_convocatoria` (si es constante de las bases), nunca
+como apartado: ninguno de los dos genera prompt ni se envía a Claude para redactar.
 
 Vocabularios cerrados: `inputs[].tipo` ∈ `texto_libre | dato_empresa | inversion |
 rentabilidad | documento`; `inputs[].nivel` ∈ `minimo | completo`; `documentos_requeridos[].fuente`
@@ -415,11 +442,17 @@ Todo el pipeline vive en `_generate_output_4` (`backend/main.py`):
    generado en llamadas aisladas.
 6. **Extracción de `datos_aplicativo`** (`OUTPUT_4_DATOS_APLICATIVO_EXTRACTOR`): una
    llamada a Haiku sobre el contexto completo (no solo la plantilla de memoria) identifica
-   los datos de formulario/aplicativo, evitando duplicar lo que ya está en `campos_empresa`.
+   los datos que el consultor teclea por expediente, evitando duplicar lo que ya está en
+   `campos_empresa` y excluyendo las constantes de las bases (van al paso 7).
+7. **Extracción de `parametros_convocatoria` + `tres_ofertas`**
+   (`OUTPUT_4_PARAMETROS_EXTRACTOR`): una llamada a Haiku sobre el contexto completo
+   extrae las constantes de las bases con su valor y el bloque `tres_ofertas`.
 
 `exporters.export_output_4` normaliza el objeto final antes de servirlo: fuerza los
-vocabularios cerrados, descarta placeholders de la lista negra ("no aplica", "ya
-incluido", "ver otro apartado"...) y elimina `ref_campo_empresa` huérfanos.
+vocabularios cerrados, ids solo ASCII, apartados solo hoja, descarta placeholders de la
+lista negra ("no aplica", "ya incluido", "ver otro apartado"...), elimina
+`ref_campo_empresa` huérfanos, deduplica `datos_aplicativo` contra `campos_empresa` y
+garantiza `tres_ofertas` bien tipado (umbral numérico o null).
 
 ## Las dos apps (importante)
 
@@ -427,8 +460,9 @@ ConvoKit es la primera de dos aplicaciones. La segunda (App de Memorias) redacta
 técnicas y cuentas justificativas a partir de los datos reales de cada empresa.
 
 Las salidas 4 y 5 exportan JSON estructurado precisamente para alimentar la App de Memorias:
-- Salida 4 produce el perfil de convocatoria (contrato `docs/contrato-convokit.md` v2.0:
-  convocatoria, campos_empresa, apartados, datos_aplicativo).
+- Salida 4 produce el perfil de convocatoria (contrato `docs/contrato-convokit.md` v2.1:
+  convocatoria, campos_empresa, apartados, tres_ofertas, parametros_convocatoria,
+  datos_aplicativo).
 - Salida 5 produce el árbol de documentos (esquema en PRD sección 12).
 
 El esquema de ambos JSON no debe modificarse sin coordinarlo con el modelo de datos de la

@@ -6,10 +6,10 @@ devolverlos al frontend para su descarga.
 
 Esquemas:
 
-  Salida 4 — contrato de exportación v2.0 (docs/contrato-convokit.md).
+  Salida 4 — contrato de exportación v2.1 (docs/contrato-convokit.md).
   La raíz es un OBJETO, no un array:
     {
-      "version_esquema": "2.0",
+      "version_esquema": "2.1",
       "convocatoria": {"nombre", "anio", "organismo", "tipo_ayuda", "fecha_generacion"},
       "campos_empresa": [{"id", "nombre", "descripcion", "formato", ...}],
       "apartados": [{
@@ -18,6 +18,8 @@ Esquemas:
         "inputs": [{"id", "label", "tipo", "nivel", "ayuda"?, "ref_campo_empresa"?}],
         "documentos_requeridos": [{"nombre", "fuente"}],
       }],
+      "tres_ofertas": {"umbral", "exencion_gasto_antes_resolucion", "condiciones_exencion"},
+      "parametros_convocatoria": [{"id", "label", "valor", "unidad"?, "nota"?}],
       "datos_aplicativo": [{"id", "label", "tipo_dato", "ambito", "obligatorio", "opciones"?}],
     }
 
@@ -28,6 +30,8 @@ Esquemas:
 from __future__ import annotations
 
 import json
+import re
+import unicodedata
 
 # Lista negra de placeholders prohibidos por el contrato (nunca se exportan como
 # ítem real): "no aplica", "ya incluido", "ver otro apartado", "ya las tienes", "n/a"...
@@ -53,6 +57,19 @@ def _is_placeholder(text: str) -> bool:
     return (text or "").strip().lower() in _PLACEHOLDER_BLACKLIST
 
 
+def _ascii_slug(value: str) -> str:
+    """Fuerza ids kebab-case solo ASCII (contrato v2.1, regla 11):
+    'experiencia-minima-años' -> 'experiencia-minima-anios' (ñ->n via NFKD)."""
+    if not value:
+        return value
+    # ñ -> ni sigue la convención del contrato ("años" -> "anios"), no la NFKD ("anos")
+    value = value.replace("ñ", "ni").replace("Ñ", "NI")
+    normalized = unicodedata.normalize("NFKD", value)
+    ascii_text = normalized.encode("ascii", "ignore").decode("ascii")
+    ascii_text = re.sub(r"[^a-zA-Z0-9]+", "-", ascii_text).strip("-").lower()
+    return ascii_text or value
+
+
 def _parse(raw: str | None, default):
     """Parsea un campo JSON de la BD; devuelve `default` si falta o es inválido."""
     if not raw:
@@ -72,7 +89,7 @@ def _normalize_input(item: dict, campo_ids: set[str]) -> dict | None:
     tipo = item.get("tipo") if item.get("tipo") in _INPUT_TIPOS else "texto_libre"
     nivel = item.get("nivel") if item.get("nivel") in _NIVELES else "minimo"
     normalized = {
-        "id": item.get("id") or "",
+        "id": _ascii_slug(item.get("id") or ""),
         "label": label,
         "tipo": tipo,
         "nivel": nivel,
@@ -80,7 +97,7 @@ def _normalize_input(item: dict, campo_ids: set[str]) -> dict | None:
     if item.get("ayuda"):
         normalized["ayuda"] = item["ayuda"]
     if tipo == "dato_empresa":
-        ref = item.get("ref_campo_empresa")
+        ref = _ascii_slug(item.get("ref_campo_empresa") or "")
         if ref and ref in campo_ids:
             normalized["ref_campo_empresa"] = ref
     return normalized
@@ -124,7 +141,7 @@ def _normalize_campo_empresa(item: dict) -> dict | None:
         return None
     formato = item.get("formato") if item.get("formato") in _CAMPO_FORMATOS else "texto"
     campo = {
-        "id": item["id"],
+        "id": _ascii_slug(item["id"]),
         "nombre": item.get("nombre") or "",
         "descripcion": item.get("descripcion") or "",
         "formato": formato,
@@ -144,7 +161,7 @@ def _normalize_dato_aplicativo(item: dict) -> dict | None:
     tipo_dato = item.get("tipo_dato") if item.get("tipo_dato") in _TIPOS_DATO else "texto_corto"
     ambito = item.get("ambito") if item.get("ambito") in _AMBITOS else "proyecto"
     normalized = {
-        "id": item.get("id") or "",
+        "id": _ascii_slug(item.get("id") or ""),
         "label": label,
         "tipo_dato": tipo_dato,
         "ambito": ambito,
@@ -154,6 +171,63 @@ def _normalize_dato_aplicativo(item: dict) -> dict | None:
         opciones = item.get("opciones")
         normalized["opciones"] = opciones if isinstance(opciones, list) else []
     return normalized
+
+
+def _normalize_tres_ofertas(item) -> dict:
+    """Bloque obligatorio del contrato v2.1. Umbral numérico o null, nunca string."""
+    if not isinstance(item, dict):
+        item = {}
+    umbral = item.get("umbral")
+    if isinstance(umbral, str):
+        try:
+            umbral = float(umbral.replace(".", "").replace(",", "."))
+        except ValueError:
+            umbral = None
+    if isinstance(umbral, float) and umbral.is_integer():
+        umbral = int(umbral)
+    if not isinstance(umbral, (int, float)):
+        umbral = None
+    exencion = bool(item.get("exencion_gasto_antes_resolucion", False))
+    return {
+        "umbral": umbral,
+        "exencion_gasto_antes_resolucion": exencion,
+        "condiciones_exencion": (item.get("condiciones_exencion") or "") if exencion else "",
+    }
+
+
+def _normalize_parametro(item: dict) -> dict | None:
+    """Parámetro de convocatoria: constante de las bases, siempre con valor."""
+    if not isinstance(item, dict):
+        return None
+    label = item.get("label") or ""
+    valor = item.get("valor")
+    if not label or _is_placeholder(label) or valor is None or valor == "":
+        return None
+    normalized = {
+        "id": _ascii_slug(item.get("id") or ""),
+        "label": label,
+        "valor": valor,
+    }
+    if item.get("unidad"):
+        normalized["unidad"] = item["unidad"]
+    if item.get("nota"):
+        normalized["nota"] = item["nota"]
+    return normalized
+
+
+def _drop_parent_apartados(apartados: list[dict]) -> list[dict]:
+    """Red de seguridad de la regla 1bis: elimina bloques padre emitidos junto a sus
+    subapartados (ej. "I" cuando existen "I.A", "I.B")."""
+    codigos = [a["codigo"] for a in apartados]
+
+    def is_parent(codigo: str) -> bool:
+        return any(
+            other != codigo and other.startswith(codigo)
+            and len(other) > len(codigo) and not other[len(codigo)].isalnum()
+            for other in codigos
+        )
+
+    return [a for a in apartados if not is_parent(a["codigo"])]
 
 
 def _dedupe_codigos(apartados: list[dict]) -> None:
@@ -170,9 +244,10 @@ def _dedupe_codigos(apartados: list[dict]) -> None:
 
 def export_output_4(raw_json: str | None) -> dict:
     """
-    Normaliza y devuelve el objeto raíz de la salida 4 (contrato v2.0).
-    Garantiza vocabularios cerrados, descarta placeholders de la lista negra
-    y elimina referencias huérfanas a campos_empresa.
+    Normaliza y devuelve el objeto raíz de la salida 4 (contrato v2.1).
+    Garantiza vocabularios cerrados, ids solo ASCII, apartados solo hoja,
+    descarta placeholders de la lista negra, elimina referencias huérfanas a
+    campos_empresa y deduplica datos_aplicativo contra el catálogo de empresa.
     """
     data = _parse(raw_json, {})
     if not isinstance(data, dict):
@@ -196,17 +271,27 @@ def export_output_4(raw_json: str | None) -> dict:
     apartados = [
         n for n in (_normalize_apartado(a, campo_ids) for a in (data.get("apartados") or [])) if n
     ]
+    apartados = _drop_parent_apartados(apartados)
     _dedupe_codigos(apartados)
 
+    # No duplicar entre datos_aplicativo y memoria: si el id ya existe en el
+    # catálogo de campos_empresa, el dato ya está cubierto como dato_empresa.
     datos_aplicativo = [
-        n for n in (_normalize_dato_aplicativo(d) for d in (data.get("datos_aplicativo") or [])) if n
+        n for n in (_normalize_dato_aplicativo(d) for d in (data.get("datos_aplicativo") or []))
+        if n and n["id"] not in campo_ids
+    ]
+
+    parametros_convocatoria = [
+        n for n in (_normalize_parametro(x) for x in (data.get("parametros_convocatoria") or [])) if n
     ]
 
     return {
-        "version_esquema": "2.0",
+        "version_esquema": "2.1",
         "convocatoria": convocatoria,
         "campos_empresa": campos_empresa,
         "apartados": apartados,
+        "tres_ofertas": _normalize_tres_ofertas(data.get("tres_ofertas")),
+        "parametros_convocatoria": parametros_convocatoria,
         "datos_aplicativo": datos_aplicativo,
     }
 

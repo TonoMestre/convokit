@@ -61,3 +61,42 @@ npm run dev
 ```
 
 El frontend queda disponible en `http://localhost:5173` y muestra el estado de conexión con el backend.
+
+## Trabajar desde otro ordenador
+
+Todo el **código** está en GitHub, pero por seguridad hay tres cosas que **nunca se suben
+al repositorio** y que tienes que recrear al clonar en una máquina nueva:
+
+1. **Ficheros `.env` (claves secretas)** — están en `.gitignore`. Cópialos desde los
+   `.env.example` y rellena los valores (los tienes en tu `.env` actual o en el panel de
+   Railway):
+   - `backend/.env` → `ANTHROPIC_API_KEY`, `RESEND_API_KEY`, `DB_PATH` y demás (ver
+     [CLAUDE.md](CLAUDE.md), sección "Variables de entorno").
+   - `frontend/.env` → `VITE_API_URL` (en local: `http://localhost:8000`).
+2. **Base de datos local (`backend/convokit.db`)** — ignorada. En la máquina nueva
+   arrancarás con una base de datos vacía: las convocatorias ya generadas **no viajan por
+   git**. Los datos de producción viven en el volumen de Railway; si quieres llevarte las
+   convocatorias locales a otro equipo, copia el fichero `convokit.db` a mano (USB, nube).
+3. **Dependencias** (`node_modules/`, `.venv/`) — se reinstalan, no se suben.
+
+Pasos en el ordenador nuevo:
+
+```bash
+git clone https://github.com/TonoMestre/convokit.git
+cd convokit
+
+# Backend
+cd backend
+python -m venv .venv
+.venv\Scripts\Activate.ps1      # Windows PowerShell (macOS/Linux: source .venv/bin/activate)
+pip install -r requirements.txt
+cp .env.example .env             # y rellenar las claves
+cd ..
+
+# Frontend
+cd frontend
+npm install
+cp .env.example .env             # y poner VITE_API_URL
+```
+
+Después, arranca backend y frontend como se indica en "Arrancar en local".

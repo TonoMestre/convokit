@@ -236,6 +236,56 @@ def _build_faqs_fragment(faqs: list) -> str:
 
 
 _CONTACT_SECTION_RE = re.compile(r'<section[^>]*id="contacto"', re.IGNORECASE)
+_SECTION_CLOSE_RE = re.compile(r"</section>", re.IGNORECASE)
+
+
+def _final_block_anchor(body: str) -> int:
+    """Posición de inserción 'antes del bloque final': antes del formulario de
+    contacto y, si existe, antes de la sección del evaluador embebido."""
+    m = _CONTACT_SECTION_RE.search(body)
+    anchor = m.start() if m else len(body)
+    if _EVALUADOR_MARKER in body:
+        marker_at = body.index(_EVALUADOR_MARKER)
+        if marker_at < anchor:
+            section_start = body.rfind("<section", 0, marker_at)
+            anchor = section_start if section_start != -1 else marker_at
+    return anchor
+
+
+def _inject_images(body: str, imagenes: list) -> str:
+    """
+    Inserta las imágenes del consultor (subidas a la biblioteca de WordPress;
+    aquí solo llegan sus URLs + alt con la frase clave). Posiciones deterministas
+    que no alteran los nth-child(3..5) de las variantes: la primera tras la 5ª
+    sección (importe), el resto antes del bloque final (FAQs/evaluador/contacto).
+    """
+    valid = [
+        i for i in (imagenes or [])
+        if isinstance(i, dict) and (i.get("url") or "").strip()
+    ]
+    if not valid:
+        return body
+
+    def fig(img: dict) -> str:
+        url = html_lib.escape(img["url"].strip(), quote=True)
+        alt = html_lib.escape((img.get("alt") or "").strip(), quote=True)
+        return (
+            f'<figure class="landing-img"><img src="{url}" alt="{alt}" loading="lazy" /></figure>\n'
+        )
+
+    fragments = [fig(i) for i in valid]
+
+    closes = [m.end() for m in _SECTION_CLOSE_RE.finditer(body)]
+    if len(closes) >= 5:
+        pos = closes[4]  # tras la sección 5 (importe): después no hay nth-child en juego
+        body = body[:pos] + "\n" + fragments[0] + body[pos:]
+        fragments = fragments[1:]
+
+    if fragments:
+        anchor = _final_block_anchor(body)
+        body = body[:anchor] + "".join(fragments) + body[anchor:]
+
+    return body
 
 
 def build_output_3_html(
@@ -244,6 +294,7 @@ def build_output_3_html(
     variant: str = DEFAULT_VARIANT,
     cfg: dict | None = None,
     faqs: list | None = None,
+    imagenes: list | None = None,
 ) -> str:
     """
     Envuelve el cuerpo de la landing en la plantilla estática: un bloque scoped bajo
@@ -259,19 +310,17 @@ def build_output_3_html(
     variant = normalize_variant(variant)
     body = _clean_body(body_html)
 
+    # Imágenes del consultor (URLs de la biblioteca de WordPress + alt con la
+    # frase clave). Van antes que las FAQs para que la última quede entre el
+    # contenido y la sección de preguntas.
+    body = _inject_images(body, imagenes)
+
     # Sección de FAQs + Schema FAQPage: se inserta antes del formulario de
     # contacto (y antes del evaluador embebido si lo hay), tras las secciones
     # 1-8 — no altera los nth-child(3..5) de las variantes de color.
     faqs_fragment = _build_faqs_fragment(faqs)
     if faqs_fragment:
-        m = _CONTACT_SECTION_RE.search(body)
-        insert_at = m.start() if m else len(body)
-        if _EVALUADOR_MARKER in body:
-            insert_at = min(insert_at, body.index(_EVALUADOR_MARKER))
-            # el marcador vive dentro de su <section>; retroceder hasta abrirla
-            section_start = body.rfind("<section", 0, insert_at)
-            if section_start != -1:
-                insert_at = section_start
+        insert_at = _final_block_anchor(body)
         body = body[:insert_at] + faqs_fragment + body[insert_at:]
 
     if cfg is not None and _EVALUADOR_MARKER in body:

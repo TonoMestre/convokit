@@ -51,11 +51,17 @@ class GenerateRequest(BaseModel):
     salidas: list[SalidaRequest]
 
 
+class LandingImage(BaseModel):
+    url: str
+    alt: str = ""
+
+
 class LandingSeoRequest(BaseModel):
     seo_title: str
     meta_description: str
     slug: str
     frase_clave: str = ""
+    imagenes: list[LandingImage] = []
 
 
 class LandingVariantRequest(BaseModel):
@@ -1300,6 +1306,7 @@ def _public_seo(seo: dict) -> dict:
     return {k: seo.get(k) for k in (
         "frase_clave", "seo_title", "meta_description", "slug", "variant", "confirmed",
         "h1_recomendado", "keywords_principales", "faqs_sugeridas", "incluir_evaluador",
+        "imagenes",
     )}
 
 
@@ -1319,9 +1326,14 @@ def update_landing_seo(convocatoria_id: int, body: LandingSeoRequest):
     meta_description = body.meta_description.strip()
     slug = output3_template.slugify(body.slug) if body.slug.strip() else seo.get("slug", "")
     frase_clave = body.frase_clave.strip().lower() or seo.get("frase_clave", "")
+    imagenes = [
+        {"url": img.url.strip(), "alt": img.alt.strip()}
+        for img in body.imagenes if img.url.strip()
+    ]
 
     new_html = output3_template.build_output_3_html(
-        body_html, slug, variant, cfg=cfg, faqs=seo.get("faqs_sugeridas")
+        body_html, slug, variant, cfg=cfg,
+        faqs=seo.get("faqs_sugeridas"), imagenes=imagenes,
     )
     new_seo = {
         **seo,
@@ -1329,6 +1341,7 @@ def update_landing_seo(convocatoria_id: int, body: LandingSeoRequest):
         "seo_title": seo_title,
         "meta_description": meta_description,
         "slug": slug,
+        "imagenes": imagenes,
         "body_html": body_html,
         "variant": variant,
         "confirmed": True,
@@ -1353,7 +1366,7 @@ def update_landing_variant(convocatoria_id: int, body: LandingVariantRequest):
 
     new_html = output3_template.build_output_3_html(
         seo["body_html"], seo.get("slug", ""), variant, cfg=cfg,
-        faqs=seo.get("faqs_sugeridas"),
+        faqs=seo.get("faqs_sugeridas"), imagenes=seo.get("imagenes"),
     )
     new_seo = {**seo, "variant": variant}
     db.update_entregables(convocatoria_id, {

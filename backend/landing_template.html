@@ -175,6 +175,19 @@
   /* ── Evaluador embebido ── */
   {{WRAPPER_SELECTOR}} .bloque-evaluador { padding-top: 44px; padding-bottom: 44px; }
 
+  /* ── Imágenes del consultor (inyectadas desde el panel SEO) ── */
+  {{WRAPPER_SELECTOR}} .landing-img {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 40px 24px 0;
+  }
+  {{WRAPPER_SELECTOR}} .landing-img img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--navy-10);
+  }
+
   /* ── FAQs (sección inyectada por el backend desde faqs_sugeridas) ── */
   {{WRAPPER_SELECTOR}} .faq-item {
     max-width: 760px;

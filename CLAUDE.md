@@ -144,8 +144,8 @@ Claves de `entregables_json`:
 - `"3"` — HTML de la landing: bloque scoped bajo `#innovate-ayuda-landing-{slug}`, sin
   doctype/html/head/body, listo para pegar en un bloque "HTML personalizado" de WordPress
 - `"3_seo"` — objeto JSON: {frase_clave, seo_title, meta_description, slug,
-  h1_recomendado, keywords_principales, faqs_sugeridas, body_html, confirmed, variant,
-  incluir_evaluador}
+  h1_recomendado, keywords_principales, faqs_sugeridas, imagenes, body_html, confirmed,
+  variant, incluir_evaluador}
 - `"3_instruccion"` — instrucción libre del usuario para la landing
 - `"6_cfg"` — objeto JSON de configuración del evaluador (ver "Salida 6"), compartido
   entre la salida 6 standalone y el evaluador embebido en la salida 3 para no generarlo
@@ -282,8 +282,13 @@ del hero, en al menos un H2 y ≥2 veces más en el cuerpo. `parse_landing_respo
 redes de seguridad deterministas: quita años de frase_clave/título/slug (NO de la meta,
 que puede citar hechos como "la dana de 2024") y trunca título/meta a sus topes por
 límite de palabra. El año de la edición vive en el cuerpo (sección "Convocatoria [año]")
-y en la cronología de actualizaciones. Las imágenes son paso manual en WordPress: el
-panel SEO instruye subir 1-2 imágenes con alt que incluya la frase clave.
+y en la cronología de actualizaciones. Imágenes: el consultor sube 1-2 imágenes a la
+biblioteca de medios de WordPress y pega sus URLs (+ alt con la frase clave) en el panel
+SEO; `_inject_images` (output3_template.py) las inserta en el HTML como
+`<figure class="landing-img">` en posiciones deterministas — la primera tras la sección 5
+(importe), el resto antes del bloque final (FAQs/evaluador/contacto) — que no alteran los
+`nth-child(3..5)` de las variantes. Se persisten en `3_seo.imagenes` `[{url, alt}]` y se
+re-aplican en cada rebuild (variant/seo) sin llamar a Claude.
 
 ### Reglas de diseño equilibrado
 Grids de tarjetas siempre en columnas fijas (nunca `auto-fit`, para no producir un
@@ -313,7 +318,7 @@ El prompt de salida 3 recibe el campo `modo` de la convocatoria:
 
 ### Endpoints específicos
 - `POST /landing/seo` — confirma los campos SEO editables (frase_clave, seo_title,
-  meta_description, slug) y los persiste en `3_seo.confirmed = true`.
+  meta_description, slug, imagenes) y los persiste en `3_seo.confirmed = true`.
 - `POST /landing/variant` — cambia la variante guardada en `3_seo.variant` y
   regenera el HTML completo con la nueva clase sin volver a llamar a Claude.
 

@@ -180,6 +180,7 @@ function parseSeo(seoRaw) {
       seo_title: s.seo_title || "",
       meta_description: s.meta_description || "",
       slug: s.slug || "",
+      imagenes: Array.isArray(s.imagenes) ? s.imagenes : [],
       variant: (s.variant || "A").toUpperCase(),
       confirmed: !!s.confirmed,
       incluir_evaluador: !!s.incluir_evaluador,
@@ -261,10 +262,15 @@ function SeoPanel({ seoRaw, convocatoriaId }) {
   const { API, openConvocatoria } = useApp();
   const initial = parseSeo(seoRaw);
 
+  const emptyImgs = [{ url: "", alt: "" }, { url: "", alt: "" }];
+  const initImgs = (arr) =>
+    emptyImgs.map((e, i) => ({ url: arr?.[i]?.url || "", alt: arr?.[i]?.alt || "" }));
+
   const [fraseClave, setFraseClave] = useState(initial?.frase_clave || "");
   const [title, setTitle] = useState(initial?.seo_title || "");
   const [meta, setMeta] = useState(initial?.meta_description || "");
   const [slug, setSlug] = useState(initial?.slug || "");
+  const [imagenes, setImagenes] = useState(initImgs(initial?.imagenes));
   const [confirmed, setConfirmed] = useState(initial?.confirmed || false);
   const [saving, setSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
@@ -278,9 +284,14 @@ function SeoPanel({ seoRaw, convocatoriaId }) {
       setTitle(s.seo_title);
       setMeta(s.meta_description);
       setSlug(s.slug);
+      setImagenes(initImgs(s.imagenes));
       setConfirmed(s.confirmed);
     }
   }, [seoRaw]);
+
+  function setImg(idx, key, value) {
+    setImagenes((prev) => prev.map((img, i) => (i === idx ? { ...img, [key]: value } : img)));
+  }
 
   if (!initial) return null;
 
@@ -291,7 +302,13 @@ function SeoPanel({ seoRaw, convocatoriaId }) {
       const res = await fetch(`${API}/convocatorias/${convocatoriaId}/landing/seo`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ seo_title: title, meta_description: meta, slug, frase_clave: fraseClave }),
+        body: JSON.stringify({
+          seo_title: title,
+          meta_description: meta,
+          slug,
+          frase_clave: fraseClave,
+          imagenes: imagenes.filter((img) => img.url.trim()),
+        }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -411,11 +428,47 @@ function SeoPanel({ seoRaw, convocatoriaId }) {
         {savedFlash && <span className="text-xs text-green-700">Guardado y aplicado al HTML.</span>}
       </div>
 
-      <p className="text-xs text-gray-500 mt-3" style={{ borderTop: "1px solid var(--color-navy-20)", paddingTop: "8px" }}>
-        <strong>Imágenes (Yoast):</strong> la landing no lleva imágenes propias. Al publicar, sube 1-2
-        imágenes a la biblioteca de WordPress e insértalas en la página con un <code>alt</code> que
-        incluya la frase clave (p. ej. «{fraseClave || "frase clave"} — maquinaria industrial»).
-      </p>
+      <div className="mt-4" style={{ borderTop: "1px solid var(--color-navy-20)", paddingTop: "10px" }}>
+        <span className="block text-xs font-semibold text-brand-blue uppercase tracking-wide mb-1">
+          Imágenes de la landing
+        </span>
+        <p className="text-xs text-gray-500 mb-3">
+          Sube 1-2 imágenes a la <strong>biblioteca de medios de WordPress</strong>, copia aquí su URL
+          y guarda: se insertan en el HTML con su <code>alt</code>. Usa la frase clave en el alt
+          (p. ej. «{fraseClave || "frase clave"} — maquinaria industrial»).
+        </p>
+        <div className="space-y-3">
+          {imagenes.map((img, idx) => (
+            <div key={idx} className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  Imagen {idx + 1} — URL (WordPress)
+                </label>
+                <input
+                  type="text"
+                  value={img.url}
+                  onChange={(e) => setImg(idx, "url", e.target.value)}
+                  placeholder="https://innovate40.es/wp-content/uploads/…"
+                  className={inputCls}
+                  style={inputStyle}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  Texto alt (con la frase clave)
+                </label>
+                <input
+                  type="text"
+                  value={img.alt}
+                  onChange={(e) => setImg(idx, "alt", e.target.value)}
+                  className={inputCls}
+                  style={inputStyle}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

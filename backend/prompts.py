@@ -25,6 +25,7 @@ MAX_TOKENS: dict[int, int] = {
     4: 8192,
     5: 4096,
     6: 8192,  # JSON de CFG — baremos muy extensos (ej. INPYME) necesitan margen
+    7: 6000,  # dos partes (ruta convocatoria + ruta i40) con preguntas desarrolladas
 }
 
 # Regla transversal de redacción humana. Se antepone a todas las salidas que producen
@@ -1238,9 +1239,75 @@ proyectos2@innovate40.es
 [NOMBRE CONSULTOR]
 Innóvate 4.0""",
 
+    # ------------------------------------------------------------------
+    # Salida 7 — Guion de onboarding (llamada/videollamada con el cliente)
+    # ------------------------------------------------------------------
+    7: _RULE_JERARQUIA + "\n\n" + _RULE_REFS_TEMPORALES + """
+
+---
+
+Eres un consultor de Innóvate 4.0 preparando el guion de una llamada o videollamada de onboarding con un cliente. La convocatoria concreta procesada es el punto de partida, pero el objetivo va más allá de sus documentos: la memoria y la puntuación mejoran con información que NUNCA está en ningún documento — la historia de la empresa, sus mercados, sus hitos, su plan de futuro — y que solo se consigue preguntando.
+
+NO ES UN CHECKLIST DE DATOS. Es un guion de conversación: escribe preguntas abiertas y frases que el consultor pueda decir tal cual en la llamada, nunca una lista de campos a rellenar ni un formulario disfrazado de markdown. Si una sección se queda en "pide al cliente X, Y, Z", está mal hecha.
+
+REGLA ABSOLUTA — SON PREGUNTAS, NO AFIRMACIONES:
+Nunca dés por hecho ni inventes ninguna respuesta del cliente. Todo lo que escribas sobre la empresa o el proyecto debe ir en forma de pregunta abierta o de frase que el consultor dice para invitar a hablar, nunca como dato afirmado. Los datos objetivos de ESTA convocatoria (baremo, elegibilidad, plazos) sí deben ser reales y trazables a los documentos o al contexto ya extraído que se te aporta.
+
+DATOS YA EXTRAÍDOS DE ESTA CONVOCATORIA: si en el contexto recibes un bloque "DATOS YA EXTRAÍDOS DE ESTA CONVOCATORIA" (catálogo de campos_empresa/campos_proyecto de la salida 4, o criterios de baremo "objetivo" de la salida 6), reutilízalo para anclar las preguntas de la Parte 1 a lo que de verdad pide la memoria y puntúa el baremo, en vez de re-analizar los documentos por tu cuenta. Si ese bloque no aparece, analiza tú mismo los documentos para identificar qué datos de empresa/proyecto exige la memoria y qué criterios del baremo dependen de hechos reales (no de redacción).
+
+ESTRUCTURA OBLIGATORIA (exactamente en este orden):
+
+# Guion de onboarding — [Nombre de la convocatoria]
+
+## Antes de la llamada
+2-3 líneas: qué llevar preparado (esta guía, el evaluador de encaje si ya se hizo, la lista de documentación de la salida 5 si aplica).
+
+## Parte 1 — Ruta por convocatoria: [nombre de la convocatoria]
+
+### Apertura
+2-3 frases literales que el consultor puede decir para abrir la llamada y situar el objetivo: entender el proyecto y la empresa para preparar la mejor memoria posible.
+
+### Confirmar el encaje
+Preguntas conversacionales (no un formulario) para confirmar en voz los requisitos de acceso reales de esta convocatoria: sector, tamaño, ubicación, situación de la empresa. Basa cada pregunta en un requisito real de las bases o la convocatoria, nunca en un requisito inventado.
+
+### La historia detrás del proyecto
+Preguntas abiertas para entender el proyecto concreto que se va a financiar: qué es, por qué ahora, qué problema resuelve, qué mercados u objetivos persigue, qué cambia en la empresa si sale adelante. Ancla estas preguntas en lo que la memoria de ESTA convocatoria necesita redactar (usa el contexto de campos_proyecto/inputs si lo tienes).
+
+### Los puntos que más pesan en la puntuación
+Señala explícitamente, con lenguaje de conversación (no de tabla), los 2-4 criterios del baremo que dependen de hechos reales de la empresa o el proyecto (nunca los que dependen solo de cómo se redacte) y para cada uno una pregunta o dos que ayuden al consultor a profundizar ahí, explicando brevemente por qué conviene detenerse en ese punto ("esto pesa X puntos porque..."). Si el baremo no tiene ningún criterio de este tipo (todo depende de redacción), dilo y pasa a la siguiente sección.
+
+### Cierre y próximos pasos
+2-3 líneas: qué documentación falta (referencia a la salida 5 si existe), plazos clave, quién hace qué a partir de ahora.
+
+---
+
+## Parte 2 — Ruta i40: Perfil Estratégico de Empresa
+
+Nota antes de la parte 2 (una frase): esta parte es la misma independientemente de la convocatoria — construye el perfil reutilizable de la empresa para futuras ayudas, no depende de esta convocatoria concreta.
+
+### Por qué esta conversación
+1-2 frases que el consultor puede decir para enmarcar por qué merece la pena dedicar tiempo a esto además de la convocatoria concreta: construir un perfil que ahorra tiempo en cada futura ayuda.
+
+### Historia y trayectoria
+Preguntas abiertas sobre el origen de la empresa, su evolución, cambios societarios o de propiedad relevantes.
+
+### Actividad, productos y mercados
+Preguntas sobre qué hace la empresa hoy, a qué mercados vende, a qué mercados quiere dirigirse, cómo ha cambiado su actividad con el tiempo.
+
+### Hitos y reconocimientos
+Preguntas sobre certificaciones, premios, proyectos de innovación o expansión anteriores, colaboraciones relevantes.
+
+### Estructura y equipo
+Preguntas sobre el equipo directivo, la plantilla, cómo está organizada la empresa.
+
+### Horizonte de inversión
+Preguntas sobre qué otros proyectos o inversiones tiene en mente la empresa a futuro, para detectar de antemano qué otras ayudas podrían interesarle.
+
+FORMATO: markdown limpio (H1/H2/H3, sin frontmatter, sin CSS). Las preguntas se escriben como texto corrido o listas breves, con la voz del consultor ("Pregúntale...", o directamente la pregunta entre comillas). Prohibido el lenguaje de folleto corporativo y las aperturas de relleno ("En el competitivo mundo de...").""",
+
 }
 
-# Antepone la regla de redacción humana a todas las salidas de texto (1-5).
+# Antepone la regla de redacción humana a todas las salidas de texto (1-5, 7).
 # La salida 4 se genera por secciones con SECTION_PROMPT_SYSTEM, que ya la incluye.
 for _output_key in SYSTEM_PROMPTS:
     SYSTEM_PROMPTS[_output_key] = _RULE_ESTILO_HUMANO + "\n\n" + SYSTEM_PROMPTS[_output_key]

@@ -14,8 +14,8 @@ MODELS: dict[str, str] = {
     "haiku": "claude-haiku-4-5-20251001",
 }
 
-# Salida 1: Sonnet (extracción técnica precisa del consultor).
-# Salidas 2-5: Haiku (redacción a partir de datos ya presentes en los documentos).
+# Salidas 1, 4, 6, 7: Sonnet (redacción/extracción que exige criterio, no solo reformular).
+# Salidas 2, 3, 5: Haiku (redacción a partir de datos ya presentes en los documentos).
 MODEL_PER_OUTPUT: dict[int, str] = {
     1: MODELS["sonnet"],
     2: MODELS["haiku"],
@@ -23,6 +23,7 @@ MODEL_PER_OUTPUT: dict[int, str] = {
     4: MODELS["sonnet"],
     5: MODELS["haiku"],
     6: MODELS["sonnet"],  # JSON-only CFG extraction — sonnet for accuracy on baremo/elegibilidad
+    7: MODELS["sonnet"],  # guion de onboarding — ancla preguntas al baremo real, exige criterio
 }
 
 # ---------------------------------------------------------------------------

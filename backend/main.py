@@ -403,6 +403,97 @@ def _generate_output_6(
 
 
 # ---------------------------------------------------------------------------
+# Generación de salida 7 (guion de onboarding)
+# ---------------------------------------------------------------------------
+
+def _generate_output_7(
+    client: anthropic.Anthropic,
+    conv_name: str,
+    context: str,
+    instrucciones: str,
+    entregables: dict,
+    model: str | None = None,
+    _track: Callable | None = None,
+) -> str:
+    """
+    Generación de la salida 7 (guion de onboarding para la llamada/videollamada
+    con el cliente). Si las salidas 4 y/o 6 ya existen para esta convocatoria
+    (mismo lote o uno anterior — `entregables` debe incluir tanto lo ya
+    persistido como lo generado en este mismo lote), reutiliza el catálogo de
+    campos_empresa/campos_proyecto y los criterios de baremo "objetivo" para
+    anclar las preguntas de la Parte 1 a lo que de verdad puntúa, sin volver a
+    analizar los documentos desde cero. Si no existen, se genera igual a partir
+    de los documentos completos.
+    """
+    model = model or pricing.MODEL_PER_OUTPUT.get(7, pricing.MODELS["sonnet"])
+
+    output_4_data = None
+    raw_4 = entregables.get("4_json")
+    if raw_4:
+        try:
+            parsed = json.loads(raw_4)
+            output_4_data = parsed if isinstance(parsed, dict) else None
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+    evaluador_cfg = _get_existing_cfg(entregables)
+
+    pieces = []
+    if output_4_data:
+        campos_empresa = output_4_data.get("campos_empresa") or []
+        campos_proyecto = output_4_data.get("campos_proyecto") or []
+        if campos_empresa:
+            pieces.append(
+                "Datos de empresa que la memoria ya pide (salida 4, catálogo campos_empresa): "
+                + json.dumps(
+                    [{"nombre": c.get("nombre"), "descripcion": c.get("descripcion")} for c in campos_empresa],
+                    ensure_ascii=False,
+                )
+            )
+        if campos_proyecto:
+            pieces.append(
+                "Datos de proyecto que la memoria ya pide (salida 4, catálogo campos_proyecto): "
+                + json.dumps(
+                    [{"nombre": c.get("nombre"), "descripcion": c.get("descripcion")} for c in campos_proyecto],
+                    ensure_ascii=False,
+                )
+            )
+    if evaluador_cfg:
+        objetivos = [b for b in (evaluador_cfg.get("baremo") or []) if b.get("tipo") == "objetivo"]
+        if objetivos:
+            pieces.append(
+                "Criterios del baremo que dependen de hechos reales de la empresa o el proyecto "
+                "(salida 6/evaluador) — son los puntos que más conviene profundizar en la llamada: "
+                + json.dumps(
+                    [{"pregunta": b.get("pregunta"), "puntos_max": b.get("puntos_max")} for b in objetivos],
+                    ensure_ascii=False,
+                )
+            )
+
+    extra_context = ""
+    if pieces:
+        extra_context = (
+            "\n\n=== DATOS YA EXTRAÍDOS DE ESTA CONVOCATORIA (salidas 4/6, si existen) ===\n"
+            + "\n\n".join(pieces)
+            + "\n=== FIN DATOS YA EXTRAÍDOS ===\n"
+            "Reutiliza esta información para decidir qué preguntar en la Parte 1; no la repitas "
+            "literalmente ni como lista técnica, conviértela en preguntas de conversación natural."
+        )
+
+    user_prompt = (
+        f"Convocatoria: {conv_name}\n\n"
+        f"Documentos de la convocatoria:\n{context}"
+        + extra_context
+    )
+    user_prompt += _instr_block(instrucciones)
+
+    return _claude(
+        client, system=p.SYSTEM_PROMPTS[7], user=user_prompt,
+        max_tokens=p.MAX_TOKENS[7], model=model, _track=_track,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Generación de salida 4
 # ---------------------------------------------------------------------------
 
@@ -997,6 +1088,13 @@ def _process_job(job_id: int, conv_id: int, salida_requests: list[dict]) -> None
                         generated["6_cfg"] = json.dumps(cfg_used, ensure_ascii=False)
                         conv_entregables["6_cfg"] = generated["6_cfg"]
 
+                elif output_type == 7:
+                    generated["7"] = _generate_output_7(
+                        client, conv_name, context, instrucciones,
+                        entregables={**conv_entregables, **generated},
+                        model=model, _track=track,
+                    )
+
                 else:
                     user_prompt = _build_user_prompt(conv_name, context, output_type, instrucciones, modo)
                     generated[key] = _claude(
@@ -1242,11 +1340,11 @@ def generate_async(convocatoria_id: int, body: GenerateRequest):
             detail="Esta convocatoria no tiene documentos. Sube los archivos antes de generar entregables.",
         )
     requested_types = {s.output_type for s in body.salidas}
-    unknown = requested_types - set(range(1, 7))
+    unknown = requested_types - set(range(1, 8))
     if unknown:
         raise HTTPException(
             status_code=422,
-            detail=f"Tipos de salida no válidos: {sorted(unknown)}. Usa números del 1 al 6.",
+            detail=f"Tipos de salida no válidos: {sorted(unknown)}. Usa números del 1 al 7.",
         )
 
     salidas_list = [s.model_dump() for s in body.salidas]
@@ -1391,7 +1489,7 @@ def generate_outputs(convocatoria_id: int, body: GenerateRequest):
             detail="Esta convocatoria no tiene documentos. Sube los archivos antes de generar entregables.",
         )
     requested_types = {s.output_type for s in body.salidas}
-    unknown = requested_types - set(range(1, 7))
+    unknown = requested_types - set(range(1, 8))
     if unknown:
         raise HTTPException(
             status_code=422,
@@ -1459,6 +1557,13 @@ def generate_outputs(convocatoria_id: int, body: GenerateRequest):
                 if cfg_used is not None:
                     generated["6_cfg"] = json.dumps(cfg_used, ensure_ascii=False)
 
+            elif output_type == 7:
+                generated["7"] = _generate_output_7(
+                    client, conv["nombre"], context, instrucciones,
+                    entregables={**conv["entregables_json"], **generated},
+                    model=model, _track=track,
+                )
+
             else:
                 user_prompt = _build_user_prompt(conv["nombre"], context, output_type, instrucciones, modo)
                 generated[str(output_type)] = _claude(
@@ -1505,7 +1610,7 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
             detail="Esta convocatoria no tiene documentos. Sube los archivos antes de generar entregables.",
         )
     requested_types = {s.output_type for s in body.salidas}
-    unknown = requested_types - set(range(1, 7))
+    unknown = requested_types - set(range(1, 8))
     if unknown:
         raise HTTPException(
             status_code=422,
@@ -1577,6 +1682,13 @@ def generate_outputs_stream(convocatoria_id: int, body: GenerateRequest):
                     generated["3_seo"] = json.dumps(seo_3, ensure_ascii=False)
                     if cfg_used is not None:
                         generated["6_cfg"] = json.dumps(cfg_used, ensure_ascii=False)
+
+                elif output_type == 7:
+                    generated["7"] = _generate_output_7(
+                        client, conv["nombre"], context, instrucciones,
+                        entregables={**conv["entregables_json"], **generated},
+                        model=model, _track=track,
+                    )
 
                 else:
                     user_prompt = _build_user_prompt(conv["nombre"], context, output_type, instrucciones, modo)

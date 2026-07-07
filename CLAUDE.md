@@ -4,7 +4,7 @@
 
 ConvoKit es una aplicación web interna de Innóvate 4.0 (consultora de ayudas públicas).
 A partir de los documentos oficiales de una convocatoria de ayudas (bases reguladoras,
-convocatoria del ejercicio, plantilla de memoria, anexos), genera SEIS entregables
+convocatoria del ejercicio, plantilla de memoria, anexos), genera SIETE entregables
 mediante la API de Claude:
 
 1. Guía interna del consultor
@@ -13,6 +13,7 @@ mediante la API de Claude:
 4. Set de prompts para la memoria (+ JSON)
 5. Lista de documentación + correo al cliente (+ JSON)
 6. Evaluador de encaje (HTML interactivo desplegable)
+7. Guion de onboarding para la llamada/videollamada con el cliente (.md)
 
 Uso exclusivamente interno. Sin clientes finales. Sin autenticación en el MVP.
 
@@ -159,6 +160,10 @@ Claves de `entregables_json`:
 - `"5"` — markdown lista de documentación + correo
 - `"5_json"` — JSON array de documentos (ver esquema en PRD sección 12)
 - `"6"` — HTML completo evaluador de encaje
+- `"7"` — markdown guion de onboarding para la llamada/videollamada con el cliente
+  (ver "Salida 7" más abajo). Sin exportación JSON: es un documento de uso interno,
+  no un contrato consumido por la App de Memorias.
+- `"7_instruccion"` — instrucción libre del usuario
 
 ### api_calls
 - `id`, `convocatoria_id`, `output_key`, `model`, `input_tokens`, `output_tokens`,
@@ -173,7 +178,7 @@ Claves de `entregables_json`:
 Los endpoints de generación lenta (salidas 1, 4, 6) usan generación asíncrona:
 - `POST /generate/async` — crea un job en `generation_jobs` y lanza un hilo daemon.
 - `GET /jobs/{job_id}` — polling de estado desde el frontend.
-- `POST /generate` — síncrono (usado para salidas rápidas 2, 3, 5).
+- `POST /generate` — síncrono (usado para salidas rápidas 2, 3, 5, 7).
 - `POST /generate/stream` — streaming SSE (salida 1 principalmente).
 
 ## max_tokens y modelos por salida
@@ -186,7 +191,8 @@ Los endpoints de generación lenta (salidas 1, 4, 6) usan generación asíncrona
 | 4        | Set de prompts (markdown)    | Sonnet  | 8192 por sección     |
 | 4_json   | Extracción JSON por sección  | Haiku   | 4096 por sección     |
 | 5        | Documentación + correo       | Haiku   | 4096                 |
-| 6        | Evaluador de encaje          | Sonnet  | 4096                 |
+| 6        | Evaluador de encaje          | Sonnet  | 8192                 |
+| 7        | Guion de onboarding          | Sonnet  | 6000                 |
 
 `pricing.MODELS` define los IDs reales: `"sonnet"` = `claude-sonnet-4-6`,
 `"haiku"` = `claude-haiku-4-5-20251001`.
@@ -406,6 +412,44 @@ crema, `border-radius: 0` en todo. El shell standalone (`_STANDALONE_SHELL` en
 que nunca debe tocar `html`/`body` porque también se usa como fragmento embebido, el shell
 standalone es un documento propio y necesita ese reset para no dejar un marco en blanco
 alrededor del fondo crema del widget.
+
+## Salida 7 — Guion de onboarding (llamada/videollamada con el cliente)
+
+Documento markdown de uso interno: un guion de conversación para la llamada o
+videollamada de onboarding con el cliente. Nace de una limitación de las salidas 1-6:
+todas se generan a partir de documentos, pero la memoria mejora con información que
+NUNCA está en ningún documento (historia de la empresa, mercados, hitos, plan de
+futuro) y que solo se consigue preguntando. Sin este guion, ese enriquecimiento queda
+disperso en notas del consultor en vez de vivir en un documento reutilizable.
+
+No es un checklist de campos a rellenar: son preguntas abiertas y frases que el
+consultor puede decir tal cual en la llamada. El prompt (`SYSTEM_PROMPTS[7]`) lo exige
+explícitamente y prohíbe que cualquier sección degenere en una lista de datos a pedir.
+
+Estructura fija en dos partes, porque no son la misma cosa:
+- **Parte 1 — Ruta por convocatoria**: específica de la convocatoria procesada
+  (apertura de llamada, confirmar encaje, historia del proyecto concreto, y un bloque
+  que señala los 2-4 criterios del baremo que dependen de HECHOS reales — no de
+  redacción — como los puntos que más conviene profundizar).
+- **Parte 2 — Ruta i40 (Perfil Estratégico de Empresa)**: agnóstica de la convocatoria
+  concreta (historia y trayectoria, actividad y mercados, hitos, estructura, horizonte
+  de inversión). Las mismas preguntas aplican independientemente de qué ayuda haya
+  disparado la conversación.
+
+`_generate_output_7` (`main.py`) reutiliza, si ya existen para esta convocatoria (mismo
+lote o uno anterior), el catálogo `campos_empresa`/`campos_proyecto` de la salida 4
+(`4_json`) y los criterios de baremo `tipo: "objetivo"` de la salida 6 (`6_cfg`, vía
+`_get_existing_cfg`), inyectados como bloque de contexto "DATOS YA EXTRAÍDOS" en el
+prompt. Así la Parte 1 se ancla a lo que de verdad pide la memoria y puntúa el baremo,
+sin repetir el análisis de documentos que 4 y 6 ya hicieron. Si ninguna de las dos
+existe todavía, se genera igual analizando los documentos directamente — no depende de
+haber generado antes 4 o 6. En los tres endpoints de generación (`/generate`,
+`/generate/async`, `/generate/stream`) los entregables que se le pasan son la unión de
+lo ya persistido en BD con lo generado en el mismo lote (`{**entregables_persistidos,
+**generated}`), para que pedir 4 y 7 juntos en una sola generación también funcione.
+
+Sin `"7_json"`: a diferencia de las salidas 4 y 5, esta no alimenta la App de Memorias.
+Es un documento de trabajo para el consultor, no un contrato de datos.
 
 ## Salida 4 — Set de prompts (arquitectura multi-llamada, contrato v2.2)
 

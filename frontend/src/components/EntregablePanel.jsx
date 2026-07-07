@@ -8,6 +8,7 @@ const SALIDAS = [
   { num: 4, label: "Set de prompts para la memoria",              ext: "md", hasJson: true },
   { num: 5, label: "Lista de documentación + correo al cliente",  ext: "md", hasJson: true },
   { num: 6, label: "Evaluador de encaje (HTML interactivo)",      ext: "html", isHtml: true },
+  { num: 7, label: "Guion de onboarding (llamada con el cliente)", ext: "md" },
 ];
 
 function Spinner({ className = "" }) {

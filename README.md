@@ -1,11 +1,12 @@
 # ConvoKit
 
-Aplicación web interna de Innóvate 4.0 que genera seis entregables (guía del consultor,
+Aplicación web interna de Innóvate 4.0 que genera siete entregables (guía del consultor,
 ficha comercial, landing page embebible en WordPress con evaluador de encaje opcional,
-set de prompts para la memoria, lista de documentación + correo al cliente, y evaluador
-de encaje standalone) a partir de los documentos oficiales de una convocatoria de ayudas
-públicas, mediante la API de Claude. Ver [CLAUDE.md](CLAUDE.md) para la arquitectura y
-las reglas completas — es la fuente de verdad del proyecto.
+set de prompts para la memoria, lista de documentación + correo al cliente, evaluador
+de encaje standalone, y guion de onboarding para la llamada con el cliente) a partir de
+los documentos oficiales de una convocatoria de ayudas públicas, mediante la API de
+Claude. Ver [CLAUDE.md](CLAUDE.md) para la arquitectura y las reglas completas — es la
+fuente de verdad del proyecto.
 
 ## Estructura de carpetas
 

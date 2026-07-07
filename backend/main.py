@@ -55,6 +55,7 @@ class LandingSeoRequest(BaseModel):
     seo_title: str
     meta_description: str
     slug: str
+    frase_clave: str = ""
 
 
 class LandingVariantRequest(BaseModel):
@@ -360,7 +361,9 @@ def _generate_output_3(
         _track=_track,
     )
     seo, body = output3_template.parse_landing_response(raw, fallback_name=conv_name)
-    html = output3_template.build_output_3_html(body, seo["slug"], variant, cfg=cfg_usado)
+    html = output3_template.build_output_3_html(
+        body, seo["slug"], variant, cfg=cfg_usado, faqs=seo.get("faqs_sugeridas")
+    )
     seo_full = {
         **seo, "body_html": body, "variant": variant, "confirmed": False,
         "incluir_evaluador": incluir_evaluador,
@@ -1295,7 +1298,7 @@ def _load_landing_seo(convocatoria_id: int) -> tuple[dict, dict]:
 def _public_seo(seo: dict) -> dict:
     """Subconjunto de la metadata de landing que se devuelve al frontend."""
     return {k: seo.get(k) for k in (
-        "seo_title", "meta_description", "slug", "variant", "confirmed",
+        "frase_clave", "seo_title", "meta_description", "slug", "variant", "confirmed",
         "h1_recomendado", "keywords_principales", "faqs_sugeridas", "incluir_evaluador",
     )}
 
@@ -1315,10 +1318,14 @@ def update_landing_seo(convocatoria_id: int, body: LandingSeoRequest):
     seo_title = body.seo_title.strip()
     meta_description = body.meta_description.strip()
     slug = output3_template.slugify(body.slug) if body.slug.strip() else seo.get("slug", "")
+    frase_clave = body.frase_clave.strip().lower() or seo.get("frase_clave", "")
 
-    new_html = output3_template.build_output_3_html(body_html, slug, variant, cfg=cfg)
+    new_html = output3_template.build_output_3_html(
+        body_html, slug, variant, cfg=cfg, faqs=seo.get("faqs_sugeridas")
+    )
     new_seo = {
         **seo,
+        "frase_clave": frase_clave,
         "seo_title": seo_title,
         "meta_description": meta_description,
         "slug": slug,
@@ -1345,7 +1352,8 @@ def update_landing_variant(convocatoria_id: int, body: LandingVariantRequest):
     cfg = _get_existing_cfg(entregables) if seo.get("incluir_evaluador") else None
 
     new_html = output3_template.build_output_3_html(
-        seo["body_html"], seo.get("slug", ""), variant, cfg=cfg
+        seo["body_html"], seo.get("slug", ""), variant, cfg=cfg,
+        faqs=seo.get("faqs_sugeridas"),
     )
     new_seo = {**seo, "variant": variant}
     db.update_entregables(convocatoria_id, {

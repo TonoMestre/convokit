@@ -175,6 +175,16 @@
   /* ── Evaluador embebido ── */
   {{WRAPPER_SELECTOR}} .bloque-evaluador { padding-top: 44px; padding-bottom: 44px; }
 
+  /* ── FAQs (sección inyectada por el backend desde faqs_sugeridas) ── */
+  {{WRAPPER_SELECTOR}} .faq-item {
+    max-width: 760px;
+    border-top: 1px solid var(--navy-10);
+    padding: 20px 0 4px;
+  }
+  {{WRAPPER_SELECTOR}} .faq-item:first-of-type { border-top: none; padding-top: 4px; }
+  {{WRAPPER_SELECTOR}} .faq-item h3 { font-size: 1.05rem; margin-bottom: 8px; }
+  {{WRAPPER_SELECTOR}} .faq-item p { font-size: 0.97rem; color: var(--navy-60); }
+
   /* ── Formulario ── */
   {{WRAPPER_SELECTOR}} .form-landing {
     max-width: 560px;

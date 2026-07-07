@@ -143,8 +143,9 @@ Claves de `entregables_json`:
 - `"2"` — markdown ficha comercial
 - `"3"` — HTML de la landing: bloque scoped bajo `#innovate-ayuda-landing-{slug}`, sin
   doctype/html/head/body, listo para pegar en un bloque "HTML personalizado" de WordPress
-- `"3_seo"` — objeto JSON: {seo_title, meta_description, slug, h1_recomendado,
-  keywords_principales, faqs_sugeridas, body_html, confirmed, variant, incluir_evaluador}
+- `"3_seo"` — objeto JSON: {frase_clave, seo_title, meta_description, slug,
+  h1_recomendado, keywords_principales, faqs_sugeridas, body_html, confirmed, variant,
+  incluir_evaluador}
 - `"3_instruccion"` — instrucción libre del usuario para la landing
 - `"6_cfg"` — objeto JSON de configuración del evaluador (ver "Salida 6"), compartido
   entre la salida 6 standalone y el evaluador embebido en la salida 3 para no generarlo
@@ -203,8 +204,8 @@ Yoast/RankMath.
 Claude devuelve la respuesta en dos bloques separados por marcadores:
 ```
 ===SEO_JSON===
-{"seo_title": ..., "meta_description": ..., "slug": ..., "h1_recomendado": ...,
- "keywords_principales": [...], "faqs_sugeridas": [...]}
+{"frase_clave": ..., "seo_title": ..., "meta_description": ..., "slug": ...,
+ "h1_recomendado": ..., "keywords_principales": [...], "faqs_sugeridas": [...]}
 ===LANDING_HTML===
 <section class="hero">...</section>
 ... (8 ó 9 secciones más, según incluya evaluador embebido)
@@ -243,7 +244,7 @@ la propia landing, en vez de (o además de) generarse como página standalone:
   pero sin el shell standalone. Si no hay `cfg` o no aparece el marcador, no hace nada.
 - `3_seo.incluir_evaluador` persiste la decisión para reflejarla en el panel al recargar.
 
-### Estructura de secciones (orden fijo: 9 sin evaluador, 10 con evaluador)
+### Estructura de secciones (orden fijo)
 1. `section.hero` — hero con gancho, H1, descriptor (.hero-sub), cuerpo, botón(es).
    Si `incluir_evaluador`, un segundo botón `.btn-outline-light` hacia `#evaluador-embebido`.
 2. `section.bloque` — beneficios (lista o grid de cards)
@@ -253,13 +254,36 @@ la propia landing, en vez de (o además de) generarse como página standalone:
 6. `section.bloque` — cómo trabajamos
 7. `section.cta.cta-primary` — CTA principal (navy)
 8. `section.cta.cta-secondary` — CTA secundario (crema)
-9. `[EVALUADOR EMBEBIDO]` — solo si `incluir_evaluador`; marcador `<!--EVALUADOR_EMBED-->`
-9/10. `section.bloque#contacto` — formulario de contacto, con checkbox de consentimiento
+9. `section.bloque` — convocatoria oficial y actualizaciones: enlace saliente a la fuente
+   oficial (SOLO URLs que consten en los documentos) + cronología fechada de hitos
+   (publicación, correcciones, adendas). Se omite entera si no hay ni URL ni hitos.
+   Es el punto natural de frescura: al regenerar tras una novedad, la cronología crece.
+10. `[FAQS]` — NO la escribe Claude: `_build_faqs_fragment` (output3_template.py) la
+   inyecta desde `3_seo.faqs_sugeridas` en cada build, con marcado Schema FAQPage
+   (JSON-LD) generado del mismo dato para que el schema coincida exactamente con el
+   contenido visible (requisito de Google). Se inserta antes del evaluador/contacto.
+11. `[EVALUADOR EMBEBIDO]` — solo si `incluir_evaluador`; marcador `<!--EVALUADOR_EMBED-->`
+12. `section.bloque#contacto` — formulario de contacto, con checkbox de consentimiento
    (`.field-check`) enlazando política de privacidad y aviso legal (ver memoria
    `evaluador-privacidad-legal`)
 
+Las variantes de color usan `nth-child(3..5)`: cualquier sección nueva debe añadirse
+DESPUÉS de la 5 para no romperlas.
+
 El H1 del hero es SOLO el nombre de la convocatoria (ej. "INPYME"). El descriptor
 va en `.hero-sub`, separado. Nunca unir nombre y descriptor con guion ni dash.
+
+### SEO orientado a frase clave (sin año)
+La landing posiciona por el NOMBRE de la ayuda, nunca por el año: la URL y el título
+sobreviven de una edición a la siguiente. `frase_clave` (máx. 4 palabras de contenido,
+sin año) es el eje: el prompt exige que el título SEO empiece por ella (≤60 chars), que
+la meta description la contenga (≤142 chars), que esté en el slug, en el primer párrafo
+del hero, en al menos un H2 y ≥2 veces más en el cuerpo. `parse_landing_response` aplica
+redes de seguridad deterministas: quita años de frase_clave/título/slug (NO de la meta,
+que puede citar hechos como "la dana de 2024") y trunca título/meta a sus topes por
+límite de palabra. El año de la edición vive en el cuerpo (sección "Convocatoria [año]")
+y en la cronología de actualizaciones. Las imágenes son paso manual en WordPress: el
+panel SEO instruye subir 1-2 imágenes con alt que incluya la frase clave.
 
 ### Reglas de diseño equilibrado
 Grids de tarjetas siempre en columnas fijas (nunca `auto-fit`, para no producir un
@@ -288,9 +312,8 @@ El prompt de salida 3 recibe el campo `modo` de la convocatoria:
 - `ANTICIPADA` — plazo no abierto aún; el copy del CTA cambia en consecuencia.
 
 ### Endpoints específicos
-- `POST /landing/seo` — confirma los campos SEO (seo_title, meta_description, slug,
-  h1_recomendado, keywords_principales, faqs_sugeridas) y los persiste en
-  `3_seo.confirmed = true`.
+- `POST /landing/seo` — confirma los campos SEO editables (frase_clave, seo_title,
+  meta_description, slug) y los persiste en `3_seo.confirmed = true`.
 - `POST /landing/variant` — cambia la variante guardada en `3_seo.variant` y
   regenera el HTML completo con la nueva clase sin volver a llamar a Claude.
 

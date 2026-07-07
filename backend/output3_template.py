@@ -24,6 +24,7 @@ evaluador (mismo motor que la salida 6, ver output6_template.build_output_6_embe
 Si `cfg` es None o el marcador no aparece, la sustitución es un no-op.
 """
 
+import html as html_lib
 import json
 import pathlib
 import re
@@ -60,6 +61,31 @@ def slugify(text: str) -> str:
     norm = norm.lower()
     norm = re.sub(r"[^a-z0-9]+", "-", norm)
     return norm.strip("-")
+
+
+_YEAR_RE = re.compile(r"\b(?:19|20)\d{2}\b")
+
+# Topes de Yoast: el prompt ya los exige, esto es la red de seguridad determinista.
+_SEO_TITLE_MAX = 60
+_META_DESCRIPTION_MAX = 142
+
+
+def _strip_years(text: str) -> str:
+    """Elimina años sueltos (1900-2099): las landing posicionan por el nombre de la
+    ayuda, no por la edición, y la URL/título deben sobrevivir de un año al siguiente."""
+    cleaned = _YEAR_RE.sub("", text or "")
+    cleaned = re.sub(r"\s+([:;,.])", r"\1", cleaned)  # sin espacio huérfano ante puntuación
+    return re.sub(r"\s{2,}", " ", cleaned).strip(" -:,")
+
+
+def _truncate_at_word(text: str, max_len: int) -> str:
+    """Recorta a max_len sin partir palabras y sin dejar puntuación colgando."""
+    text = (text or "").strip()
+    if len(text) <= max_len:
+        return text
+    cut = text[:max_len + 1]
+    cut = cut[:cut.rfind(" ")] if " " in cut else cut[:max_len]
+    return cut.rstrip(" ,;:.-")
 
 
 def _strip_fences(text: str) -> str:
@@ -107,7 +133,7 @@ def parse_landing_response(raw: str, fallback_name: str = "") -> tuple[dict, str
     - JSON con vallas markdown.
     """
     seo: dict = {
-        "seo_title": "", "meta_description": "", "slug": "",
+        "frase_clave": "", "seo_title": "", "meta_description": "", "slug": "",
         "h1_recomendado": "", "keywords_principales": [], "faqs_sugeridas": [],
     }
 
@@ -137,8 +163,11 @@ def parse_landing_response(raw: str, fallback_name: str = "") -> tuple[dict, str
     # Rellenar huecos con valores derivados del nombre de la convocatoria.
     if not seo["seo_title"]:
         seo["seo_title"] = fallback_name.strip()
+    if not seo["frase_clave"]:
+        base = _strip_years(fallback_name) or fallback_name
+        seo["frase_clave"] = f"ayudas {base}".strip().lower()
     if not seo["slug"]:
-        seo["slug"] = slugify(seo["seo_title"] or fallback_name)
+        seo["slug"] = slugify(seo["frase_clave"] or seo["seo_title"] or fallback_name)
     if not seo["meta_description"]:
         seo["meta_description"] = seo["seo_title"]
     if not seo["h1_recomendado"]:
@@ -148,7 +177,65 @@ def parse_landing_response(raw: str, fallback_name: str = "") -> tuple[dict, str
     if not isinstance(seo["faqs_sugeridas"], list):
         seo["faqs_sugeridas"] = []
 
+    # Red de seguridad determinista sobre las reglas del prompt: sin año en
+    # frase_clave/título/slug (posicionan por nombre, no por edición) y topes
+    # de longitud de Yoast (60 título / 142 meta description). La meta NO se
+    # limpia de años en código: puede contener referencias factuales legítimas
+    # ("la dana de 2024") que la regex rompería; ahí manda solo el prompt.
+    seo["frase_clave"] = _strip_years(seo["frase_clave"]).lower()
+    seo["seo_title"] = _truncate_at_word(_strip_years(seo["seo_title"]), _SEO_TITLE_MAX)
+    seo["meta_description"] = _truncate_at_word(seo["meta_description"].strip(), _META_DESCRIPTION_MAX)
+    seo["slug"] = slugify(_strip_years(seo["slug"].replace("-", " ")))
+
     return seo, _clean_body(body)
+
+
+def _build_faqs_fragment(faqs: list) -> str:
+    """
+    Sección visible de FAQs (H2 + un H3 por pregunta) + marcado Schema FAQPage
+    (JSON-LD). Se renderiza aquí, no en el prompt, para garantizar que el schema
+    coincide EXACTAMENTE con el contenido visible (requisito de Google para los
+    rich results). Devuelve cadena vacía si no hay FAQs válidas.
+    """
+    valid = [
+        f for f in (faqs or [])
+        if isinstance(f, dict) and (f.get("pregunta") or "").strip() and (f.get("respuesta") or "").strip()
+    ]
+    if not valid:
+        return ""
+
+    items_html = "".join(
+        '<div class="faq-item"><h3>{q}</h3><p>{r}</p></div>'.format(
+            q=html_lib.escape(f["pregunta"].strip()),
+            r=html_lib.escape(f["respuesta"].strip()),
+        )
+        for f in valid
+    )
+    schema = {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": f["pregunta"].strip(),
+                "acceptedAnswer": {"@type": "Answer", "text": f["respuesta"].strip()},
+            }
+            for f in valid
+        ],
+    }
+    # </ escapado para no cerrar el <script> prematuramente
+    schema_json = json.dumps(schema, ensure_ascii=False).replace("</", "<\\/")
+
+    return (
+        '<section class="bloque faqs"><div class="wrap">'
+        '<h2 class="bloque-titulo">Preguntas frecuentes</h2>'
+        f"{items_html}"
+        "</div></section>\n"
+        f'<script type="application/ld+json">{schema_json}</script>\n'
+    )
+
+
+_CONTACT_SECTION_RE = re.compile(r'<section[^>]*id="contacto"', re.IGNORECASE)
 
 
 def build_output_3_html(
@@ -156,6 +243,7 @@ def build_output_3_html(
     slug: str,
     variant: str = DEFAULT_VARIANT,
     cfg: dict | None = None,
+    faqs: list | None = None,
 ) -> str:
     """
     Envuelve el cuerpo de la landing en la plantilla estática: un bloque scoped bajo
@@ -170,6 +258,21 @@ def build_output_3_html(
     """
     variant = normalize_variant(variant)
     body = _clean_body(body_html)
+
+    # Sección de FAQs + Schema FAQPage: se inserta antes del formulario de
+    # contacto (y antes del evaluador embebido si lo hay), tras las secciones
+    # 1-8 — no altera los nth-child(3..5) de las variantes de color.
+    faqs_fragment = _build_faqs_fragment(faqs)
+    if faqs_fragment:
+        m = _CONTACT_SECTION_RE.search(body)
+        insert_at = m.start() if m else len(body)
+        if _EVALUADOR_MARKER in body:
+            insert_at = min(insert_at, body.index(_EVALUADOR_MARKER))
+            # el marcador vive dentro de su <section>; retroceder hasta abrirla
+            section_start = body.rfind("<section", 0, insert_at)
+            if section_start != -1:
+                insert_at = section_start
+        body = body[:insert_at] + faqs_fragment + body[insert_at:]
 
     if cfg is not None and _EVALUADOR_MARKER in body:
         embed_fragment = output6_template.build_output_6_embed_fragment(cfg)

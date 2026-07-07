@@ -176,6 +176,7 @@ function parseSeo(seoRaw) {
   try {
     const s = typeof seoRaw === "string" ? JSON.parse(seoRaw) : seoRaw;
     return {
+      frase_clave: s.frase_clave || "",
       seo_title: s.seo_title || "",
       meta_description: s.meta_description || "",
       slug: s.slug || "",
@@ -260,6 +261,7 @@ function SeoPanel({ seoRaw, convocatoriaId }) {
   const { API, openConvocatoria } = useApp();
   const initial = parseSeo(seoRaw);
 
+  const [fraseClave, setFraseClave] = useState(initial?.frase_clave || "");
   const [title, setTitle] = useState(initial?.seo_title || "");
   const [meta, setMeta] = useState(initial?.meta_description || "");
   const [slug, setSlug] = useState(initial?.slug || "");
@@ -272,6 +274,7 @@ function SeoPanel({ seoRaw, convocatoriaId }) {
   useEffect(() => {
     const s = parseSeo(seoRaw);
     if (s) {
+      setFraseClave(s.frase_clave);
       setTitle(s.seo_title);
       setMeta(s.meta_description);
       setSlug(s.slug);
@@ -288,7 +291,7 @@ function SeoPanel({ seoRaw, convocatoriaId }) {
       const res = await fetch(`${API}/convocatorias/${convocatoriaId}/landing/seo`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ seo_title: title, meta_description: meta, slug }),
+        body: JSON.stringify({ seo_title: title, meta_description: meta, slug, frase_clave: fraseClave }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -340,7 +343,22 @@ function SeoPanel({ seoRaw, convocatoriaId }) {
       <div className="space-y-3">
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
-            Título SEO <span className="text-gray-400">({titleLen}/60 aprox.)</span>
+            Frase clave objetivo <span className="text-gray-400">(campo &quot;frase clave&quot; de Yoast — máx. 4 palabras, sin año)</span>
+          </label>
+          <input
+            type="text"
+            value={fraseClave}
+            onChange={(e) => setFraseClave(e.target.value)}
+            className={inputCls}
+            style={inputStyle}
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            Título SEO{" "}
+            <span className={titleLen > 60 ? "text-brand-red font-semibold" : "text-gray-400"}>
+              ({titleLen}/60)
+            </span>
           </label>
           <input
             type="text"
@@ -352,7 +370,10 @@ function SeoPanel({ seoRaw, convocatoriaId }) {
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
-            Meta description <span className="text-gray-400">({metaLen}/155 aprox.)</span>
+            Meta description{" "}
+            <span className={metaLen > 142 ? "text-brand-red font-semibold" : "text-gray-400"}>
+              ({metaLen}/142)
+            </span>
           </label>
           <textarea
             value={meta}
@@ -389,6 +410,12 @@ function SeoPanel({ seoRaw, convocatoriaId }) {
         </button>
         {savedFlash && <span className="text-xs text-green-700">Guardado y aplicado al HTML.</span>}
       </div>
+
+      <p className="text-xs text-gray-500 mt-3" style={{ borderTop: "1px solid var(--color-navy-20)", paddingTop: "8px" }}>
+        <strong>Imágenes (Yoast):</strong> la landing no lleva imágenes propias. Al publicar, sube 1-2
+        imágenes a la biblioteca de WordPress e insértalas en la página con un <code>alt</code> que
+        incluya la frase clave (p. ej. «{fraseClave || "frase clave"} — maquinaria industrial»).
+      </p>
     </div>
   );
 }

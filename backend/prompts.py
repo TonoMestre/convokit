@@ -865,6 +865,12 @@ Estructura:
 
 ---
 
+### [CONVOCATORIA OFICIAL Y ACTUALIZACIONES]
+
+Sección de credibilidad y frescura: enlace a la fuente oficial (solo URLs que consten literalmente en los documentos) y cronología fechada de los hitos de la convocatoria (publicación, correcciones de errores, adendas, plazos). Es la única sección donde las fechas con año completo son protagonistas. Si los documentos no aportan ni URL ni hitos fechados, la sección se omite entera. Ver las reglas exactas en FORMATO DE SALIDA.
+
+---
+
 ### [EVALUADOR EMBEBIDO] — SOLO si INCLUIR_EVALUADOR: SI
 
 Bloque contenedor únicamente. No escribas título, texto de introducción ni preguntas: eso lo aporta el backend a partir de la configuración del evaluador. Tu única tarea es emitir el contenedor con el marcador exacto indicado en FORMATO DE SALIDA, en la posición justo anterior al formulario de contacto.
@@ -948,15 +954,25 @@ Si el usuario especifica en su instrucción un año previsto (ej. "2027") difere
 
 ## SEO
 
-La landing se inserta directamente en WordPress, sin generar metadatos en un `<head>` propio: por eso el SEO se devuelve como un objeto JSON aparte, para que el consultor lo configure a mano en Yoast/RankMath. Todos los campos van SIN AÑO — la URL debe poder reutilizarse edición tras edición sin rehacerse.
+La landing se inserta directamente en WordPress, sin generar metadatos en un `<head>` propio: por eso el SEO se devuelve como un objeto JSON aparte, para que el consultor lo configure a mano en Yoast/RankMath. Todos los campos van SIN AÑO — la URL debe poder reutilizarse edición tras edición sin rehacerse, y la página debe posicionar por el NOMBRE de la ayuda, nunca por su año.
+
+LA FRASE CLAVE ES EL EJE: primero decide la frase clave objetivo (frase_clave) y después construye título, meta description, slug y cuerpo alrededor de ella. Yoast evaluará exactamente esto.
 
 Debes decidir estos campos:
-- seo_title: nombre base de la convocatoria, orientado a búsqueda. Máximo 60 caracteres. Sin raya larga; usa dos puntos o coma como separador. Ej: "INPYME: ayudas a la pyme industrial".
-- meta_description: resumen de la ayuda (objeto, beneficiarios y porcentaje de financiación), sin año. Máximo 155 caracteres.
-- slug: versión-url del nombre base, en minúsculas, sin año, palabras separadas por guiones, sin tildes ni caracteres especiales. Ej: "inpyme-ayudas-pyme-industrial".
+- frase_clave: la frase clave objetivo de Yoast. De 2 a 4 palabras de contenido como máximo, SIN AÑO, en minúsculas. Debe ser lo que un empresario teclearía en Google para encontrar esta ayuda: normalmente "ayudas" + nombre base (ej. "ayudas inpyme"), o "ayudas" + objeto si el nombre es poco buscable (ej. "ayudas digitalización pymes"). Nunca más de 4 palabras de contenido.
+- seo_title: DEBE EMPEZAR por la frase clave exacta (o contenerla íntegra al principio). Máximo 60 caracteres CONTANDO ESPACIOS — cuenta los caracteres antes de responder. Sin año. Sin raya larga; usa dos puntos o coma como separador. Ej: "Ayudas INPYME: hasta el 40% para la pyme industrial" (frase_clave "ayudas inpyme").
+- meta_description: DEBE CONTENER la frase clave exacta. Máximo 142 caracteres CONTANDO ESPACIOS — cuenta los caracteres antes de responder. Sin año. Resume objeto, beneficiarios y porcentaje de financiación.
+- slug: DEBE CONTENER la frase clave (en versión-url). Minúsculas, sin año, palabras separadas por guiones, sin tildes ni caracteres especiales. Ej: "ayudas-inpyme".
 - h1_recomendado: el mismo texto que uses como `<h1>` en el HERO (nombre base, sin año). Se devuelve aparte porque el tema de WordPress puede usar su propio título de página en vez del `<h1>` del bloque insertado.
 - keywords_principales: array de 4 a 8 keywords o frases cortas de búsqueda, en minúsculas, derivadas del objeto de la ayuda y del perfil de beneficiario (nunca inventadas ni genéricas de otro sector).
-- faqs_sugeridas: array de 3 a 5 objetos `{"pregunta": "...", "respuesta": "..."}` con preguntas frecuentes reales sobre esta ayuda (quién puede pedirla, qué financia, plazos, cuantía). Cada respuesta debe basarse ÚNICAMENTE en los documentos aportados, con las mismas reglas de no invención que el resto de la landing; si en modo ANTICIPADA una respuesta usa datos de la edición anterior, aplica la misma regla condicional que en el resto del cuerpo.
+- faqs_sugeridas: array de 4 a 6 objetos `{"pregunta": "...", "respuesta": "..."}` con preguntas frecuentes reales sobre esta ayuda (quién puede pedirla, qué financia, plazos, cuantía). IMPORTANTE: estas FAQs se publican como sección visible de la landing (con marcado Schema FAQPage), no son solo sugerencias. Cada respuesta: 30-60 palabras, autoconclusiva, basada ÚNICAMENTE en los documentos aportados, con las mismas reglas de no invención que el resto de la landing. Al menos una pregunta debe contener la frase clave o un sinónimo directo. Si en modo ANTICIPADA una respuesta usa datos de la edición anterior, aplica la misma regla condicional que en el resto del cuerpo.
+
+## FRASE CLAVE EN EL CUERPO
+
+Para que la página posicione, la frase clave debe aparecer de forma natural en el cuerpo de la landing (Yoast lo mide):
+- En el PRIMER párrafo visible del hero (hero-sub o hero-body): la frase clave exacta o una variante muy próxima.
+- En al menos UN `<h2>` de sección (ej. "Qué consigues con las ayudas INPYME"): la frase clave o un sinónimo directo.
+- Al menos DOS apariciones más de la frase clave (o variantes próximas) repartidas por el texto del cuerpo, siempre con naturalidad: nunca la fuerces hasta sonar robótica ni la repitas en cada párrafo.
 
 ---
 
@@ -966,7 +982,7 @@ Devuelve la respuesta en DOS partes separadas por marcadores literales. Sin text
 
 Primero el bloque SEO, exactamente así:
 ===SEO_JSON===
-{"seo_title": "...", "meta_description": "...", "slug": "...", "h1_recomendado": "...", "keywords_principales": ["...", "..."], "faqs_sugeridas": [{"pregunta": "...", "respuesta": "..."}]}
+{"frase_clave": "...", "seo_title": "...", "meta_description": "...", "slug": "...", "h1_recomendado": "...", "keywords_principales": ["...", "..."], "faqs_sugeridas": [{"pregunta": "...", "respuesta": "..."}]}
 ===LANDING_HTML===
 
 Y a continuación, el cuerpo HTML de la landing (las secciones de contenido).
@@ -975,7 +991,7 @@ Para el cuerpo HTML: NO incluyas <!DOCTYPE>, <html>, <head>, <title>, <meta>, <s
 NO escribas CSS, atributos style="..." ni clases de color/fondo. Usa exclusivamente las clases documentadas al final.
 Si incluyes alguna <img>, añade siempre un atributo alt descriptivo.
 
-Estructura HTML obligatoria (9 bloques si INCLUIR_EVALUADOR: NO, 10 bloques si INCLUIR_EVALUADOR: SI, siempre en este orden):
+Estructura HTML obligatoria, siempre en este orden (el bloque 9 solo si hay datos para él; el bloque 10 solo si INCLUIR_EVALUADOR: SI; la sección de FAQs NO la escribes tú — la inyecta el backend a partir de faqs_sugeridas justo antes del formulario):
 
 1. HERO — sección de apertura.
    REGLA ESTRUCTURAL: el H1 contiene SOLO el nombre base de la convocatoria. El descriptor
@@ -1037,12 +1053,27 @@ Estructura HTML obligatoria (9 bloques si INCLUIR_EVALUADOR: NO, 10 bloques si I
   <a class="btn btn-outline" href="#contacto">Cuéntanos tu situación</a>
 </section>
 
-9. EVALUADOR EMBEBIDO — SOLO si INCLUIR_EVALUADOR: SI. Usa EXACTAMENTE este contenedor, con el marcador literal `<!--EVALUADOR_EMBED-->` como único contenido (el backend lo sustituye por el evaluador completo; no escribas nada más dentro):
+9. CONVOCATORIA OFICIAL Y ACTUALIZACIONES — enlace a la fuente oficial y cronología fechada de la convocatoria:
+<section class="bloque"><div class="wrap">
+  <h2 class="bloque-titulo">Convocatoria oficial y actualizaciones</h2>
+  <p>Consulta la <a href="URL_OFICIAL" target="_blank" rel="noopener">publicación oficial de la convocatoria</a> en la web del organismo.</p>
+  <ul class="lista">
+    <li><strong>12 de mayo de 2026.</strong> Publicación de la convocatoria en el DOGV.</li>
+    <li><strong>3 de junio de 2026.</strong> Corrección de errores del anexo II.</li>
+  </ul>
+</div></section>
+   REGLAS DE ESTE BLOQUE (no invención estricta):
+   - El enlace SOLO si una URL oficial (sede electrónica, trámite telemático, página del organismo, publicación en DOGV/BOE) consta LITERALMENTE en los documentos aportados. Si no consta ninguna URL, omite el párrafo del enlace y deja solo la lista.
+   - Los hitos de la lista SOLO si constan con fecha en los documentos: publicación de la convocatoria, correcciones de errores, adendas, apertura y cierre del plazo. Escríbelos en orden cronológico. Aquí SÍ van fechas y año completos: es la cronología de la edición.
+   - Si no consta ni URL ni ningún hito fechado, OMITE la sección entera.
+   Este bloque da a la página un enlace saliente oficial y un punto natural de actualización cuando la convocatoria cambia (nueva corrección, nueva adenda): al regenerar, la cronología crece y la página cambia de verdad.
+
+10. EVALUADOR EMBEBIDO — SOLO si INCLUIR_EVALUADOR: SI. Usa EXACTAMENTE este contenedor, con el marcador literal `<!--EVALUADOR_EMBED-->` como único contenido (el backend lo sustituye por el evaluador completo; no escribas nada más dentro):
 <section class="bloque bloque-evaluador" id="evaluador-embebido"><div class="wrap">
 <!--EVALUADOR_EMBED-->
 </div></section>
 
-10. FORMULARIO — usa EXACTAMENTE esta estructura (es Web3Forms, funciona sin JS al desplegarse). Sustituye NOMBRE_CONVOCATORIA por el nombre base y el texto del botón por la frase del CTA primario:
+11. FORMULARIO — usa EXACTAMENTE esta estructura (es Web3Forms, funciona sin JS al desplegarse). Sustituye NOMBRE_CONVOCATORIA por el nombre base y el texto del botón por la frase del CTA primario:
 <section class="bloque" id="contacto"><div class="wrap">
   <h2 class="bloque-titulo">Quiero que revisen mi caso</h2>
   <form class="form-landing" action="https://api.web3forms.com/submit" method="POST">

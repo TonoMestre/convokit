@@ -442,6 +442,11 @@ function SeoPanel({ seoRaw, convocatoriaId }) {
           El texto alt viene sugerido a partir de la frase clave — revísalo o cámbialo por algo más
           descriptivo de cada imagen antes de guardar.
         </p>
+        <p className="text-xs text-gray-400 mb-3">
+          Tamaño recomendado: <strong>1600×900 px</strong> (horizontal, 16:9), formato JPG o WEBP,
+          menos de 300 KB. El bloque las muestra a un ancho máximo de ~870 px; súbelas más grandes
+          para que se vean nítidas en pantallas retina, pero comprimidas para no ralentizar la página.
+        </p>
         <div className="space-y-3">
           {imagenes.map((img, idx) => (
             <div key={idx} className="grid grid-cols-2 gap-2">

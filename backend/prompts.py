@@ -45,22 +45,34 @@ El objetivo es que el texto resulte indistinguible del que escribiría una perso
 # Prompts auxiliares usados en la generación multi-llamada de la salida 4.
 # No son salidas finales: los usa internamente el endpoint /generate.
 #
-# Contrato de exportación de la salida 4 (4_json): versión 2.0, ver
+# Contrato de exportación de la salida 4 (4_json): versión 2.5, ver
 # docs/contrato-convokit.md. La raíz es un objeto {version_esquema,
-# convocatoria, campos_empresa, apartados, datos_aplicativo}, no un array.
+# convocatoria, campos_empresa, campos_proyecto, apartados, tres_ofertas,
+# parametros_convocatoria, documentos_convocatoria, datos_aplicativo}, no un array.
 # Pipeline (orquestado en main.py, _generate_output_4):
 #   1. SECTION_EXTRACTOR_PROMPT       -> metadatos de convocatoria + lista de secciones
 #   2. SECTION_PROMPT_SYSTEM          -> markdown de cada apartado (una llamada por apartado;
-#      con reintento si el markdown contiene placeholders de "pega aquí")
+#      con reintento si el markdown contiene placeholders de "pega aquí").
+#      Recibe el índice completo de apartados (regla 16: los apartados de resumen no
+#      desarrollan bloques que otro apartado desarrolla en detalle) y el registro de
+#      datos ya pedidos en apartados anteriores (contrato v2.5: la duplicación nace
+#      en la redacción del md, no solo en la conversión).
 #   3. OUTPUT_4_JSON_EXTRACTOR        -> JSON tipado de ese apartado, incluido contexto_evaluador
-#      (una llamada por apartado, con reintento si falla — nunca se descarta en silencio)
+#      (una llamada por apartado, con reintento si falla — nunca se descarta en silencio).
+#      Recibe el mismo registro para reutilizar el id de un dato ya pedido en vez de
+#      inventar uno nuevo por apartado.
 #   4. OUTPUT_4_CAMPOS_EMPRESA_CONSOLIDATOR -> dedup del catálogo de datos de empresa
 #   5. OUTPUT_4_FICHA_EXTRACTOR       -> parametros_convocatoria + tres_ofertas +
 #      datos_aplicativo + documentos_convocatoria
 #      (una sola llamada: el test decisivo parametro-vs-dato se aplica dato a dato;
-#      separados, el extractor de datos_aplicativo volcaba constantes de las bases)
+#      separados, el extractor de datos_aplicativo volcaba constantes de las bases).
+#      Recibe también los datos de proyecto ya pedidos en apartados y tiene prohibido
+#      emitir dos entradas de datos_aplicativo para el mismo dato.
 #   6. OUTPUT_4_CAMPOS_PROYECTO_CONSOLIDATOR -> dedup de datos de proyecto repetidos
-#      entre apartados o entre un apartado y el formulario (campos_proyecto)
+#      entre apartados, entre un apartado y el formulario, o DENTRO del propio
+#      datos_aplicativo (campos_proyecto). Paso obligatorio siempre, aunque el md
+#      llegue limpio: el conversor puede introducir duplicados nuevos (caso real
+#      S3-CV en INNOVA-CV: un dato pedido una vez en el md salió triplicado).
 # Antes de devolver el resultado, _generate_output_4 verifica que ningún código de
 # sección se haya perdido y que el root cumpla el contenido mínimo del contrato
 # (convocatoria.nombre y al menos un apartado); si no, detiene la generación con un
@@ -298,6 +310,12 @@ Evita dos errores recurrentes:
 Si este apartado agrupa contenido que el baremo reparte entre varios criterios, indícalo con el desglose explícito (por ejemplo: "este apartado cubre 30 puntos = 18 de [criterio X] + 12 de [criterio Y]").
 Si este apartado puede redactarse tanto de forma integrada como criterio por criterio, incluye al inicio una nota de uso que explique al consultor cuándo conviene cada opción, para que no duplique trabajo ni deje subapartados sin cubrir.
 
+REGLA DE NO REPETICIÓN DE DATOS (contrato v2.5 — la duplicación nace en la redacción, no solo en la conversión):
+El mensaje puede incluir un bloque "DATOS YA PEDIDOS EN APARTADOS ANTERIORES" con el registro de datos que otros apartados de esta misma memoria ya han solicitado al consultor. Antes de redactar "QUÉ DEBES APORTAR ANTES DE GENERAR", contrasta cada ítem contra ese registro. Si este apartado necesita un dato que ya figura en él (casos reales: auditor + número ROAC pedido en presupuesto detallado y otra vez en presupuesto resumen; autocartera/socios/administradores pedidos en presentación de empresa y repetidos íntegros como apartado propio; ofertas comparativas de proveedores pedidas en detalle y en resumen), NO vuelvas a redactar la petición desde cero: inclúyelo en la sublista que corresponda usando EXACTAMENTE el mismo texto (label) de la primera aparición y añade al final " — mismo dato ya pedido en el apartado [código]". Así queda marcado como el mismo dato subyacente y la conversión a JSON lo unificará bajo un único identificador. Nunca lo omitas del todo (este apartado también lo necesita) y nunca lo reformules con otras palabras (impediría unificarlo).
+
+REGLA DE APARTADOS DE RESUMEN (regla 16 del contrato v2.5):
+El mensaje incluye el ÍNDICE COMPLETO de apartados de esta memoria. Si el apartado que estás redactando funciona como resumen o presentación (típicamente sin puntuación propia) y alguno de sus bloques de contenido lo desarrolla en mucho más detalle —y normalmente con puntuación propia— otro apartado del índice (caso real: un apartado de presentación incluía "impacto económico" y "alineación con el Pacto Verde Europeo", y ambos volvían a aparecer como apartados independientes puntuados), NO desarrolles ese bloque aquí: indica en el texto, como nota breve al consultor, que ese contenido se trabaja en el apartado [código] correspondiente, y limita "QUÉ DEBES APORTAR" y la INSTRUCCIÓN A CLAUDE al contenido que no se repite en ningún otro apartado del índice. Detecta esta situación por CONTENIDO (títulos y temas de los apartados del índice), no por numeración: estos apartados no comparten prefijo de código, así que la regla de apartados hoja no los cubre.
+
 FORMATO DE SALIDA:
 Devuelve ÚNICAMENTE el bloque markdown de esta sección. Sin texto antes ni después. Sin bloque de código externo que envuelva todo el contenido. No devuelvas JSON.
 
@@ -450,6 +468,7 @@ Reglas de extracción:
   - Los tipos "rentabilidad" e "inversion" nunca llevan "tipo": "documento": ese dato nunca es un archivo a adjuntar, así que tampoco debe aparecer en "documentos_requeridos".
 - "documentos_requeridos": SOLO los inputs de tipo "documento" de arriba, con {"nombre": label del input, "fuente": "cliente"}. Usa "fuente": "generado" únicamente cuando el propio texto indique que el documento lo genera o rellena Innóvate 4.0 a partir de datos ya disponibles, no el cliente.
 - "prompt": string con el texto completo dentro del bloque de código de "INSTRUCCIÓN A CLAUDE", sin los backticks. Si no hay bloque de código, string vacío.
+- REGISTRO DE DATOS YA PEDIDOS (contrato v2.5): tras el markdown puede llegar un bloque "REGISTRO DE DATOS YA PEDIDOS EN APARTADOS ANTERIORES" con los inputs que otros apartados de esta memoria ya han generado ({"id", "label", "tipo"}). Si un ítem de este apartado es el mismo dato que una entrada del registro —el propio ítem puede marcarlo con "mismo dato ya pedido en el apartado X", pero aplica también la comparación semántica aunque no lleve la marca—, usa EXACTAMENTE el "id" del registro para ese input (y, si es "tipo": "dato_empresa", el mismo "ref_campo_empresa") en vez de inventar uno nuevo. No copies la coletilla "— mismo dato ya pedido en el apartado X" dentro del "label": el label queda limpio, igual al de la primera aparición. La consolidación posterior unifica por id, así que reutilizar el id es lo que evita que el consultor teclee el mismo dato dos veces.
 - IDS SOLO ASCII: todos los "id" y "ref_campo_empresa" en kebab-case sin acentos, eñes ni caracteres no ASCII ("experiencia-minima-anios", nunca "experiencia-minima-años").
 - LABELS SIN CIFRAS DE LAS BASES: un "label" nunca lleva topes o límites incrustados entre paréntesis ("(máximo 70%)", "(hasta 15.000 euros)"). Si el límite aporta contexto útil al consultor, va en "ayuda", nunca en "label"."""
 
@@ -534,6 +553,8 @@ Solo datos que EL CONSULTOR TECLEA POR EXPEDIENTE en el formulario telemático y
 3. NO DUPLIQUES datos ya cubiertos como "campos_empresa" de la memoria (lista proporcionada tras los documentos). Si un dato aparece tanto en la memoria narrativa como en el formulario, NO lo repitas aquí.
 4. PROHIBIDO incrustar cifras de las bases en los "label" (ej. "Porcentaje de subvención solicitado (máximo 70%)"). Si hay un tope, ese tope es su propio parámetro en la parte 1 y el label queda limpio ("Porcentaje de subvención solicitado").
 5. REGLA ABSOLUTA — NO INVENCIÓN: solo datos que los documentos mencionen explícitamente como exigidos al solicitante.
+6. SIN DUPLICADOS INTERNOS (contrato v2.5): nunca emitas dos o más entradas de "datos_aplicativo" para el mismo dato subyacente, aunque los documentos lo mencionen en varios sitios o con palabras distintas. Caso real: un dato pedido una sola vez en la memoria salió TRIPLICADO en datos_aplicativo. Cada dato del formulario aparece aquí UNA vez como máximo.
+7. DATOS YA PEDIDOS EN LA MEMORIA: tras los documentos puede llegar la lista de datos específicos de proyecto que los apartados de la memoria ya piden al consultor. Si el formulario telemático también exige alguno de ellos, inclúyelo aquí UNA sola vez (una consolidación posterior lo unificará con el apartado mediante campos_proyecto); si el formulario no lo pide, no lo añadas.
 
 Esquema de cada elemento:
 {
@@ -579,7 +600,7 @@ Devuelve ÚNICAMENTE un objeto JSON válido, sin texto adicional, sin bloques de
 
 - "umbral": importe en euros como número (nunca string). Si la convocatoria no exige tres ofertas en ningún caso: "umbral": null.
 
-AUTORREVISIÓN antes de responder: recorre tu lista de "datos_aplicativo" una vez más y pregunta, por cada entrada, "¿el valor de esto ya está escrito en las bases?". Si la respuesta es sí, muévela a "parametros_convocatoria" con su valor. Este error se ha cometido dos veces; no lo repitas. Repasa también los documentos en busca de exigencias documentales que apliquen a CUALQUIER solicitud (no solo a un apartado): si encuentras alguna y no está en "documentos_convocatoria", añádela."""
+AUTORREVISIÓN antes de responder: recorre tu lista de "datos_aplicativo" una vez más y pregunta, por cada entrada, "¿el valor de esto ya está escrito en las bases?". Si la respuesta es sí, muévela a "parametros_convocatoria" con su valor. Este error se ha cometido dos veces; no lo repitas. Después recorre la lista una segunda vez buscando dos entradas que pidan el mismo dato con palabras distintas: si las hay, fusiónalas en una (regla 6). Repasa también los documentos en busca de exigencias documentales que apliquen a CUALQUIER solicitud (no solo a un apartado): si encuentras alguna y no está en "documentos_convocatoria", añádela."""
 
 
 OUTPUT_4_CAMPOS_PROYECTO_CONSOLIDATOR = """Eres un consolidador de datos de proyecto para convocatorias de ayudas públicas.
@@ -588,15 +609,19 @@ Recibirás un objeto JSON con dos listas:
 - "inputs_texto_libre": todos los inputs de texto libre de todos los apartados de la memoria, con la forma {"codigo_apartado", "id_input", "label", "ayuda"}.
 - "datos_aplicativo": los datos del formulario telemático, con la forma {"id", "label", "tipo_dato", "opciones"?}.
 
-Tu tarea: identificar los datos DE PROYECTO que se piden en MÁS DE UN sitio de la misma convocatoria — en dos o más apartados, o en un apartado y también en el formulario — aunque cada aparición use palabras o ids distintos. Cada dato repetido se convierte en UNA entrada del catálogo "campos_proyecto", y todas sus apariciones se remapean a ese id único, para que el consultor lo rellene una sola vez.
+Tu tarea: identificar los datos DE PROYECTO que se piden en MÁS DE UN sitio de la misma convocatoria — en dos o más apartados, en un apartado y también en el formulario, o repetidos dentro del propio "datos_aplicativo" — aunque cada aparición use palabras o ids distintos. Cada dato repetido se convierte en UNA entrada del catálogo "campos_proyecto", y todas sus apariciones se remapean a ese id único, para que el consultor lo rellene una sola vez.
+
+Esta deduplicación es OBLIGATORIA SIEMPRE, aunque la entrada parezca ya limpia: no asumas que los pasos anteriores han deduplicado nada. Caso real (contrato v2.5): un dato pedido una sola vez en la memoria llegó TRIPLICADO en datos_aplicativo — el duplicado puede nacer en cualquier paso, y este es el último filtro con IA antes de entregar.
 
 REGLAS:
 - Solo datos pedidos en 2 o más sitios. Lo que aparece una sola vez NO va al catálogo (se queda como estaba).
+- Dos inputs de apartados distintos con EL MISMO "id_input" son siempre el mismo dato (el pipeline reutiliza ids a propósito para marcar repeticiones): consolídalos sin más análisis.
 - Son datos específicos de este expediente (no reutilizables con otro cliente). Los datos generales de empresa ya se deduplican por otro mecanismo; no los toques aquí.
 - Si una de las apariciones es una "seleccion" con lista cerrada de opciones, recoge esa lista dentro de la "descripcion" del campo del catálogo (ej. "Uno de los doce sectores listados en las bases: ...").
 - "descripcion" debe indicar en qué sitios se usa el dato (ej. "Se usa en C.1, C.2 y en el formulario telemático").
 - No inventes datos ni agrupes conceptos genuinamente distintos solo porque se parezcan superficialmente.
 - Ids en kebab-case solo ASCII.
+- DUPLICADOS SOLO DENTRO DE "datos_aplicativo": si dos o más entradas del formulario piden el mismo dato pero ese dato NO aparece en ningún apartado, no hace falta catálogo — decláralas en "duplicados_datos_aplicativo" indicando cuál conservar y cuáles eliminar.
 
 Devuelve ÚNICAMENTE un objeto JSON válido, sin texto adicional, sin bloques de código markdown:
 
@@ -610,13 +635,17 @@ Devuelve ÚNICAMENTE un objeto JSON válido, sin texto adicional, sin bloques de
   ],
   "remapeo_datos_aplicativo": [
     {"id": "sector-actividad-auge", "id_final": "sector-auge"}
+  ],
+  "duplicados_datos_aplicativo": [
+    {"conservar": "entorno-inversion", "eliminar": ["entorno-proyecto", "descripcion-entorno"]}
   ]
 }
 
 - "formato": "texto" para datos descriptivos, "numero" para una cifra única, "tabla_historica" para series de varios ejercicios.
 - "remapeo_inputs" y "remapeo_datos_aplicativo" solo contienen las apariciones de datos que SÍ se consolidan; el resto de inputs y datos no aparecen en la respuesta.
+- "duplicados_datos_aplicativo": solo para duplicados internos del formulario cuyo dato no aparece en ningún apartado (ver regla de arriba). "conservar" y "eliminar" son ids de "datos_aplicativo"; la entrada conservada se queda como está.
 
-Si no hay ningún dato de proyecto repetido: {"campos_proyecto": [], "remapeo_inputs": [], "remapeo_datos_aplicativo": []}"""
+Si no hay ningún dato de proyecto repetido: {"campos_proyecto": [], "remapeo_inputs": [], "remapeo_datos_aplicativo": [], "duplicados_datos_aplicativo": []}"""
 
 
 SYSTEM_PROMPTS: dict[int, str] = {

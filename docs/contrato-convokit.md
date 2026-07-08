@@ -1,7 +1,25 @@
 # Contrato de salida ConvoKit → MemorAI (Salida 4)
 
-Versión propuesta: `2.4` · Julio 2026
+Versión propuesta: `2.5` · Julio 2026
 
+> Cambios 2.4 → 2.5, tras comparar los md internos de ConvoKit con su JSON
+> para dos convocatorias distintas (DIGITALIZA-CV e INNOVA-CV/INNOVATeiC-CV):
+> la mayoría de los datos que debían ir en `campos_proyecto` no se duplican
+> en la conversión md → JSON, sino que **ya se piden dos o más veces en el
+> propio md**, apartado a apartado (ejemplos reales: auditor + ROAC pedido
+> en dos apartados distintos en ambas convocatorias; autocartera/socios/
+> administradores pedidos en un apartado y repetidos íntegros en otro;
+> Pacto Verde Europeo pedido hasta tres veces). Se añade una nota explícita
+> exigiendo ese control también en la fase de redacción del md, no solo en
+> la conversión. Además, se detectó un patrón nuevo — un apartado de
+> resumen cuyos bloques de contenido se vuelven a redactar, en detalle y
+> puntuados, en varios apartados posteriores — que no encajaba en ninguna
+> regla existente; se añade la regla 16 y el checklist punto 14 para
+> cubrirlo. Por último, se confirmó con un caso real (S3-CV en INNOVA-CV)
+> que el conversor también puede introducir duplicados aunque el md de
+> origen llegue limpio, así que la deduplicación en la conversión sigue
+> siendo obligatoria con independencia del estado del md de entrada.
+>
 > Cambios 2.3 → 2.4, tras comparar el md interno de ConvoKit con su JSON
 > para la misma convocatoria (INNOVA-CV): el md contiene un bloque "QUÉ
 > BUSCA EL EVALUADOR" por apartado que se perdía íntegro en la conversión.
@@ -76,20 +94,21 @@ Todo eso es información que ConvoKit ya tiene al generar el apartado.
 ## Ámbito: cualquier convocatoria
 
 Este contrato es **agnóstico del tipo de ayuda**. Los ejemplos que aparecen
-(inversión industrial, INPYME, EMPYME, INNOVA-CV/INNOVATeiC-CV...) son
-ilustrativos, no plantilla: cada uno documenta un fallo real detectado en un
-JSON concreto para explicar el porqué de una regla, pero la regla en sí debe
-leerse en genérico y aplicarse igual a una convocatoria de I+D+i, de empleo,
-de internacionalización o de cualquier otro tipo, aunque no se haya visto
-un ejemplo real de ese tipo todavía. Ningún nombre de campo, id sugerido ni
-número citado en un "caso real" es obligatorio replicarlo tal cual en otra
-convocatoria: lo obligatorio es el mecanismo (usar el mismo id cuando el
-dato se repite, mover constantes a `parametros_convocatoria`, contrastar el
-índice de apartados contra la memoria oficial...), no el ejemplo concreto.
-Los tipos de input y los flags reflejan la estructura de MemorAI (perfil de
-empresa reutilizable, cuenta justificativa, cálculo de rentabilidad), no la
-de ninguna convocatoria concreta. Para convocatorias que no encajen en algún
-concepto, el contrato prevé escape explícito:
+(inversión industrial, INPYME, EMPYME, INNOVA-CV/INNOVATeiC-CV,
+DIGITALIZA-CV...) son ilustrativos, no plantilla: cada uno documenta un
+fallo real detectado en un JSON concreto para explicar el porqué de una
+regla, pero la regla en sí debe leerse en genérico y aplicarse igual a una
+convocatoria de I+D+i, de empleo, de internacionalización o de cualquier
+otro tipo, aunque no se haya visto un ejemplo real de ese tipo todavía.
+Ningún nombre de campo, id sugerido ni número citado en un "caso real" es
+obligatorio replicarlo tal cual en otra convocatoria: lo obligatorio es el
+mecanismo (usar el mismo id cuando el dato se repite, mover constantes a
+`parametros_convocatoria`, contrastar el índice de apartados contra la
+memoria oficial, no repetir bloques de contenido entre apartados...), no el
+ejemplo concreto. Los tipos de input y los flags reflejan la estructura de
+MemorAI (perfil de empresa reutilizable, cuenta justificativa, cálculo de
+rentabilidad), no la de ninguna convocatoria concreta. Para convocatorias
+que no encajen en algún concepto, el contrato prevé escape explícito:
 
 - Sin baremo por puntos → `puntos_max: null`.
 - Sin distinción mínimo/completo → todos los inputs con `nivel: "minimo"`.
@@ -206,6 +225,27 @@ consultor habría tenido que teclear el mismo dato tres veces.
   convocatoria: eso sigue siendo un input `texto_libre` normal dentro del
   apartado, o una entrada normal de `datos_aplicativo`.
 
+### El origen de la duplicación no está solo en la conversión a JSON
+
+Comprobado con dos convocatorias distintas: la mayoría de los casos en que
+`campos_proyecto` debía usarse y no se usó no son un fallo del paso de
+conversión md → JSON, sino que **el propio md ya pide el mismo dato o el
+mismo bloque de contenido en más de un apartado**, antes de que exista
+ningún JSON. Esto significa que la corrección no puede limitarse al
+conversor: durante la redacción del md, apartado a apartado, ConvoKit debe
+mantener un registro por convocatoria de qué datos y qué bloques de
+contenido ya se han pedido en un apartado anterior, y contrastarlo antes de
+redactar el siguiente. Si un apartado posterior pide un dato ya registrado,
+no debe volver a pedirlo desde cero: debe quedar marcado como el mismo dato
+subyacente para que la conversión a JSON lo unifique con un único `id`.
+
+Dicho esto, la deduplicación en la conversión a JSON sigue siendo
+obligatoria en todo caso, incluso cuando el md de origen ya llega sin
+duplicados: un conversor que no aplique activamente esta regla puede
+introducir duplicados nuevos que no estaban en el md (caso real: un dato
+pedido una sola vez en el md apareció triplicado en `datos_aplicativo` del
+JSON).
+
 ## Apartados (`apartados[]`)
 
 ```json
@@ -321,6 +361,19 @@ consultor habría tenido que teclear el mismo dato tres veces.
     descartarse. MemorAI lo muestra al consultor como guía junto a la
     sección; **no** se envía a Claude (lo que Claude necesita saber del
     evaluador debe estar en el `prompt`).
+16. **Un apartado de resumen o presentación no debe duplicar en bloque el
+    contenido de apartados posteriores que lo desarrollan en detalle y con
+    su propia puntuación.** Caso real: un apartado sin puntuación propia
+    incluía, entre otros, un bloque de "impacto económico" y un bloque de
+    "alineación con el Pacto Verde Europeo"; ambos volvían a aparecer,
+    desarrollados en mucho más detalle y puntuados, como apartados
+    independientes más adelante en la misma memoria. El apartado de resumen
+    debe emitirse **sin los bloques que un apartado posterior desarrolla ya
+    en detalle** — conservando solo el contenido que no se repite en
+    ningún otro sitio — en vez de pedir la misma redacción dos veces. No es
+    el mismo caso que la regla 1bis (bloque padre + hijos con numeración
+    jerárquica compartida): aquí los apartados no comparten prefijo de
+    código, así que hay que detectarlo por contenido, no por numeración.
 
 ## Distinción memoria vs. formulario/aplicativo (crítico)
 
@@ -585,6 +638,12 @@ anterior — repetirlo significa que el JSON se devuelve.
 13. **Contenido mínimo**: ¿`convocatoria.nombre` informado y `apartados[]`
     con al menos una entrada? Si no, algo ha fallado en la extracción:
     detenerse y reportar la causa, nunca entregar el esqueleto vacío.
+14. **¿Algún apartado sin puntuación propia funciona como resumen y
+    contiene bloques que luego se redactan en detalle, con su propia
+    puntuación, en uno o varios apartados posteriores?** → retirar del
+    apartado de resumen los bloques que se repiten en otro sitio (regla
+    16). Este contraste hay que hacerlo por contenido, no solo por
+    numeración: no lo detecta el mismo chequeo que el punto 1.
 
 ## Validación
 

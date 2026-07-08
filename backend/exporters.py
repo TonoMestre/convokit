@@ -6,10 +6,10 @@ devolverlos al frontend para su descarga.
 
 Esquemas:
 
-  Salida 4 — contrato de exportación v2.4 (docs/contrato-convokit.md).
+  Salida 4 — contrato de exportación v2.5 (docs/contrato-convokit.md).
   La raíz es un OBJETO, no un array:
     {
-      "version_esquema": "2.4",
+      "version_esquema": "2.5",
       "convocatoria": {"nombre", "anio", "organismo", "tipo_ayuda", "fecha_generacion"},
       "campos_empresa": [{"id", "nombre", "descripcion", "formato", ...}],
       "campos_proyecto": [{"id", "nombre", "descripcion", "formato", ...}],
@@ -310,11 +310,13 @@ def _dedupe_codigos(apartados: list[dict]) -> None:
 
 def export_output_4(raw_json: str | None) -> dict:
     """
-    Normaliza y devuelve el objeto raíz de la salida 4 (contrato v2.4).
+    Normaliza y devuelve el objeto raíz de la salida 4 (contrato v2.5).
     Garantiza vocabularios cerrados, ids solo ASCII, apartados solo hoja,
     labels sin cifras de las bases incrustadas, descarta placeholders de la
     lista negra, elimina referencias huérfanas a campos_empresa y
-    campos_proyecto, y deduplica datos_aplicativo contra ambos catálogos.
+    campos_proyecto, deduplica datos_aplicativo contra ambos catálogos y
+    colapsa sus duplicados internos (dos entradas con el mismo id, o dos
+    referencias al mismo campo del catálogo — contrato v2.5, corrección 3).
     """
     data = _parse(raw_json, {})
     if not isinstance(data, dict):
@@ -361,6 +363,28 @@ def export_output_4(raw_json: str | None) -> dict:
         if n and n.get("id") not in campo_ids
     ]
 
+    # Contrato v2.5, corrección 3 (red de seguridad determinista): colapsar
+    # duplicados internos de datos_aplicativo — dos entradas con el mismo id,
+    # o dos referencias al mismo campo del catálogo (el caso real S3-CV llegó
+    # triplicado). Se conserva la primera aparición con el obligatorio más
+    # restrictivo.
+    seen_ids: dict[str, dict] = {}
+    seen_refs: dict[str, dict] = {}
+    deduped: list[dict] = []
+    for dato in datos_aplicativo:
+        ref = dato.get("ref_campo_proyecto")
+        key_map = seen_refs if ref else seen_ids
+        key = ref or dato.get("id")
+        if key and key in key_map:
+            key_map[key]["obligatorio"] = (
+                key_map[key].get("obligatorio", False) or dato.get("obligatorio", False)
+            )
+            continue
+        if key:
+            key_map[key] = dato
+        deduped.append(dato)
+    datos_aplicativo = deduped
+
     parametros_convocatoria = [
         n for n in (_normalize_parametro(x) for x in (data.get("parametros_convocatoria") or [])) if n
     ]
@@ -372,7 +396,7 @@ def export_output_4(raw_json: str | None) -> dict:
     ]
 
     return {
-        "version_esquema": "2.4",
+        "version_esquema": "2.5",
         "convocatoria": convocatoria,
         "campos_empresa": campos_empresa,
         "campos_proyecto": campos_proyecto,

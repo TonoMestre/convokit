@@ -152,7 +152,7 @@ Claves de `entregables_json`:
   entre la salida 6 standalone y el evaluador embebido en la salida 3 para no generarlo
   (ni redactar sus preguntas) dos veces
 - `"4"` — markdown set de prompts
-- `"4_json"` — objeto JSON, contrato de exportación v2.4 (ver docs/contrato-convokit.md
+- `"4_json"` — objeto JSON, contrato de exportación v2.5 (ver docs/contrato-convokit.md
   y la sección "Salida 4" más abajo). No es un array: la raíz es
   `{version_esquema, convocatoria, campos_empresa, campos_proyecto, apartados,
   tres_ofertas, parametros_convocatoria, documentos_convocatoria, datos_aplicativo}`.
@@ -451,15 +451,15 @@ lo ya persistido en BD con lo generado en el mismo lote (`{**entregables_persist
 Sin `"7_json"`: a diferencia de las salidas 4 y 5, esta no alimenta la App de Memorias.
 Es un documento de trabajo para el consultor, no un contrato de datos.
 
-## Salida 4 — Set de prompts (arquitectura multi-llamada, contrato v2.4)
+## Salida 4 — Set de prompts (arquitectura multi-llamada, contrato v2.5)
 
 El JSON de exportación de la salida 4 (`4_json`) sigue el contrato `docs/contrato-convokit.md`
-(versión `2.4`), pensado para que la App de Memorias lo importe sin post-proceso de IA ni
+(versión `2.5`), pensado para que la App de Memorias lo importe sin post-proceso de IA ni
 revisión manual. La raíz es un OBJETO, no un array:
 
 ```json
 {
-  "version_esquema": "2.4",
+  "version_esquema": "2.5",
   "convocatoria": {"nombre", "anio", "organismo", "tipo_ayuda", "fecha_generacion"},
   "campos_empresa": [{"id", "nombre", "descripcion", "formato"}],
   "campos_proyecto": [{"id", "nombre", "descripcion", "formato"}],
@@ -477,6 +477,46 @@ revisión manual. La raíz es un OBJETO, no un array:
                        | {"ref_campo_proyecto", "obligatorio"}]
 }
 ```
+
+Reglas clave del v2.5, tras comparar los md internos contra su JSON en dos convocatorias
+distintas (DIGITALIZA-CV e INNOVA-CV/INNOVATeiC-CV):
+
+- **La duplicación nace en la redacción del md, no solo en la conversión** (corrección 1
+  del encargo v2.5): en la mayoría de los casos el propio md ya pedía el mismo dato dos
+  o más veces en apartados distintos (casos reales: auditor + número ROAC pedido en
+  presupuesto detallado y otra vez en resumen, en ambas convocatorias;
+  autocartera/socios >10%/administradores pedidos en presentación de empresa y repetidos
+  íntegros como apartado propio; ofertas comparativas ≥15.000 € en detalle y en resumen;
+  Pacto Verde Europeo pedido hasta tres veces). `_generate_output_4` mantiene ahora un
+  **registro por convocatoria de los datos ya pedidos** (`datos_pedidos`, alimentado con
+  los inputs del JSON de cada sección) que se inyecta en dos sitios: en el prompt de
+  redacción de cada sección siguiente (`SECTION_PROMPT_SYSTEM`, "REGLA DE NO REPETICIÓN
+  DE DATOS": la petición repetida usa el mismo label + coletilla "mismo dato ya pedido
+  en el apartado X", nunca se reescribe desde cero) y en el extractor JSON de esa
+  sección (`OUTPUT_4_JSON_EXTRACTOR`: reutiliza el id del registro en vez de inventar
+  uno nuevo, sin copiar la coletilla al label). Con ids iguales, la consolidación de
+  `campos_proyecto`/`campos_empresa` unifica sin ambigüedad.
+- **Regla 16 — apartados de resumen que duplican en bloque a apartados de detalle**
+  (corrección 2; checklist punto 14 del contrato): un apartado de presentación sin
+  puntuación propia contenía bloques ("impacto económico", "alineación con el Pacto
+  Verde Europeo") que volvían a aparecer desarrollados y puntuados como apartados
+  independientes. NO es el caso de la regla 1bis: los códigos no comparten prefijo, hay
+  que detectarlo por contenido. Cada sección recibe ahora el **índice completo de
+  apartados** de la memoria (`indice_block` en `_generate_output_4`) y
+  `SECTION_PROMPT_SYSTEM` ("REGLA DE APARTADOS DE RESUMEN") exige emitir el apartado de
+  resumen sin los bloques que otro apartado del índice desarrolla en detalle,
+  remitiendo al consultor al apartado correspondiente.
+- **El conversor deduplica siempre, aunque el md llegue limpio** (corrección 3): caso
+  real S3-CV en INNOVA-CV — un dato pedido UNA vez en el md salió triplicado en
+  `datos_aplicativo` sin referencia al apartado de origen. `_consolidate_campos_proyecto`
+  se ejecuta siempre que haya inputs de texto libre O ≥2 entradas de `datos_aplicativo`
+  (nunca se salta por asumir entrada limpia), detecta también duplicados internos del
+  formulario (`duplicados_datos_aplicativo` en `OUTPUT_4_CAMPOS_PROYECTO_CONSOLIDATOR`)
+  y colapsa de forma determinista las referencias idénticas tras el remapeo. Además,
+  `OUTPUT_4_FICHA_EXTRACTOR` recibe la lista de datos de proyecto ya pedidos por los
+  apartados y tiene prohibido emitir dos entradas para el mismo dato; y
+  `exporters.export_output_4` aplica la misma deduplicación determinista (mismo id o
+  misma `ref_campo_proyecto` → una sola entrada) como red de seguridad final.
 
 Reglas clave del v2.3/v2.4, tras contrastar el JSON real de INNOVA-CV/INNOVATeiC-CV
 contra la memoria oficial en Word (además de las reglas del v2.0/v2.1/v2.2):
@@ -590,14 +630,19 @@ Todo el pipeline vive en `_generate_output_4` (`backend/main.py`):
    Sonnet genera el bloque markdown (max_tokens = 8192), con dos flags explícitos
    (`Requiere cálculo de rentabilidad` / `Usa tabla de inversiones`) y los datos a aportar
    repartidos en tres bloques (datos generales de empresa / imprescindible / mejora
-   puntuación) en vez de listas libres.
+   puntuación) en vez de listas libres. Cada llamada recibe además el índice completo de
+   apartados (regla 16, apartados de resumen) y el registro de datos ya pedidos en
+   apartados anteriores (regla de no repetición del v2.5).
 3. **Extracción JSON por sección** (`OUTPUT_4_JSON_EXTRACTOR`): inmediatamente después de
    generar el markdown de cada sección, una llamada a Haiku extrae el objeto JSON tipado
    de ese apartado, incluido `contexto_evaluador` (max_tokens = 4096). Esto evita enviar
-   60 K chars en una sola llamada. Los `ref_campo_empresa` que produce esta llamada son
-   IDs provisionales por apartado. Con reintento (3 intentos, backoff 5/10/15s): si los
-   3 fallan, se detiene toda la generación con la causa — nunca se descarta el apartado
-   en silencio (ver "Reglas clave del v2.3/v2.4" arriba).
+   60 K chars en una sola llamada. Recibe el mismo registro de datos ya pedidos: si un
+   ítem coincide con uno del registro reutiliza su id (esto alimenta la unificación de
+   los pasos 5 y 7); para los demás, los `ref_campo_empresa` que produce son IDs
+   provisionales por apartado. Tras extraer, el registro se actualiza con los inputs del
+   apartado. Con reintento (3 intentos, backoff 5/10/15s): si los 3 fallan, se detiene
+   toda la generación con la causa — nunca se descarta el apartado en silencio (ver
+   "Reglas clave del v2.3/v2.4" arriba).
 4. **Desambiguación de códigos** (Python, sin llamada a Claude): si dos apartados comparten
    `codigo`, se añade un sufijo numérico (`-2`, `-3`...) para garantizar unicidad.
 5. **Consolidación de `campos_empresa`** (`OUTPUT_4_CAMPOS_EMPRESA_CONSOLIDATOR`): una
@@ -611,12 +656,18 @@ Todo el pipeline vive en `_generate_output_4` (`backend/main.py`):
    `tres_ofertas`, `datos_aplicativo` y `documentos_convocatoria`, aplicando el test
    decisivo dato a dato. Es una sola llamada a propósito: con extractores separados las
    constantes de las bases acababan en `datos_aplicativo`. Si `parametros_convocatoria`
-   sale vacío, `main.py` reintenta una vez con aviso explícito.
+   sale vacío, `main.py` reintenta una vez con aviso explícito. Recibe la lista de datos
+   de proyecto ya pedidos por los apartados y tiene prohibido emitir dos entradas de
+   `datos_aplicativo` para el mismo dato (v2.5).
 7. **Consolidación de `campos_proyecto`** (`OUTPUT_4_CAMPOS_PROYECTO_CONSOLIDATOR`): una
    llamada a Haiku recibe todos los inputs `texto_libre` de todos los apartados más los
    `datos_aplicativo`, detecta los datos de proyecto pedidos en más de un sitio y
    devuelve el catálogo + remapeos que `main.py` aplica in place (inputs →
    `dato_proyecto`/`ref_campo_proyecto`; entradas de datos_aplicativo → referencia).
+   Paso obligatorio siempre (v2.5): se ejecuta aunque el md llegue limpio, en cuanto
+   haya inputs de texto libre o ≥2 entradas de `datos_aplicativo`; detecta también
+   duplicados internos del formulario (`duplicados_datos_aplicativo`) y, tras el
+   remapeo, `main.py` colapsa de forma determinista las referencias idénticas.
 
 Antes de devolver el resultado, `_generate_output_4` verifica el contenido mínimo del
 contrato (`convocatoria.nombre` y al menos un apartado) y lanza un error explícito si
@@ -627,8 +678,9 @@ vocabularios cerrados, ids solo ASCII, apartados solo hoja, labels sin cifras de
 bases incrustadas, descarta placeholders de la lista negra ("no aplica", "ya incluido",
 "ver otro apartado"...), elimina `ref_campo_empresa`/`ref_campo_proyecto` huérfanos
 (un `dato_proyecto` con ref huérfana se degrada a `texto_libre`), deduplica
-`datos_aplicativo` contra los catálogos, normaliza `documentos_convocatoria` y garantiza
-`tres_ofertas` bien tipado (umbral numérico o null).
+`datos_aplicativo` contra los catálogos y contra sí mismo (mismo id o misma
+`ref_campo_proyecto` → una sola entrada, v2.5), normaliza `documentos_convocatoria` y
+garantiza `tres_ofertas` bien tipado (umbral numérico o null).
 
 ## Las dos apps (importante)
 
@@ -636,7 +688,7 @@ ConvoKit es la primera de dos aplicaciones. La segunda (App de Memorias) redacta
 técnicas y cuentas justificativas a partir de los datos reales de cada empresa.
 
 Las salidas 4 y 5 exportan JSON estructurado precisamente para alimentar la App de Memorias:
-- Salida 4 produce el perfil de convocatoria (contrato `docs/contrato-convokit.md` v2.4:
+- Salida 4 produce el perfil de convocatoria (contrato `docs/contrato-convokit.md` v2.5:
   convocatoria, campos_empresa, campos_proyecto, apartados, tres_ofertas,
   parametros_convocatoria, documentos_convocatoria, datos_aplicativo).
 - Salida 5 produce el árbol de documentos (esquema en PRD sección 12).

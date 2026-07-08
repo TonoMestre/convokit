@@ -591,6 +591,7 @@ def _extract_ficha_convocatoria(
     client: anthropic.Anthropic,
     full_context: str,
     campos_empresa: list[dict],
+    datos_proyecto_pedidos: list[str] | None = None,
     _track: Callable | None = None,
 ) -> tuple[list[dict], dict, list[dict], list[dict]]:
     """
@@ -599,6 +600,11 @@ def _extract_ficha_convocatoria(
     Una sola llamada fuerza a aplicar el test decisivo dato a dato: con
     extractores separados, las constantes de las bases acababan
     sistemáticamente en datos_aplicativo (falló en INPYME y en EMPYME).
+
+    Contrato v2.5: recibe también los datos de proyecto que los apartados de
+    la memoria ya piden al consultor, para que un dato exigido además por el
+    formulario se emita UNA sola vez (la consolidación posterior lo unifica)
+    y nunca duplicado ni triplicado (caso real S3-CV en INNOVA-CV).
 
     Checklist punto 5: si parametros_convocatoria llega vacío —prácticamente
     ninguna convocatoria carece de plazos o límites—, se reintenta una vez con
@@ -610,6 +616,13 @@ def _extract_ficha_convocatoria(
         "Datos de empresa ya cubiertos como contenido de memoria (no los dupliques en datos_aplicativo):\n"
         f"{json.dumps(campos_conocidos, ensure_ascii=False)}"
     )
+    if datos_proyecto_pedidos:
+        user_msg += (
+            "\n\nDatos específicos de proyecto que los apartados de la memoria ya piden "
+            "al consultor (regla 7: si el formulario telemático también exige alguno, "
+            "inclúyelo UNA sola vez; si no lo exige, no lo añadas):\n"
+            f"{json.dumps(datos_proyecto_pedidos, ensure_ascii=False)}"
+        )
 
     def _call(extra: str = "") -> dict | None:
         try:
@@ -667,6 +680,14 @@ def _consolidate_campos_proyecto(
     - entradas de datos_aplicativo repetidas -> {ref_campo_proyecto, obligatorio}
       (sin redefinir label/tipo_dato)
     Caso real que lo motiva: "sector en auge" pedido tres veces en EMPYME 2026.
+
+    Contrato v2.5 (corrección 3): este paso es OBLIGATORIO SIEMPRE, aunque el
+    md de origen llegue limpio — el conversor puede introducir duplicados que
+    no estaban en el md (caso real S3-CV en INNOVA-CV: un dato pedido una vez
+    en el md salió triplicado en datos_aplicativo). Además de consolidar al
+    catálogo, elimina duplicados internos de datos_aplicativo
+    (duplicados_datos_aplicativo) y colapsa las referencias idénticas que
+    queden tras el remapeo, de forma determinista.
     """
     inputs_texto_libre = []
     for apartado in apartados:
@@ -684,7 +705,10 @@ def _consolidate_campos_proyecto(
         for d in datos_aplicativo if isinstance(d, dict)
     ]
 
-    if not inputs_texto_libre:
+    # Contrato v2.5: la llamada solo se omite cuando no hay literalmente nada
+    # que deduplicar (ni inputs de texto libre ni dos entradas de formulario).
+    # Nunca se salta por asumir que la entrada "ya viene limpia".
+    if not inputs_texto_libre and len(datos_resumen) < 2:
         return []
 
     try:
@@ -707,8 +731,8 @@ def _consolidate_campos_proyecto(
         return []
 
     campos_proyecto = data.get("campos_proyecto") or []
-    if not isinstance(campos_proyecto, list) or not campos_proyecto:
-        return []
+    if not isinstance(campos_proyecto, list):
+        campos_proyecto = []
     campo_ids = {c.get("id") for c in campos_proyecto if isinstance(c, dict)}
 
     remap_inputs = {
@@ -738,6 +762,41 @@ def _consolidate_campos_proyecto(
                 "ref_campo_proyecto": id_final,
                 "obligatorio": bool(dato.get("obligatorio", False)),
             }
+
+    # Duplicados internos del formulario cuyo dato no está en ningún apartado:
+    # se conserva una entrada y se eliminan las demás (contrato v2.5).
+    ids_a_eliminar: set[str] = set()
+    for dup in data.get("duplicados_datos_aplicativo") or []:
+        if not isinstance(dup, dict):
+            continue
+        conservar = dup.get("conservar")
+        eliminar = dup.get("eliminar") or []
+        ids_presentes = {d.get("id") for d in datos_aplicativo if isinstance(d, dict)}
+        if conservar in ids_presentes:
+            ids_a_eliminar.update(e for e in eliminar if isinstance(e, str) and e != conservar)
+
+    # Red de seguridad determinista: tras el remapeo, varias entradas pueden
+    # haber quedado apuntando al mismo campo del catálogo (el caso triplicado
+    # produce tres refs idénticas). Se colapsan en una, conservando el
+    # obligatorio más restrictivo.
+    deduped: list = []
+    seen_refs: dict[str, dict] = {}
+    for dato in datos_aplicativo:
+        if not isinstance(dato, dict):
+            deduped.append(dato)
+            continue
+        if dato.get("id") and dato["id"] in ids_a_eliminar:
+            continue
+        ref = dato.get("ref_campo_proyecto")
+        if ref:
+            if ref in seen_refs:
+                seen_refs[ref]["obligatorio"] = (
+                    seen_refs[ref].get("obligatorio", False) or dato.get("obligatorio", False)
+                )
+                continue
+            seen_refs[ref] = dato
+        deduped.append(dato)
+    datos_aplicativo[:] = deduped
 
     return campos_proyecto
 
@@ -770,7 +829,7 @@ def _generate_output_4(
 ) -> tuple[str, dict]:
     """
     Generación multi-llamada de la salida 4. Produce el objeto raíz del
-    contrato de exportación v2.4 (docs/contrato-convokit.md): version_esquema,
+    contrato de exportación v2.5 (docs/contrato-convokit.md): version_esquema,
     convocatoria, campos_empresa, campos_proyecto, apartados, tres_ofertas,
     parametros_convocatoria, documentos_convocatoria, datos_aplicativo.
 
@@ -781,15 +840,22 @@ def _generate_output_4(
        contiene placeholders de copiar-pegar) + JSON tipado, incluido
        contexto_evaluador (con reintento si la extracción falla; nunca se
        descarta en silencio — ver "Contenido mínimo" del contrato).
+       Contrato v2.5: cada sección recibe el índice completo de apartados
+       (regla 16, apartados de resumen) y el registro de datos ya pedidos en
+       apartados anteriores, que también se pasa al extractor JSON para
+       reutilizar ids; el registro se actualiza tras cada sección.
        Pausa entre secciones para reducir carga en la API.
     3. Desambiguar códigos de apartado repetidos.
     4. Consolidar el catálogo de campos_empresa (dedup semántico entre apartados).
     5. Extraer la ficha de la convocatoria en una llamada (test decisivo dato a
        dato): parametros_convocatoria (con valor), tres_ofertas,
-       datos_aplicativo y documentos_convocatoria.
+       datos_aplicativo y documentos_convocatoria. Recibe los datos de proyecto
+       ya pedidos por los apartados y tiene prohibidos los duplicados internos.
     6. Consolidar campos_proyecto: datos de proyecto pedidos en más de un sitio
-       (varios apartados, o apartado + formulario) se definen una vez y se
-       referencian con dato_proyecto/ref_campo_proyecto.
+       (varios apartados, apartado + formulario, o duplicados dentro del propio
+       datos_aplicativo) se definen una vez y se referencian con
+       dato_proyecto/ref_campo_proyecto. Paso obligatorio siempre, aunque el md
+       llegue limpio; las refs idénticas resultantes se colapsan en una.
     Antes de devolver, verifica el contenido mínimo (nombre de convocatoria y
     al menos un apartado); si falta, detiene la generación con la causa.
     """
@@ -838,6 +904,34 @@ def _generate_output_4(
     apartados: list[dict] = []
     section_context = _slice_context_for_section(documents_json)
 
+    # Contrato v2.5, regla 16: cada sección recibe el índice completo de la
+    # memoria para que un apartado de resumen no desarrolle bloques que otro
+    # apartado del índice desarrolla en detalle (detección por contenido, no
+    # por numeración — la regla 1bis no cubre este caso).
+    indice_block = "ÍNDICE COMPLETO DE APARTADOS DE ESTA MEMORIA:\n" + "\n".join(
+        f"- [{s['codigo']}] {s['nombre']} "
+        f"({s.get('puntos_max') if s.get('puntos_max') is not None else 'sin puntuación'})"
+        for s in secciones
+    )
+
+    # Contrato v2.5, corrección 1: registro por convocatoria de los datos ya
+    # pedidos en apartados anteriores. Se inyecta en la redacción de cada
+    # sección (para no volver a redactar la petición desde cero) y en su
+    # extracción JSON (para reutilizar el mismo id y que la consolidación
+    # unifique). La duplicación nace en el propio md, no solo en la conversión:
+    # auditor+ROAC, autocartera/socios, ofertas comparativas y Pacto Verde
+    # llegaron pedidos 2-3 veces cada uno en convocatorias reales.
+    datos_pedidos: list[dict] = []
+
+    def _registro_block() -> str:
+        if not datos_pedidos:
+            return ""
+        return (
+            "\n\nDATOS YA PEDIDOS EN APARTADOS ANTERIORES DE ESTA MEMORIA "
+            "(REGISTRO DE DATOS YA PEDIDOS EN APARTADOS ANTERIORES):\n"
+            + json.dumps(datos_pedidos, ensure_ascii=False)
+        )
+
     for i, seccion in enumerate(secciones):
         if i > 0:
             time.sleep(5)  # Pausa entre secciones para evitar rate limits
@@ -847,8 +941,10 @@ def _generate_output_4(
             f"Apartado: {seccion['codigo']} — {seccion['nombre']} "
             f"(puntos_max: {seccion.get('puntos_max') or 'no especificado'}, "
             f"habilitante: {seccion.get('es_habilitante', False)})\n\n"
+            f"{indice_block}\n\n"
             f"Documentos de la convocatoria:\n{section_context}"
         )
+        user_msg += _registro_block()
         user_msg += _instr_block(instrucciones)
 
         # Retry con backoff para tolerar rate limits transitorios
@@ -923,7 +1019,7 @@ def _generate_output_4(
                 raw_json_sec = _claude(
                     client,
                     system=p.OUTPUT_4_JSON_EXTRACTOR,
-                    user=raw_section,
+                    user=raw_section + _registro_block(),
                     max_tokens=4096,
                     model=pricing.MODELS["haiku"],
                     _track=_track,
@@ -952,6 +1048,24 @@ def _generate_output_4(
         parsed_sec["codigo"] = seccion["codigo"]
         apartados.append(parsed_sec)
 
+        # Actualizar el registro con los datos que este apartado acaba de pedir,
+        # para que los apartados siguientes los reconozcan como ya pedidos.
+        for inp in parsed_sec.get("inputs") or []:
+            if not isinstance(inp, dict):
+                continue
+            inp_id = inp.get("ref_campo_empresa") or inp.get("id") or ""
+            label = inp.get("label") or ""
+            if not inp_id or not label:
+                continue
+            if any(r["id"] == inp_id for r in datos_pedidos):
+                continue
+            datos_pedidos.append({
+                "id": inp_id,
+                "label": label,
+                "tipo": inp.get("tipo") or "texto_libre",
+                "apartado": seccion["codigo"],
+            })
+
         if _progress_cb:
             _progress_cb(i + 1, len(secciones))
 
@@ -963,9 +1077,22 @@ def _generate_output_4(
     # Paso 4: consolidar catálogo de campos_empresa y remapear referencias
     campos_empresa = _consolidate_campos_empresa(client, apartados, _track=_track)
 
-    # Paso 5: ficha de la convocatoria en una llamada (test decisivo dato a dato)
+    # Paso 5: ficha de la convocatoria en una llamada (test decisivo dato a dato).
+    # Se le pasan los datos de proyecto ya pedidos por los apartados para que un
+    # dato repetido en el formulario se emita una sola vez (contrato v2.5).
+    datos_proyecto_pedidos = sorted({
+        inp.get("label") or ""
+        for apartado in apartados
+        for inp in (apartado.get("inputs") or [])
+        if isinstance(inp, dict)
+        and inp.get("tipo") in ("texto_libre", "dato_proyecto")
+        and inp.get("label")
+    })
     parametros_convocatoria, tres_ofertas, datos_aplicativo, documentos_convocatoria = (
-        _extract_ficha_convocatoria(client, full_context, campos_empresa, _track=_track)
+        _extract_ficha_convocatoria(
+            client, full_context, campos_empresa,
+            datos_proyecto_pedidos=datos_proyecto_pedidos, _track=_track,
+        )
     )
 
     # Paso 6: consolidar datos de proyecto repetidos (remapea apartados y
@@ -995,7 +1122,7 @@ def _generate_output_4(
         )
 
     root = {
-        "version_esquema": "2.4",
+        "version_esquema": "2.5",
         "convocatoria": {
             "nombre": convocatoria_nombre,
             "anio": conv_meta.get("anio"),

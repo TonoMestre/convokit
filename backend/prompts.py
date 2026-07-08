@@ -620,6 +620,7 @@ REGLAS:
 - Si una de las apariciones es una "seleccion" con lista cerrada de opciones, recoge esa lista dentro de la "descripcion" del campo del catálogo (ej. "Uno de los doce sectores listados en las bases: ...").
 - "descripcion" debe indicar en qué sitios se usa el dato (ej. "Se usa en C.1, C.2 y en el formulario telemático").
 - No inventes datos ni agrupes conceptos genuinamente distintos solo porque se parezcan superficialmente.
+- A la inversa, dos apariciones NO necesitan tener el mismo label para ser el mismo dato: basta con que pidan el mismo valor subyacente. Caso real que se escapó: "Entorno S3-CV seleccionado" (input de un apartado) y "Entorno de especialización S3-CV seleccionado" (entrada del formulario) son el MISMO dato y debían consolidarse. Ante dos labels que solo difieren en palabras accesorias (seleccionado/elegido, del proyecto/de la actuación, con o sin el nombre del programa), trátalos como el mismo dato salvo que el contenido pedido sea realmente distinto.
 - Ids en kebab-case solo ASCII.
 - DUPLICADOS SOLO DENTRO DE "datos_aplicativo": si dos o más entradas del formulario piden el mismo dato pero ese dato NO aparece en ningún apartado, no hace falta catálogo — decláralas en "duplicados_datos_aplicativo" indicando cuál conservar y cuáles eliminar.
 

@@ -1046,6 +1046,20 @@ def _generate_output_4(
         # el que Claude reescriba al extraer el JSON: evita que un apartado acabe
         # con un código distinto al de su sección y "desaparezca" del índice.
         parsed_sec["codigo"] = seccion["codigo"]
+
+        # Contrato v2.4 regla 15, red determinista: si el extractor omitió
+        # contexto_evaluador pero el md de la sección SÍ tiene el bloque
+        # "QUÉ BUSCA EL EVALUADOR", se copia literal desde el md (caso real
+        # INNOVA-CV: Haiku lo perdió en 3 de 18 apartados).
+        if not (parsed_sec.get("contexto_evaluador") or "").strip():
+            ev_match = re.search(
+                r"\*\*QUÉ BUSCA EL EVALUADOR\*\*\s*\n(.*?)(?=\n\*\*QUÉ DEBES APORTAR"
+                r"|\n\*\*INSTRUCCIÓN|\Z)",
+                raw_section or "", re.S,
+            )
+            if ev_match and ev_match.group(1).strip():
+                parsed_sec["contexto_evaluador"] = ev_match.group(1).strip()
+
         apartados.append(parsed_sec)
 
         # Actualizar el registro con los datos que este apartado acaba de pedir,

@@ -30,6 +30,22 @@ function downloadFile(content, filename) {
   URL.revokeObjectURL(url);
 }
 
+// Nombre de archivo seguro: sin acentos ni caracteres especiales, palabras
+// separadas por "_". Se usa para prefijar cada descarga con el nombre de la
+// convocatoria, de modo que dos JSON de ayudas distintas no se confundan.
+function fileSlug(text) {
+  return (text || "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function buildFilename(convocatoriaNombre, salida, ext) {
+  const parts = [fileSlug(convocatoriaNombre), `salida_${salida.num}`, fileSlug(salida.label)];
+  return `${parts.filter(Boolean).join("_")}.${ext}`;
+}
+
 const INSTR_PLACEHOLDER =
   "Instrucción adicional opcional: p.ej. 'El año correcto es 2026', 'No incluyas el apartado X'";
 
@@ -489,8 +505,8 @@ function SeoPanel({ seoRaw, convocatoriaId }) {
 // ---------------------------------------------------------------------------
 
 function EntregableItem({
-  salida, texto, instruccionPrevia, hasJsonData, seoRaw, convocatoriaId, isOpen, onToggle,
-  onRegenerate, outputStatus, output4Progress, costEur,
+  salida, texto, instruccionPrevia, hasJsonData, seoRaw, convocatoriaId, convocatoriaNombre,
+  isOpen, onToggle, onRegenerate, outputStatus, output4Progress, costEur,
 }) {
   const { API } = useApp();
   const [copied, setCopied] = useState(false);
@@ -511,10 +527,7 @@ function EntregableItem({
 
   function handleDownload(e) {
     e.stopPropagation();
-    downloadFile(
-      texto,
-      `salida_${salida.num}_${salida.label.replace(/\s+/g, "_")}.${salida.ext}`
-    );
+    downloadFile(texto, buildFilename(convocatoriaNombre, salida, salida.ext));
   }
 
   function handlePreview(e) {
@@ -542,7 +555,7 @@ function EntregableItem({
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `salida_${salida.num}_${salida.label.replace(/\s+/g, "_")}.json`;
+      a.download = buildFilename(convocatoriaNombre, salida, "json");
       a.click();
       URL.revokeObjectURL(url);
     } finally {
@@ -972,6 +985,7 @@ export default function EntregablePanel({ convocatoria, onUpdate: _onUpdate }) {
                   hasJsonData={!!entregables[`${s.num}_json`]}
                   seoRaw={entregables[`${s.num}_seo`] || ""}
                   convocatoriaId={convocatoria.id}
+                  convocatoriaNombre={convocatoria.nombre}
                   isOpen={openNum === s.num}
                   onToggle={() => toggleAccordion(s.num)}
                   outputStatus={salStatus?.status}

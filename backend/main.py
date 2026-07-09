@@ -2077,6 +2077,9 @@ class ResultEmailRequest(BaseModel):
 
 @app.post("/send-result-email")
 def send_result_email(req: ResultEmailRequest):
+    if not _is_valid_email(req.email):
+        raise HTTPException(status_code=422, detail="Email no válido.")
+
     api_key = os.environ.get("RESEND_API_KEY", "")
     if not api_key:
         raise HTTPException(status_code=503, detail="Servicio de email no configurado.")

@@ -94,6 +94,10 @@ def build_result_email_html(
     veredicto: str,
     logo_url: str = "",
 ) -> str:
+    nombre = _esc(nombre)
+    empresa = _esc(empresa)
+    convocatoria = _esc(convocatoria)
+    veredicto = _esc(veredicto)
     return f"""<!DOCTYPE html>
 <html lang="es">
 <head>

@@ -12,7 +12,7 @@ const ETIQUETAS = [
 const ACCEPT = ".pdf,.docx,.xlsx,.txt";
 
 export default function NuevaConvocatoria() {
-  const { API, loadConvocatorias, openConvocatoria } = useApp();
+  const { API, apiFetch, loadConvocatorias, openConvocatoria } = useApp();
   const fileInputRef = useRef(null);
 
   const [nombre, setNombre] = useState("");
@@ -52,7 +52,7 @@ export default function NuevaConvocatoria() {
     setProcessingMsg("Creando convocatoria...");
 
     try {
-      const resConv = await fetch(`${API}/convocatorias`, {
+      const resConv = await apiFetch(`${API}/convocatorias`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nombre: nombre.trim() }),
@@ -66,7 +66,7 @@ export default function NuevaConvocatoria() {
         formData.append("files", file);
         formData.append("etiquetas", etiqueta);
       });
-      const resUp = await fetch(`${API}/convocatorias/${conv.id}/upload`, {
+      const resUp = await apiFetch(`${API}/convocatorias/${conv.id}/upload`, {
         method: "POST",
         body: formData,
       });

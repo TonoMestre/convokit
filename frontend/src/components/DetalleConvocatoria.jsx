@@ -23,7 +23,7 @@ const ADDITIONAL_LABEL_OPTIONS = [
 ];
 
 export default function DetalleConvocatoria() {
-  const { activeConvocatoria, setActiveConvocatoria, deleteConvocatoria } = useApp();
+  const { activeConvocatoria, setActiveConvocatoria, deleteConvocatoria, apiFetch } = useApp();
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [addFiles, setAddFiles] = useState([]);
@@ -78,7 +78,7 @@ export default function DetalleConvocatoria() {
     }
 
     try {
-      const res = await fetch(`${API}/convocatorias/${activeConvocatoria.id}/documentos/add`, {
+      const res = await apiFetch(`${API}/convocatorias/${activeConvocatoria.id}/documentos/add`, {
         method: "POST",
         body: form,
       });
@@ -86,7 +86,7 @@ export default function DetalleConvocatoria() {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.detail ?? "Error al subir los documentos.");
       }
-      const updated = await fetch(`${API}/convocatorias/${activeConvocatoria.id}`).then((r) => r.json());
+      const updated = await apiFetch(`${API}/convocatorias/${activeConvocatoria.id}`).then((r) => r.json());
       setActiveConvocatoria(updated);
       setShowAddForm(false);
       setAddFiles([]);

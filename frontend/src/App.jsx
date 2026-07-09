@@ -4,8 +4,11 @@ import ErrorBanner from "./components/ErrorBanner";
 import NuevaConvocatoria from "./components/NuevaConvocatoria";
 import DetalleConvocatoria from "./components/DetalleConvocatoria";
 import StatsPanel from "./components/StatsPanel";
+import LoginScreen from "./components/LoginScreen";
 
 function AppHeader() {
+  const { logout } = useApp();
+  const hasToken = !!localStorage.getItem("convokit_token");
   return (
     <header
       className="bg-brand-blue flex items-center justify-between shrink-0"
@@ -19,11 +22,22 @@ function AppHeader() {
           by innóvate 4.0
         </span>
       </div>
-      <img
-        src="/logo-negativo.png"
-        alt="Innóvate 4.0"
-        style={{ height: "28px", objectFit: "contain" }}
-      />
+      <div className="flex items-center gap-4">
+        {hasToken && (
+          <button
+            onClick={logout}
+            className="text-xs text-white/60 hover:text-white transition-colors"
+            style={{ letterSpacing: "0.05em" }}
+          >
+            Cerrar sesión
+          </button>
+        )}
+        <img
+          src="/logo-negativo.png"
+          alt="Innóvate 4.0"
+          style={{ height: "28px", objectFit: "contain" }}
+        />
+      </div>
     </header>
   );
 }
@@ -39,19 +53,27 @@ function Main() {
   );
 }
 
+function AppShell() {
+  const { authNeeded } = useApp();
+  if (authNeeded) return <LoginScreen />;
+  return (
+    <div className="flex flex-col min-h-screen font-sans">
+      <AppHeader />
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <ErrorBanner />
+          <Main />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <AppProvider>
-      <div className="flex flex-col min-h-screen font-sans">
-        <AppHeader />
-        <div className="flex flex-1 overflow-hidden">
-          <Sidebar />
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <ErrorBanner />
-            <Main />
-          </div>
-        </div>
-      </div>
+      <AppShell />
     </AppProvider>
   );
 }

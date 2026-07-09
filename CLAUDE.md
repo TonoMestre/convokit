@@ -15,7 +15,9 @@ mediante la API de Claude:
 6. Evaluador de encaje (HTML interactivo desplegable)
 7. Guion de onboarding para la llamada/videollamada con el cliente (.md)
 
-Uso exclusivamente interno. Sin clientes finales. Sin autenticación en el MVP.
+Uso exclusivamente interno. Sin clientes finales. Acceso protegido por contraseña
+compartida (`APP_PASSWORD`): sin gestión de usuarios, una única contraseña para el
+equipo. Si la variable no está definida, la app funciona sin login (desarrollo local).
 
 NOTA: en versiones anteriores del PRD existían dos salidas más (post de LinkedIn y
 artículo WordPress). Se han ELIMINADO. El contenido editorial de marca se produce fuera
@@ -99,6 +101,11 @@ Backend (.env en /backend):
 - EVALUATOR_REPLY_TO_EMAIL (reply-to opcional de ambos correos del evaluador)
 - BACKEND_URL (URL pública de este backend; la usa el HTML del evaluador para llamar a
   `/submit-evaluation` tanto en la salida 6 standalone como embebido en la salida 3)
+- APP_PASSWORD (contraseña compartida de acceso a la app. Si está definida, toda la API
+  exige login salvo las rutas públicas — `/health`, `/login`, `/submit-evaluation`,
+  `/send-result-email`, `/assets/*`, `/demo/*` — que usa el evaluador publicado en la
+  web. El token de sesión es un HMAC determinista de la contraseña: sin estado en BD,
+  sobrevive a reinicios, se invalida al cambiarla. Vacía = sin login.)
 
 Frontend (.env en /frontend):
 - VITE_API_URL (URL del backend desplegado en Railway)

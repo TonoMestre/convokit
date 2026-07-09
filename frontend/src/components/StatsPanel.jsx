@@ -20,7 +20,7 @@ const SALIDA_LABELS = {
 };
 
 export default function StatsPanel() {
-  const { API } = useApp();
+  const { API, apiFetch } = useApp();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,7 +29,7 @@ export default function StatsPanel() {
     let cancelled = false;
     async function load() {
       try {
-        const res = await fetch(`${API}/stats`);
+        const res = await apiFetch(`${API}/stats`);
         if (!res.ok) throw new Error();
         const data = await res.json();
         if (!cancelled) setStats(data);

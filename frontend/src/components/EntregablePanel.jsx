@@ -213,7 +213,7 @@ const VARIANT_OPTIONS = [
 ];
 
 function VariantSelector({ seoRaw, convocatoriaId }) {
-  const { API, openConvocatoria } = useApp();
+  const { API, apiFetch, openConvocatoria } = useApp();
   const current = parseSeo(seoRaw)?.variant || "A";
   const [busy, setBusy] = useState(null);
   const [error, setError] = useState(null);
@@ -223,7 +223,7 @@ function VariantSelector({ seoRaw, convocatoriaId }) {
     setBusy(v);
     setError(null);
     try {
-      const res = await fetch(`${API}/convocatorias/${convocatoriaId}/landing/variant`, {
+      const res = await apiFetch(`${API}/convocatorias/${convocatoriaId}/landing/variant`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ variante: v }),
@@ -276,7 +276,7 @@ function VariantSelector({ seoRaw, convocatoriaId }) {
 }
 
 function SeoPanel({ seoRaw, convocatoriaId }) {
-  const { API, openConvocatoria } = useApp();
+  const { API, apiFetch, openConvocatoria } = useApp();
   const initial = parseSeo(seoRaw);
 
   // Alt sugerido (editable): borrador a partir de la frase clave para que el
@@ -321,7 +321,7 @@ function SeoPanel({ seoRaw, convocatoriaId }) {
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch(`${API}/convocatorias/${convocatoriaId}/landing/seo`, {
+      const res = await apiFetch(`${API}/convocatorias/${convocatoriaId}/landing/seo`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -508,7 +508,7 @@ function EntregableItem({
   salida, texto, instruccionPrevia, hasJsonData, seoRaw, convocatoriaId, convocatoriaNombre,
   isOpen, onToggle, onRegenerate, outputStatus, output4Progress, costEur,
 }) {
-  const { API } = useApp();
+  const { API, apiFetch } = useApp();
   const [copied, setCopied] = useState(false);
   const [downloadingJson, setDownloadingJson] = useState(false);
   const [showRegenPanel, setShowRegenPanel] = useState(false);
@@ -542,7 +542,7 @@ function EntregableItem({
     e.stopPropagation();
     setDownloadingJson(true);
     try {
-      const res = await fetch(`${API}/convocatorias/${convocatoriaId}/json/${salida.num}`);
+      const res = await apiFetch(`${API}/convocatorias/${convocatoriaId}/json/${salida.num}`);
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         alert(data.detail ?? "Error al descargar el JSON.");
@@ -808,7 +808,7 @@ function EntregableItem({
 // ---------------------------------------------------------------------------
 
 export default function EntregablePanel({ convocatoria, onUpdate: _onUpdate }) {
-  const { API, openConvocatoria } = useApp();
+  const { API, apiFetch, openConvocatoria } = useApp();
   const entregables = convocatoria.entregables_json ?? {};
 
   const [openNum, setOpenNum] = useState(null);
@@ -851,7 +851,7 @@ export default function EntregablePanel({ convocatoria, onUpdate: _onUpdate }) {
 
   async function pollJob(jobId, types) {
     try {
-      const res = await fetch(`${API}/jobs/${jobId}`);
+      const res = await apiFetch(`${API}/jobs/${jobId}`);
       if (!res.ok) return;
       const job = await res.json();
       const { status, progress } = job;
@@ -901,7 +901,7 @@ export default function EntregablePanel({ convocatoria, onUpdate: _onUpdate }) {
     }));
 
     try {
-      const res = await fetch(`${API}/convocatorias/${convocatoria.id}/generate/async`, {
+      const res = await apiFetch(`${API}/convocatorias/${convocatoria.id}/generate/async`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ salidas }),

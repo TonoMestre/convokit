@@ -2,6 +2,8 @@
 ConvoKit backend — FastAPI application entry point.
 """
 
+import hashlib
+import hmac
 import json
 import os
 import re
@@ -13,7 +15,7 @@ from typing import Annotated, Callable
 
 import anthropic
 from dotenv import load_dotenv
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel
@@ -1384,6 +1386,66 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="ConvoKit API", lifespan=lifespan)
 
+
+# ---------------------------------------------------------------------------
+# Acceso con contraseña compartida (APP_PASSWORD)
+# ---------------------------------------------------------------------------
+# Si APP_PASSWORD está definida, toda la API exige un token de sesión salvo
+# las rutas públicas: el health check, el propio login y los endpoints que
+# consume el evaluador de encaje publicado en la web (innovate40.es), que
+# debe seguir funcionando sin credenciales.
+# El token es un HMAC determinista de la contraseña: no requiere estado en
+# BD, sobrevive a reinicios del servidor y se invalida al cambiar la
+# contraseña. Suficiente para el objetivo (que no entre cualquiera que vea
+# la URL en un vídeo o una demo), sin gestión de usuarios.
+
+APP_PASSWORD = os.environ.get("APP_PASSWORD", "")
+
+_PUBLIC_PATHS = {"/health", "/login", "/submit-evaluation", "/send-result-email"}
+_PUBLIC_PREFIXES = ("/assets/", "/demo/")
+
+
+def _session_token() -> str:
+    return hmac.new(
+        APP_PASSWORD.encode("utf-8"), b"convokit-session-v1", hashlib.sha256
+    ).hexdigest()
+
+
+@app.middleware("http")
+async def require_app_password(request: Request, call_next):
+    if APP_PASSWORD and request.method != "OPTIONS":
+        path = request.url.path
+        if path not in _PUBLIC_PATHS and not path.startswith(_PUBLIC_PREFIXES):
+            auth_header = request.headers.get("authorization", "")
+            if not hmac.compare_digest(auth_header, f"Bearer {_session_token()}"):
+                return JSONResponse(
+                    status_code=401,
+                    content={"detail": "No autorizado. Inicia sesión para continuar."},
+                )
+    return await call_next(request)
+
+
+class LoginRequest(BaseModel):
+    password: str
+
+
+@app.post("/login")
+def login(req: LoginRequest):
+    if not APP_PASSWORD:
+        raise HTTPException(
+            status_code=400,
+            detail="El acceso con contraseña no está activado en este servidor.",
+        )
+    if not hmac.compare_digest(req.password, APP_PASSWORD):
+        raise HTTPException(status_code=401, detail="Contraseña incorrecta.")
+    return {"token": _session_token()}
+
+
+# El CORS se registra DESPUÉS del middleware de contraseña para quedar por
+# fuera de él: los middlewares de Starlette se anidan en orden inverso al de
+# registro, y si el 401 de autenticación no pasa por CORSMiddleware sale sin
+# Access-Control-Allow-Origin — el navegador lo convierte en un error de red
+# y el frontend nunca llega a ver el 401 para mostrar la pantalla de login.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

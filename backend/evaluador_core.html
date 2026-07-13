@@ -114,6 +114,10 @@
     font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.09em; opacity: 0.7; margin-bottom: 5px;
   }
   #i40-evaluador .strip-item .strip-valor { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.1rem; }
+  #i40-evaluador .aviso-financiero {
+    background: var(--cream); border-left: 4px solid var(--red); padding: 16px 20px;
+    margin-bottom: 30px; font-size: 0.87rem; line-height: 1.55; color: var(--navy);
+  }
 
   /* ── Form fields ── */
   #i40-evaluador .field { margin-bottom: 22px; }
@@ -455,6 +459,7 @@ function renderInicio() {
     '<p class="intro-titulo">' + escHtml(CFG.textos.intro_titulo || "") + '</p>' +
     '<p class="intro-lead">' + escHtml(CFG.textos.intro_lead || "") + '</p>' +
     (stripHtml ? '<div class="strip">' + stripHtml + '</div>' : '') +
+    (CFG.aviso_financiero ? '<div class="aviso-financiero">' + escHtml(CFG.aviso_financiero) + '</div>' : '') +
     '<div class="field"><label for="f-nombre">Tu nombre *</label>' +
     '<input type="text" id="f-nombre" placeholder="Nombre y apellidos" autocomplete="name" value="' + escHtml(STATE.nombre) + '" /></div>' +
     '<div class="field"><label for="f-empresa">Empresa *</label>' +

@@ -138,6 +138,7 @@ ESQUEMA EXACTO DEL OBJETO JSON (respeta todos los campos y tipos):
     "pct_max": 40,
     "tope_euros": 200000
   },
+  "aviso_financiero": "Aviso breve sobre condiciones de la financiación (garantías, análisis de solvencia...), solo si las bases lo mencionan literalmente. Cadena vacía si no aplica.",
   "datos_proyecto": [
     {
       "id": "tipo-actuacion",
@@ -223,6 +224,12 @@ inversion:
 - Si pct_min === pct_max (porcentaje único), igualar ambos campos.
 - Si la convocatoria tiene un importe fijo por empresa (sin depender de la inversión del solicitante): "tiene_campo": false, añadir campo "importe_fijo": número en euros.
 - "tope_euros": importe máximo de ayuda por empresa/proyecto según las bases.
+
+aviso_financiero:
+- Campo opcional de una frase (máx. 30 palabras). Complementa a "inversion": mientras "inversion" cuantifica el importe de la ayuda, este campo avisa de condiciones que afectan a si el solicitante puede acceder a esa financiación en la práctica.
+- Inclúyelo SOLO si las bases mencionan literalmente que la convocatoria es una financiación reembolsable (préstamo, préstamo participativo, anticipo reembolsable, línea de crédito...) y que el organismo realiza un análisis de solvencia, riesgo o capacidad de reembolso que puede exigir garantías, avales o similares en caso de solvencia insuficiente.
+- NO lo deduzcas por el tipo de organismo ni lo asumas por defecto: una convocatoria de subvención a fondo perdido, o una financiación reembolsable cuyas bases no mencionen garantías ni análisis de solvencia, no lleva este aviso.
+- Si no aplica, usa cadena vacía "".
 
 datos_proyecto:
 - El evaluador de encaje verifica el cumplimiento de requisitos y el baremo; NO es una entrevista de captación de datos del proyecto. Este bloque es el más prescindible de todo el CFG: úsalo con mano dura, nunca por defecto.
@@ -886,6 +893,7 @@ En MODO ABIERTA, incluye:
 - Presupuesto total y plazo de solicitud de la edición vigente, si constan.
 - Si hay límite de minimis relevante, una frase sencilla.
 - Si es posible con los datos reales, incluye un ejemplo de cálculo orientativo con cifras concretas. Ejemplo: "Una inversión subvencionable de 300.000 € con el tipo del 30% generaría una ayuda de 90.000 €."
+- Si la convocatoria es una financiación reembolsable y las bases mencionan que el organismo realiza un análisis de solvencia, riesgo o capacidad de reembolso que puede exigir garantías o avales en caso de solvencia insuficiente, añade una frase breve indicándolo (ej. "La concesión puede requerir garantías en función del análisis de solvencia de la empresa."). Inclúyelo SOLO si consta literalmente en los documentos; nunca lo asumas por el tipo de organismo.
 - Sin fórmulas ni tecnicismos.
 
 En MODO ANTICIPADA, incluye SOLO:
@@ -964,8 +972,10 @@ Nota de pie: "Tiempo de respuesta habitual: 24-48 horas laborables."
 
 ## REGLAS DE COPY
 
-- Usar siempre "a fondo perdido". Prohibido "sin devolución" y "no reembolsable".
-- Preferir "ayuda" o "financiación a fondo perdido" sobre "subvención" siempre que sea posible.
+- INSTRUMENTO FINANCIERO: antes de escribir el gancho y la sección de importe, identifica si la convocatoria es una ayuda no reembolsable (subvención a fondo perdido) o una financiación reembolsable (préstamo, préstamo participativo, anticipo reembolsable) según conste en las bases. Por defecto, si los documentos no dicen lo contrario, es a fondo perdido.
+  • Si es a fondo perdido: usar siempre "a fondo perdido". Prohibido "sin devolución" y "no reembolsable".
+  • Si es reembolsable: PROHIBIDO usar "a fondo perdido" o cualquier fórmula que dé a entender que no hay que devolver el dinero. Usa "préstamo", "financiación reembolsable" o el término exacto de las bases, y refléjalo con naturalidad en el gancho y en la sección de importe (ej. "Hasta 300.000 € en préstamo a tipo bonificado" en vez de "... a fondo perdido").
+- Preferir "ayuda" o "financiación a fondo perdido" sobre "subvención" siempre que sea posible — solo cuando la convocatoria sea efectivamente a fondo perdido.
 - Los titulares expresan beneficios, no descripciones.
 - Tono directo, sin adjetivos vacíos. Prohibido: "innovador", "líder", "integral", "solución", "ecosistema", "sinergias". Sin anglicismos. Sin lenguaje de folleto corporativo.
 - Los CTAs son frases en primera persona. Prohibido "Más información" y "Contáctenos".
@@ -990,6 +1000,8 @@ Nunca inventes cifras, estadísticas ni afirmaciones que no estén en los docume
 La landing es una pieza comercial cuyo objetivo es que el cliente quiera saber más y deje sus datos. NO debe incluir obligaciones, cargas ni requisitos que el beneficiario asume DESPUÉS de recibir la ayuda. Esto abarca, entre otros: plazos de mantenimiento de la inversión, obligaciones de no relocalización, conservación de documentación, requisitos de publicidad y comunicación del fondo financiador, obligaciones de justificación, prohibiciones de cambio de titularidad.
 
 Toda esa materia es parte del servicio de consultoría de Innóvate 4.0 y se trabaja con el cliente una vez dentro; no se anticipa en una página de captación.
+
+EXCEPCIÓN: el aviso de garantías o análisis de solvencia de la sección de importe (ver [IMPORTE]) no es una obligación posterior a la concesión, sino una condición previa que determina si la financiación reembolsable llega a formalizarse. Sí debe incluirse cuando conste en las bases.
 
 La landing solo comunica el valor para el cliente: qué es la ayuda, cuánto puede recibir, qué puede financiar, quién puede solicitarla (elegibilidad de entrada) y cómo acompaña Innóvate. Las condiciones, límites y obligaciones posteriores NO van en la landing bajo ninguna forma: ni como ventaja ("garantizamos el cumplimiento"), ni como advertencia.
 
@@ -1070,6 +1082,9 @@ Estructura HTML obligatoria, siempre en este orden (el bloque 9 solo si hay dato
    en el mismo elemento ni con guión u otro separador. Son dos elementos distintos siempre.
 <section class="hero">
   <p class="hero-gancho">Hasta el 40% a fondo perdido</p>
+  <!-- Ejemplo para ayuda a fondo perdido. Si la convocatoria es reembolsable (préstamo,
+       anticipo reembolsable), el gancho no puede decir "a fondo perdido": usa el importe
+       o porcentaje real y el término exacto del instrumento (ver REGLAS DE COPY). -->
   <h1>Nombre base de la convocatoria, sin año</h1>
   <p class="hero-sub">Descriptor: qué tipo de ayuda es, en una frase</p>
   <p class="hero-body">Opcional: presupuesto total o plazo si están confirmados.</p>
@@ -1105,6 +1120,8 @@ Estructura HTML obligatoria, siempre en este orden (el bloque 9 solo si hay dato
   <div class="destacado">
     <div class="destacado-cifra">90.000 €</div>
     <div class="destacado-detalle">Una inversión de 300.000 € al 30% genera esta ayuda a fondo perdido.</div>
+    <!-- Ejemplo para ayuda a fondo perdido; para financiación reembolsable adapta la frase
+         (ver REGLAS DE COPY) y añade el aviso de garantías/solvencia si consta en las bases. -->
   </div>
 </div></section>
 

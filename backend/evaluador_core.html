@@ -172,6 +172,20 @@
   #i40-evaluador .pregunta-ayuda {
     font-size: 0.87rem; color: rgba(29,37,76,0.62); margin-bottom: 22px; line-height: 1.55;
   }
+  #i40-evaluador .pregunta-ayuda + .lista-ref-toggle { margin-top: -14px; }
+  #i40-evaluador .lista-ref-toggle {
+    display: inline-flex; align-items: center; gap: 6px; background: none; border: none;
+    color: var(--red); font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 600;
+    cursor: pointer; padding: 0; margin-bottom: 20px; text-decoration: underline;
+  }
+  #i40-evaluador .lista-ref-toggle:hover { color: var(--navy); }
+  #i40-evaluador .lista-ref-box {
+    display: none; background: var(--cream); border: 1px solid var(--navy-20);
+    padding: 14px 18px; margin: -10px 0 20px; font-size: 0.85rem; line-height: 1.6; color: var(--navy);
+  }
+  #i40-evaluador .lista-ref-box.open { display: block; }
+  #i40-evaluador .lista-ref-box p { font-weight: 700; margin-bottom: 8px; }
+  #i40-evaluador .lista-ref-box ul { margin: 0; padding-left: 18px; }
   #i40-evaluador .opciones-lista { display: flex; flex-direction: column; gap: 11px; }
   #i40-evaluador .opcion {
     display: flex; align-items: flex-start; gap: 14px; padding: 16px 18px;
@@ -476,6 +490,23 @@ function onStep1Submit() {
   avanzar();
 }
 
+// ── Listado de referencia (anexos: zonas, sectores, CNAEs...) ──
+function listaRefHtml(preg) {
+  var lr = preg.lista_referencia;
+  if (!lr || !lr.items || !lr.items.length) return '';
+  var uid = 'lref-' + escHtml(String(preg.id));
+  var itemsHtml = lr.items.map(function(it) { return '<li>' + escHtml(it) + '</li>'; }).join('');
+  return '<button type="button" class="lista-ref-toggle" data-target="' + uid + '" onclick="toggleListaRef(this.dataset.target)">Ver ' + escHtml(lr.titulo || 'listado completo') + '</button>' +
+    '<div class="lista-ref-box" id="' + uid + '">' +
+    (lr.titulo ? '<p>' + escHtml(lr.titulo) + '</p>' : '') +
+    '<ul>' + itemsHtml + '</ul></div>';
+}
+
+function toggleListaRef(uid) {
+  var el = document.getElementById(uid);
+  if (el) el.classList.toggle('open');
+}
+
 // ── PASO 2a — Elegibilidad (una pregunta por pantalla) ──
 function renderEleg(idx) {
   var preg  = CFG.elegibilidad[idx];
@@ -498,6 +529,7 @@ function renderEleg(idx) {
     '<div class="pregunta-block">' +
     '<p class="pregunta-titulo">' + escHtml(preg.pregunta) + '</p>' +
     (preg.ayuda ? '<p class="pregunta-ayuda">' + escHtml(preg.ayuda) + '</p>' : '') +
+    listaRefHtml(preg) +
     '<div class="opciones-lista">' + optsHtml + '</div>' +
     '</div>' +
     '<div class="step-nav">' + backBtn + continueBtn + '</div>'
@@ -576,6 +608,7 @@ function renderGrupo(groupIdx) {
     return '<div class="pregunta-block">' +
       '<p class="pregunta-titulo">' + escHtml(preg.pregunta) + '</p>' +
       (preg.ayuda ? '<p class="pregunta-ayuda">' + escHtml(preg.ayuda) + '</p>' : '') +
+      listaRefHtml(preg) +
       '<div class="opciones-lista">' + optsHtml + '</div>' +
       '</div>';
   }).join('');

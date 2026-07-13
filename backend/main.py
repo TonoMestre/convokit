@@ -143,7 +143,7 @@ def _get_existing_cfg(entregables: dict) -> dict | None:
         return None
     try:
         parsed = json.loads(raw)
-        return parsed if isinstance(parsed, dict) else None
+        return _normalize_evaluador_puntos(parsed) if isinstance(parsed, dict) else None
     except (json.JSONDecodeError, TypeError):
         return None
 
@@ -269,6 +269,41 @@ def _generate_output_1(
 # Generación de salida 3 (landing page HTML desplegable)
 # ---------------------------------------------------------------------------
 
+def _normalize_evaluador_puntos(config: dict) -> dict:
+    """
+    Red de seguridad determinista sobre el baremo del evaluador: nunca se confía
+    en que "puntos_max_total" y los "puntos" de cada opción ya vengan cuadrados.
+    Caso real: un baremo cuya suma real de "puntos_max" no coincidía con
+    "puntos_max_total" declarado dejaba al evaluador mostrando 111 sobre 100.
+    Se recorta cada "puntos" de opción a su propio "puntos_max" y se recalcula
+    "puntos_max_total" como la suma real del baremo, que es la única fuente de
+    verdad para el máximo (los "puntos_max" de cada criterio son los que
+    constan en las bases; el total es derivado, nunca al revés).
+    """
+    baremo = config.get("baremo")
+    if not isinstance(baremo, list):
+        return config
+
+    total = 0
+    for item in baremo:
+        if not isinstance(item, dict):
+            continue
+        puntos_max = item.get("puntos_max")
+        if not isinstance(puntos_max, (int, float)) or puntos_max < 0:
+            puntos_max = 0
+            item["puntos_max"] = 0
+        total += puntos_max
+        for opt in (item.get("opciones") or []):
+            if not isinstance(opt, dict):
+                continue
+            puntos = opt.get("puntos")
+            if isinstance(puntos, (int, float)):
+                opt["puntos"] = max(0, min(puntos, puntos_max))
+
+    config["puntos_max_total"] = total
+    return config
+
+
 def _generate_evaluador_cfg(
     client: anthropic.Anthropic,
     conv_name: str,
@@ -319,7 +354,7 @@ def _generate_evaluador_cfg(
             status_code=502,
             detail=f"JSON inválido: {parse_err[:120]} | fin_respuesta: {tail}",
         )
-    return config
+    return _normalize_evaluador_puntos(config)
 
 
 def _generate_output_3(

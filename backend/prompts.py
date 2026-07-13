@@ -102,6 +102,7 @@ ESQUEMA EXACTO DEL OBJETO JSON (respeta todos los campos y tipos):
       "id": "e1",
       "pregunta": "Pregunta de sí/no en segunda persona sobre un requisito de elegibilidad",
       "ayuda": "Breve explicación del criterio extraída de las bases",
+      "lista_referencia": {"titulo": "Nombre del anexo o listado citado (omitir el campo entero si no aplica)", "items": ["Elemento 1", "Elemento 2"]},
       "opciones": [
         {"label": "Respuesta afirmativa", "bloquea": false},
         {"label": "Respuesta negativa", "bloquea": true, "motivo": "Explicación de por qué bloquea, extraída de las bases."}
@@ -113,6 +114,7 @@ ESQUEMA EXACTO DEL OBJETO JSON (respeta todos los campos y tipos):
       "id": "b1",
       "pregunta": "Pregunta sobre el criterio de baremo en segunda persona",
       "ayuda": "Breve explicación del criterio y cómo se valora",
+      "lista_referencia": {"titulo": "Nombre del anexo o listado citado (omitir el campo entero si no aplica)", "items": ["Elemento 1", "Elemento 2"]},
       "puntos_max": 20,
       "tipo": "objetivo",
       "influenciable": true,
@@ -208,6 +210,13 @@ baremo:
 - "influenciable": aplica solo a criterios "objetivo". true si Innóvate 4.0 puede ayudar a mejorar el criterio antes de presentar. false si es un hecho inmodificable (ubicación actual, CNAE actual, tamaño actual).
 - Las opciones de cada criterio "objetivo" deben cubrir la escala de puntuación del criterio, de menor a mayor, siguiendo las reglas absolutas de opciones indicadas arriba. Para criterios "redaccion" usar array vacío: [].
 - Si la convocatoria no tiene baremo (ayuda directa, préstamo participativo sin concurrencia), devolver "baremo": [] y "puntos_max_total": 0.
+- CUADRE OBLIGATORIO: "puntos_max_total" debe ser exactamente igual a la suma de "puntos_max" de todos los criterios de "baremo", y el "puntos" de cada opción nunca puede superar el "puntos_max" de su propio criterio. Un evaluador que muestre una puntuación por encima del máximo (ej. 111 sobre 100) es un error grave. Antes de devolver el JSON, suma tú mismo los "puntos_max" y comprueba que coincide con "puntos_max_total".
+
+lista_referencia (opcional, en elegibilidad y en baremo):
+- Úsalo cuando la pregunta dependa de que la empresa, la sede o la inversión estén incluidas en un listado enumerable de los documentos: municipios o comarcas de una zona (ej. Anexo de zonas rurales, zonas ITI, zonas de baja densidad), sectores o códigos CNAE admitidos, tipos de activo subvencionable, etc. No asumas que el usuario conoce ese listado de memoria.
+- Inclúyelo SOLO si el listado aparece de forma completa y enumerable en los documentos aportados (no lo inventes, no lo resumas, no lo completes con conocimiento general). Si el listado no consta completo en los documentos, o es tan extenso que no cabe razonablemente (más de 40 elementos), omite el campo entero.
+- "titulo": nombre del anexo o listado tal como aparece en los documentos. "items": cada elemento del listado, literal.
+- Esta regla es genérica para cualquier convocatoria: aplícala cada vez que una pregunta remita a un anexo o listado cerrado, no solo para zonas geográficas.
 
 inversion:
 - Si la convocatoria financia un porcentaje de la inversión elegible del solicitante: "tiene_campo": true, con pct_min, pct_max y tope_euros extraídos de las bases.
@@ -216,8 +225,11 @@ inversion:
 - "tope_euros": importe máximo de ayuda por empresa/proyecto según las bases.
 
 datos_proyecto:
+- El evaluador de encaje verifica el cumplimiento de requisitos y el baremo; NO es una entrevista de captación de datos del proyecto. Este bloque es el más prescindible de todo el CFG: úsalo con mano dura, nunca por defecto.
 - Estas preguntas NO bloquean, NO puntúan y NUNCA aparecen en "elegibilidad" ni en "baremo": son datos de cualificación comercial que se recogen para que el equipo de Innóvate 4.0 entienda el proyecto al recibir el lead, no para calcular el resultado.
 - Cubre únicamente lo que NO esté ya cubierto por otro bloque del CFG: tipo de inversión o actuación, situación actual del proyecto, fechas previstas de ejecución, y principales gastos o partidas previstas. NO repitas aquí el importe de la inversión (ya lo cubre "inversion"), ni ningún dato que ya exista como pregunta de "elegibilidad" o de "baremo".
+- PROHIBIDO pedir el mismo dato dos veces con preguntas distintas dentro de este bloque: si ya preguntas "en qué vas a invertir" con una "seleccion" cerrada (maquinaria, software, obra, equipos...), NO añadas además un campo de "texto_libre" pidiendo que describan en qué consiste la inversión — es el mismo dato bajo dos formatos. Elige un único formato por dato: o selección cerrada, o texto libre, nunca los dos.
+- Límite: como máximo 3 preguntas en este bloque, y solo las estrictamente necesarias para entender el encaje comercial del lead. Menos preguntas es mejor que más: ante la duda, omite la pregunta.
 - Si un dato de esta lista no aplica a este tipo de convocatoria (ej. una ayuda a la contratación no tiene "situación del proyecto" de obra), omite esa entrada en vez de forzarla.
 - "tipo": uno de "seleccion" (con "opciones": lista cerrada de 2 a 5 alternativas, siempre incluye una opción "Otro" si la lista no es exhaustiva), "texto_libre" (respuesta abierta corta, para gastos principales o descripciones), "numero", o "fecha" (para fechas previstas de inicio o ejecución). No uses "seleccion" sin "opciones".
 - "ayuda": opcional, una frase corta o cadena vacía.

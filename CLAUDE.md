@@ -731,10 +731,25 @@ volver a subir archivos.
 
 ## Marca Innóvate 4.0 (para la interfaz y las salidas con diseño)
 
-- Colores: azul #1d254c, rojo #c50339, blanco #FFFFFF, negro #000000. Sin otros colores.
-  Variable CSS adicional: `--cream: #F2EBD8` (usado en landing y evaluador).
-- Tipografía: Roboto Slab (títulos), Inter (cuerpo y UI). Ambas desde Google Fonts.
-- Border-radius: 0px en todos los elementos.
+- Colores (paleta vigente desde las Instrucciones Maestras de Landings y Evaluadores):
+  navy `#1B2060` (deep `#141848`, mid `#2B3180`, light `#E8EAF6`), crimson `#BE0034`
+  (deep `#9A0028`, mid `#D4004A`, light `#FCEEF2`), blanco `#FFFFFF`, negro `#1A1A1A`,
+  escala de grises `--gray-100` `#F4F4F6` a `--gray-700` `#3C3C52`. Sin otros colores
+  fuera de esta paleta salvo los semánticos imprescindibles (éxito/aviso/error), sobrios
+  y accesibles. No existe variable crema: los usos que antes llevaban `--cream` se
+  remapearon caso a caso — `--red-light` en cajas de aviso/alerta y cifras destacadas
+  (aviso_financiero, concurrencia-block, destacado, score-box), `--navy-light` en fondos
+  amplios de sección (variantes de landing, cta-secondary), `--gray-100` en tarjetas
+  neutras y estados hover (`.card` pasa a fondo blanco con borde navy sutil, como pide la
+  guía de tarjetas del documento maestro).
+- Tipografía: Roboto Slab (títulos H1-H3) desde Google Fonts. Etiquetas, botones, campos
+  de formulario y microcopy de interfaz usan `'Neutra Text', 'Arial Narrow', sans-serif`
+  — Neutra Text es una fuente de pago sin origen `@font-face` cargado todavía; hasta que
+  se aporte (URL pública o ficheros, o se confirme que el tema de WordPress ya la carga),
+  cae al fallback Arial Narrow, que es el mismo fallback que especifica el documento
+  maestro. El resto del cuerpo (párrafos, texto explicativo) sigue en Inter por ahora.
+- Border-radius: 0px en todos los elementos (cumple el máximo de 4px que permite el
+  documento maestro para controles funcionales, sin necesidad de usarlo).
 - La salida 2 (ficha comercial) sale en .md limpio con jerarquía clara (H1, H2, bullets,
   destacados). El diseño visual lo aplica Claude design después, que ya tiene el design
   system de Innóvate 4.0; no generar frontmatter de marca ni CSS en esa salida.

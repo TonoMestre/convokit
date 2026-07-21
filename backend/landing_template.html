@@ -10,14 +10,25 @@
     box-sizing: border-box; margin: 0; padding: 0;
   }
   {{WRAPPER_SELECTOR}} {
-    --navy: #1D254C;
-    --red: #C50339;
-    --cream: #F2EBD8;
+    --navy: #1B2060;
+    --navy-deep: #141848;
+    --navy-mid: #2B3180;
+    --navy-light: #E8EAF6;
+    --red: #BE0034;
+    --red-deep: #9A0028;
+    --red-mid: #D4004A;
+    --red-light: #FCEEF2;
     --white: #FFFFFF;
-    --black: #000000;
-    --navy-10: rgba(29,37,76,0.10);
-    --navy-20: rgba(29,37,76,0.20);
-    --navy-60: rgba(29,37,76,0.60);
+    --black: #1A1A1A;
+    --gray-100: #F4F4F6;
+    --gray-200: #E8E8EE;
+    --gray-300: #CBCBD8;
+    --gray-500: #8A8A9A;
+    --gray-600: #5C5C72;
+    --gray-700: #3C3C52;
+    --navy-10: rgba(27,32,96,0.10);
+    --navy-20: rgba(27,32,96,0.20);
+    --navy-60: rgba(27,32,96,0.60);
     font-family: 'Inter', sans-serif;
     background: var(--white);
     color: var(--navy);
@@ -114,7 +125,8 @@
      query). */
   {{WRAPPER_SELECTOR}} .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
   {{WRAPPER_SELECTOR}} .card {
-    background: var(--cream);
+    background: var(--white);
+    border: 1px solid rgba(27,32,96,0.12);
     border-left: 3px solid var(--red);
     padding: 22px;
   }
@@ -123,7 +135,7 @@
 
   /* ── Destacado (ejemplo de importe) ── */
   {{WRAPPER_SELECTOR}} .destacado {
-    background: var(--cream);
+    background: var(--red-light);
     padding: 28px;
     margin-top: 24px;
     border-top: 3px solid var(--red);
@@ -140,7 +152,7 @@
   /* ── Botones ── */
   {{WRAPPER_SELECTOR}} .btn {
     display: inline-block;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Neutra Text', 'Arial Narrow', sans-serif;
     font-size: 1rem;
     font-weight: 600;
     padding: 15px 34px;
@@ -150,9 +162,9 @@
     transition: background 0.2s, color 0.2s;
   }
   {{WRAPPER_SELECTOR}} .btn-cta { background: var(--red); color: var(--white); }
-  {{WRAPPER_SELECTOR}} .btn-cta:hover { background: #a00230; }
+  {{WRAPPER_SELECTOR}} .btn-cta:hover { background: #9A0028; }
   {{WRAPPER_SELECTOR}} .btn-light { background: var(--white); color: var(--navy); }
-  {{WRAPPER_SELECTOR}} .btn-light:hover { background: var(--cream); }
+  {{WRAPPER_SELECTOR}} .btn-light:hover { background: var(--gray-100); }
   {{WRAPPER_SELECTOR}} .btn-outline { background: transparent; color: var(--navy); border: 1.5px solid var(--navy); }
   {{WRAPPER_SELECTOR}} .btn-outline:hover { background: var(--navy); color: var(--white); }
   /* Variante para fondos oscuros (hero, cta-primary): .btn-outline usa texto y borde
@@ -168,7 +180,7 @@
   {{WRAPPER_SELECTOR}} .cta-primary { background: var(--navy); color: var(--white); }
   {{WRAPPER_SELECTOR}} .cta-primary h2 { color: var(--white); font-size: 1.9rem; margin-bottom: 14px; }
   {{WRAPPER_SELECTOR}} .cta-primary p { color: rgba(255,255,255,0.85); max-width: 600px; margin-left: auto; margin-right: auto; margin-bottom: 28px; }
-  {{WRAPPER_SELECTOR}} .cta-secondary { background: var(--cream); }
+  {{WRAPPER_SELECTOR}} .cta-secondary { background: var(--navy-light); }
   {{WRAPPER_SELECTOR}} .cta-secondary h2 { font-size: 1.5rem; margin-bottom: 12px; }
   {{WRAPPER_SELECTOR}} .cta-secondary p { color: var(--navy-60); max-width: 600px; margin-left: auto; margin-right: auto; margin-bottom: 24px; }
 
@@ -223,7 +235,7 @@
     padding: 12px 14px;
     border: 1.5px solid var(--navy-20);
     background: var(--white);
-    font-family: 'Inter', sans-serif;
+    font-family: 'Neutra Text', 'Arial Narrow', sans-serif;
     font-size: 0.95rem;
     color: var(--navy);
     outline: none;
@@ -282,11 +294,11 @@
      7=cta-primary  8=cta-secondary  [9=evaluador embebido, opcional]  último=formulario */
 
   /* Variante A: elegibilidad (3) e importe (5) en crema; el resto hereda su color base */
-  {{WRAPPER_SELECTOR}}.variante-a .landing > section:nth-child(3) { background: var(--cream); }
-  {{WRAPPER_SELECTOR}}.variante-a .landing > section:nth-child(5) { background: var(--cream); }
+  {{WRAPPER_SELECTOR}}.variante-a .landing > section:nth-child(3) { background: var(--navy-light); }
+  {{WRAPPER_SELECTOR}}.variante-a .landing > section:nth-child(5) { background: var(--navy-light); }
 
   /* Variante B: hero crema (texto navy), qué-financia (4) crema, importe (5) navy */
-  {{WRAPPER_SELECTOR}}.variante-b .hero { background: var(--cream); }
+  {{WRAPPER_SELECTOR}}.variante-b .hero { background: var(--navy-light); }
   {{WRAPPER_SELECTOR}}.variante-b .hero h1 { color: var(--navy); }
   {{WRAPPER_SELECTOR}}.variante-b .hero .hero-sub { color: var(--navy); }
   {{WRAPPER_SELECTOR}}.variante-b .hero .hero-body { color: var(--navy-60); }
@@ -296,11 +308,11 @@
      navy y el outline a navy. Se corrige aquí en CSS para que valga con
      cualquier HTML que genere Claude, sin depender del prompt. */
   {{WRAPPER_SELECTOR}}.variante-b .hero .btn-light { background: var(--navy); color: var(--white); }
-  {{WRAPPER_SELECTOR}}.variante-b .hero .btn-light:hover { background: #111828; }
+  {{WRAPPER_SELECTOR}}.variante-b .hero .btn-light:hover { background: #141848; }
   {{WRAPPER_SELECTOR}}.variante-b .hero .btn-outline-light { color: var(--navy); border-color: var(--navy); }
   {{WRAPPER_SELECTOR}}.variante-b .hero .btn-outline-light:hover { background: var(--navy); color: var(--white); }
 
-  {{WRAPPER_SELECTOR}}.variante-b .landing > section:nth-child(4) { background: var(--cream); }
+  {{WRAPPER_SELECTOR}}.variante-b .landing > section:nth-child(4) { background: var(--navy-light); }
 
   {{WRAPPER_SELECTOR}}.variante-b .landing > section:nth-child(5) { background: var(--navy); color: var(--white); }
   {{WRAPPER_SELECTOR}}.variante-b .landing > section:nth-child(5) h2,

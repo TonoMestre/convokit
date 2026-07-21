@@ -39,10 +39,10 @@ _STANDALONE_SHELL = """<!DOCTYPE html>
 <title>__TITULO__</title>
 <style>
   html, body { margin: 0; padding: 0; }
-  body { display: flex; flex-direction: column; min-height: 100vh; background: #F2EBD8; }
+  body { display: flex; flex-direction: column; min-height: 100vh; background: #F4F4F6; }
   .shell-header {
-    background: #1D254C;
-    border-bottom: 2px solid #C50339;
+    background: #1B2060;
+    border-bottom: 2px solid #BE0034;
     padding: 16px 28px;
     display: flex;
     align-items: center;
@@ -63,7 +63,7 @@ _STANDALONE_SHELL = """<!DOCTYPE html>
      o superar esa especificidad, y el estilo del core va después en el documento. */
   .shell-main #i40-evaluador .widget-topbar { display: none; }
   .shell-footer {
-    background: #1D254C;
+    background: #1B2060;
     color: rgba(255,255,255,0.55);
     text-align: center;
     padding: 18px 24px;
@@ -85,7 +85,7 @@ __CORE__
 </main>
 <footer class="shell-footer">
   © Innóvate 4.0 Estrategia Empresarial, S.L. &nbsp;|&nbsp;
-  <a href="https://innovate40.es/aviso-legal/" target="_blank" rel="noopener">Aviso legal</a>
+  <a href="https://innovate40.es/aviso-legal/" target="_blank" rel="noopener noreferrer">Aviso legal</a>
   &nbsp;|&nbsp;
   <a href="mailto:proyectos2@innovate40.es">proyectos2@innovate40.es</a>
   &nbsp;|&nbsp; 960 66 66 10

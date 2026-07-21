@@ -11,19 +11,30 @@
     box-sizing: border-box; margin: 0; padding: 0;
   }
   #i40-evaluador {
-    --navy: #1D254C;
-    --red: #C50339;
-    --cream: #F2EBD8;
+    --navy: #1B2060;
+    --navy-deep: #141848;
+    --navy-mid: #2B3180;
+    --navy-light: #E8EAF6;
+    --red: #BE0034;
+    --red-deep: #9A0028;
+    --red-mid: #D4004A;
+    --red-light: #FCEEF2;
     --white: #FFFFFF;
-    --black: #000000;
-    --navy-10: rgba(29,37,76,0.10);
-    --navy-20: rgba(29,37,76,0.20);
-    --line: rgba(29,37,76,0.14);
-    --field-border: rgba(29,37,76,0.32);
-    --shadow: 0 1px 2px rgba(29,37,76,.04), 0 14px 30px -20px rgba(29,37,76,.40);
-    --shadow-btn: 0 6px 16px -8px rgba(29,37,76,.55);
+    --black: #1A1A1A;
+    --gray-100: #F4F4F6;
+    --gray-200: #E8E8EE;
+    --gray-300: #CBCBD8;
+    --gray-500: #8A8A9A;
+    --gray-600: #5C5C72;
+    --gray-700: #3C3C52;
+    --navy-10: rgba(27,32,96,0.10);
+    --navy-20: rgba(27,32,96,0.20);
+    --line: rgba(27,32,96,0.14);
+    --field-border: rgba(27,32,96,0.32);
+    --shadow: 0 1px 2px rgba(27,32,96,.04), 0 14px 30px -20px rgba(27,32,96,.40);
+    --shadow-btn: 0 6px 16px -8px rgba(27,32,96,.55);
     font-family: 'Inter', sans-serif;
-    background: var(--cream);
+    background: var(--gray-100);
     color: var(--navy);
     display: flex;
     flex-direction: column;
@@ -57,7 +68,7 @@
     text-align: center;
   }
   #i40-evaluador .widget-topbar-tag {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Neutra Text', 'Arial Narrow', sans-serif;
     font-size: 0.72rem;
     font-weight: 600;
     color: rgba(255,255,255,0.85);
@@ -115,7 +126,7 @@
   }
   #i40-evaluador .strip-item .strip-valor { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.1rem; }
   #i40-evaluador .aviso-financiero {
-    background: var(--cream); border-left: 4px solid var(--red); padding: 16px 20px;
+    background: var(--red-light); border-left: 4px solid var(--red); padding: 16px 20px;
     margin-bottom: 30px; font-size: 0.87rem; line-height: 1.55; color: var(--navy);
   }
 
@@ -131,12 +142,12 @@
   #i40-evaluador .field input[type="number"],
   #i40-evaluador .field input[type="date"] {
     width: 100%; padding: 13px 15px; border: 1.5px solid var(--field-border);
-    background: var(--white); font-family: 'Inter', sans-serif; font-size: 0.98rem;
+    background: var(--white); font-family: 'Neutra Text', 'Arial Narrow', sans-serif; font-size: 0.98rem;
     color: var(--navy); outline: none; border-radius: 0;
-    box-shadow: inset 0 1px 2px rgba(29,37,76,0.05);
+    box-shadow: inset 0 1px 2px rgba(27,32,96,0.05);
     transition: border-color 0.2s, box-shadow 0.2s;
   }
-  #i40-evaluador .field input::placeholder { color: rgba(29,37,76,0.42); }
+  #i40-evaluador .field input::placeholder { color: rgba(27,32,96,0.42); }
   #i40-evaluador .field input:focus { border-color: var(--navy); box-shadow: 0 0 0 3px var(--navy-10); }
   #i40-evaluador .field input.error { border-color: var(--red); }
 
@@ -174,17 +185,17 @@
     color: var(--navy); margin-bottom: 10px; line-height: 1.35;
   }
   #i40-evaluador .pregunta-ayuda {
-    font-size: 0.87rem; color: rgba(29,37,76,0.62); margin-bottom: 22px; line-height: 1.55;
+    font-size: 0.87rem; color: rgba(27,32,96,0.62); margin-bottom: 22px; line-height: 1.55;
   }
   #i40-evaluador .pregunta-ayuda + .lista-ref-toggle { margin-top: -14px; }
   #i40-evaluador .lista-ref-toggle {
     display: inline-flex; align-items: center; gap: 6px; background: none; border: none;
-    color: var(--red); font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 600;
+    color: var(--red); font-family: 'Neutra Text', 'Arial Narrow', sans-serif; font-size: 0.85rem; font-weight: 600;
     cursor: pointer; padding: 0; margin-bottom: 20px; text-decoration: underline;
   }
   #i40-evaluador .lista-ref-toggle:hover { color: var(--navy); }
   #i40-evaluador .lista-ref-box {
-    display: none; background: var(--cream); border: 1px solid var(--navy-20);
+    display: none; background: var(--gray-100); border: 1px solid var(--navy-20);
     padding: 14px 18px; margin: -10px 0 20px; font-size: 0.85rem; line-height: 1.6; color: var(--navy);
   }
   #i40-evaluador .lista-ref-box.open { display: block; }
@@ -195,12 +206,13 @@
     display: flex; align-items: flex-start; gap: 14px; padding: 16px 18px;
     border: 1.5px solid var(--navy-20); background: var(--white); cursor: pointer;
     transition: border-color 0.15s, background 0.15s, transform 0.12s, box-shadow 0.15s; text-align: left;
-    font-family: 'Inter', sans-serif; font-size: 0.96rem; line-height: 1.45; color: var(--navy);
+    font-family: 'Neutra Text', 'Arial Narrow', sans-serif; font-size: 0.96rem; line-height: 1.45; color: var(--navy);
     border-radius: 0; width: 100%;
   }
-  #i40-evaluador .opcion:hover { border-color: var(--navy); background: var(--cream); transform: translateY(-1px); box-shadow: 0 4px 10px -6px rgba(29,37,76,.35); }
+  #i40-evaluador .opcion:hover { border-color: var(--navy); background: var(--gray-100); transform: translateY(-1px); box-shadow: 0 4px 10px -6px rgba(27,32,96,.35); }
   #i40-evaluador .opcion.selected {
-    border-color: var(--navy); background: var(--navy); color: var(--white);
+    border-color: var(--red); background: var(--red-light); color: var(--navy);
+    box-shadow: inset 3px 0 0 var(--red);
     animation: i40-select-pulse 0.28s ease;
   }
   @keyframes i40-select-pulse {
@@ -230,17 +242,17 @@
   /* ── Botones ── */
   #i40-evaluador .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    padding: 14px 30px; font-family: 'Inter', sans-serif; font-size: 0.92rem; font-weight: 600;
+    padding: 14px 30px; font-family: 'Neutra Text', 'Arial Narrow', sans-serif; font-size: 0.92rem; font-weight: 600;
     cursor: pointer; border: none; border-radius: 0; text-decoration: none;
     transition: background 0.2s, color 0.2s, transform 0.12s, box-shadow 0.2s;
   }
   #i40-evaluador .btn-primary { background: var(--navy); color: var(--white); box-shadow: var(--shadow-btn); }
-  #i40-evaluador .btn-primary:hover { background: #111828; transform: translateY(-1px); }
+  #i40-evaluador .btn-primary:hover { background: #141848; transform: translateY(-1px); }
   #i40-evaluador .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
   #i40-evaluador .btn-secondary { background: transparent; color: var(--navy); border: 1.5px solid var(--navy); }
   #i40-evaluador .btn-secondary:hover { background: var(--navy); color: var(--white); }
-  #i40-evaluador .btn-red { background: var(--red); color: var(--white); box-shadow: 0 6px 16px -8px rgba(197,3,57,.55); }
-  #i40-evaluador .btn-red:hover { background: #a00230; transform: translateY(-1px); }
+  #i40-evaluador .btn-red { background: var(--red); color: var(--white); box-shadow: 0 6px 16px -8px rgba(190,0,52,.55); }
+  #i40-evaluador .btn-red:hover { background: #9A0028; transform: translateY(-1px); }
 
   /* ── Step nav ── */
   #i40-evaluador .step-nav { display: flex; gap: 14px; margin-top: 34px; align-items: center; flex-wrap: wrap; }
@@ -263,7 +275,7 @@
     display: block; margin-top: 26px; padding-top: 22px; border-top: 1px solid rgba(255,255,255,0.15);
     font-size: 0.83rem; color: rgba(255,255,255,0.6);
     cursor: pointer; border-left: none; border-right: none; border-bottom: none;
-    background: none; font-family: 'Inter', sans-serif; text-decoration: underline; text-align: left; width: 100%;
+    background: none; font-family: 'Neutra Text', 'Arial Narrow', sans-serif; text-decoration: underline; text-align: left; width: 100%;
   }
   #i40-evaluador .bloqueo-volver:hover { color: var(--white); }
 
@@ -273,14 +285,14 @@
   #i40-evaluador .eleg-apto { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.25rem; color: var(--navy); margin-bottom: 16px; line-height: 1.4; }
   #i40-evaluador .veredicto-texto { font-size: 0.98rem; line-height: 1.65; color: var(--navy); }
 
-  #i40-evaluador .concurrencia-block { background: var(--cream); border-left: 4px solid var(--red); padding: 26px 28px; margin-bottom: 20px; box-shadow: var(--shadow); }
+  #i40-evaluador .concurrencia-block { background: var(--red-light); border-left: 4px solid var(--red); padding: 26px 28px; margin-bottom: 20px; box-shadow: var(--shadow); }
   #i40-evaluador .concurrencia-block p { font-size: 0.94rem; line-height: 1.6; color: var(--navy); margin-bottom: 12px; }
   #i40-evaluador .concurrencia-block p:last-child { margin-bottom: 0; }
 
   #i40-evaluador .score-display { display: flex; gap: 20px; flex-wrap: wrap; margin: 24px 0 4px; }
-  #i40-evaluador .score-box { flex: 1 1 auto; background: var(--cream); padding: 22px 24px; text-align: center; }
+  #i40-evaluador .score-box { flex: 1 1 auto; background: var(--red-light); padding: 22px 24px; text-align: center; }
   #i40-evaluador .score-box .score-num { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 3rem; color: var(--navy); line-height: 1; }
-  #i40-evaluador .score-box .score-label { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(29,37,76,0.6); margin-top: 8px; }
+  #i40-evaluador .score-box .score-label { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(27,32,96,0.6); margin-top: 8px; }
   #i40-evaluador .score-box.potencial .score-num { color: var(--red); }
 
   #i40-evaluador .score-bar-wrap { height: 10px; background: var(--navy-10); margin: 22px 0 8px; }
@@ -288,7 +300,7 @@
 
   #i40-evaluador .calc-block { background: var(--white); border: 1px solid var(--line); padding: 30px 32px; margin-bottom: 20px; box-shadow: var(--shadow); }
   #i40-evaluador .calc-block h3 { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.1rem; color: var(--navy); margin-bottom: 10px; }
-  #i40-evaluador .calc-formula { font-size: 0.85rem; color: rgba(29,37,76,0.62); margin-bottom: 20px; line-height: 1.55; }
+  #i40-evaluador .calc-formula { font-size: 0.85rem; color: rgba(27,32,96,0.62); margin-bottom: 20px; line-height: 1.55; }
   #i40-evaluador .calc-block .field { margin-bottom: 0; }
   #i40-evaluador .calc-result { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 1.8rem; color: var(--red); margin-top: 16px; }
 
@@ -298,7 +310,7 @@
   #i40-evaluador .cta-block .cta-contacto { font-size: 0.96rem; font-weight: 500; line-height: 1.6; }
   #i40-evaluador .cta-block a { color: var(--white); }
 
-  #i40-evaluador .nota-fuente { font-size: 0.74rem; color: rgba(29,37,76,0.5); margin-top: 28px; line-height: 1.55; }
+  #i40-evaluador .nota-fuente { font-size: 0.74rem; color: rgba(27,32,96,0.5); margin-top: 28px; line-height: 1.55; }
   #i40-evaluador .form-error { color: var(--red); font-size: 0.83rem; margin-top: 11px; display: none; }
 
   @media (max-width: 480px) {
@@ -321,12 +333,12 @@
   <span class="widget-topbar-tag">Evaluador de encaje</span>
 </div>
 
-<div class="progress-bar-wrap" id="progress-bar-wrap" style="display:none">
-  <div class="progress-bar-inner" id="progress-bar-inner"></div>
+<div class="progress-bar-wrap" id="i40ev-progress-bar-wrap" style="display:none">
+  <div class="progress-bar-inner" id="i40ev-progress-bar-inner"></div>
 </div>
 
 <main class="container">
-  <div id="screen-content"></div>
+  <div id="i40ev-screen-content"></div>
 </main>
 
 </div>
@@ -344,7 +356,15 @@ const STATE = {
 };
 
 function getPageUrl() {
-  try { if (window.parent && window.parent !== window && window.parent.location) { return window.parent.location.href; } } catch (e) {}
+  try {
+    if (window.parent) {
+      if (window.parent !== window) {
+        if (window.parent.location) {
+          return window.parent.location.href;
+        }
+      }
+    }
+  } catch (e) {}
   return window.location.href;
 }
 
@@ -392,9 +412,11 @@ function retroceder() {
 }
 
 function updateProgress() {
-  var wrap = document.getElementById("progress-bar-wrap");
-  var bar  = document.getElementById("progress-bar-inner");
-  if (currentIdx === 0 && !STATE.bloqueado) { wrap.style.display = "none"; return; }
+  var wrap = document.getElementById("i40ev-progress-bar-wrap");
+  var bar  = document.getElementById("i40ev-progress-bar-inner");
+  if (currentIdx === 0) {
+    if (!STATE.bloqueado) { wrap.style.display = "none"; return; }
+  }
   wrap.style.display = "block";
   var pct = Math.round(currentIdx / SCREENS.length * 100);
   bar.style.width = pct + "%";
@@ -407,8 +429,10 @@ function scrollWidgetToTop() {
   // la cabecera del widget quede arriba del viewport, tanto si es la página
   // entera (standalone) como si es un bloque embebido a mitad de la landing.
   var widget = document.querySelector(".evaluador-widget");
-  if (widget && widget.scrollIntoView) {
-    widget.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (widget) {
+    if (widget.scrollIntoView) {
+      widget.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   }
 }
 
@@ -432,18 +456,24 @@ function renderScreen() {
 
 // ── Helpers ──────────────────────────────────────
 function escHtml(str) {
+  var amp = String.fromCharCode(38);
   return String(str || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+    .replace(new RegExp(amp, "g"), amp + "amp;")
+    .replace(/</g, amp + "lt;")
+    .replace(/>/g, amp + "gt;")
+    .replace(/"/g, amp + "quot;");
+}
+function getTituloEvaluador() {
+  var textos = CFG.textos;
+  if (!textos) { return ""; }
+  return textos.titulo_evaluador || "";
 }
 function formatEur(n) { return Math.round(n).toLocaleString("es-ES") + " €"; }
 function getBaremoById(id) {
   return (CFG.baremo || []).find(function(p) { return p.id === id; });
 }
 function setContent(html) {
-  document.getElementById("screen-content").innerHTML = html;
+  document.getElementById("i40ev-screen-content").innerHTML = html;
 }
 
 // ── PASO 1 — Inicio ──────────────────────────────
@@ -460,12 +490,12 @@ function renderInicio() {
     '<p class="intro-lead">' + escHtml(CFG.textos.intro_lead || "") + '</p>' +
     (stripHtml ? '<div class="strip">' + stripHtml + '</div>' : '') +
     (CFG.aviso_financiero ? '<div class="aviso-financiero">' + escHtml(CFG.aviso_financiero) + '</div>' : '') +
-    '<div class="field"><label for="f-nombre">Tu nombre *</label>' +
-    '<input type="text" id="f-nombre" placeholder="Nombre y apellidos" autocomplete="name" value="' + escHtml(STATE.nombre) + '" /></div>' +
-    '<div class="field"><label for="f-empresa">Empresa *</label>' +
-    '<input type="text" id="f-empresa" placeholder="Nombre de la empresa" autocomplete="organization" value="' + escHtml(STATE.empresa) + '" /></div>' +
-    '<div class="field"><label for="f-municipio">Municipio</label>' +
-    '<input type="text" id="f-municipio" placeholder="Municipio donde opera la empresa" autocomplete="address-level2" value="' + escHtml(STATE.municipio) + '" /></div>' +
+    '<div class="field"><label for="i40ev-f-nombre">Tu nombre *</label>' +
+    '<input type="text" id="i40ev-f-nombre" placeholder="Nombre y apellidos" autocomplete="name" value="' + escHtml(STATE.nombre) + '" /></div>' +
+    '<div class="field"><label for="i40ev-f-empresa">Empresa *</label>' +
+    '<input type="text" id="i40ev-f-empresa" placeholder="Nombre de la empresa" autocomplete="organization" value="' + escHtml(STATE.empresa) + '" /></div>' +
+    '<div class="field"><label for="i40ev-f-municipio">Municipio</label>' +
+    '<input type="text" id="i40ev-f-municipio" placeholder="Municipio donde opera la empresa" autocomplete="address-level2" value="' + escHtml(STATE.municipio) + '" /></div>' +
     '<div class="rgpd-block">' +
     '<strong>Información sobre protección de datos</strong><br /><br />' +
     '<strong>Responsable:</strong> INNÓVATE 4.0 ESTRATEGIA EMPRESARIAL, S.L. — NIF B-01.734.813<br />' +
@@ -473,24 +503,26 @@ function renderInicio() {
     '<strong>Email:</strong> <a href="mailto:GDPR@INNOVATE40.ES">GDPR@INNOVATE40.ES</a><br /><br />' +
     'Tus datos se utilizarán exclusivamente para atender tu consulta sobre ayudas públicas y no se cederán a terceros sin tu consentimiento. ' +
     'Puedes ejercer tus derechos de acceso, rectificación, supresión y portabilidad en la dirección anterior.<br /><br />' +
-    '<label class="rgpd-check"><input type="checkbox" id="f-rgpd" />' +
+    '<label class="rgpd-check"><input type="checkbox" id="i40ev-f-rgpd" />' +
     '<span>He leído y acepto la <a href="https://innovate40.es/politica-de-privacidad/" target="_blank" rel="noopener noreferrer">política de privacidad</a> y el <a href="https://innovate40.es/aviso-legal/" target="_blank" rel="noopener noreferrer">aviso legal</a> de Innóvate 4.0 Estrategia Empresarial, S.L., y el tratamiento de mis datos para recibir información sobre esta convocatoria de ayudas públicas. *</span>' +
     '</label></div>' +
     '<div class="step-nav"><button class="btn btn-primary" onclick="onStep1Submit()">Comenzar el evaluador →</button></div>' +
-    '<div class="form-error" id="e-step1">Por favor, completa los campos obligatorios y acepta la política de privacidad.</div>'
+    '<div class="form-error" id="i40ev-e-step1">Por favor, completa los campos obligatorios y acepta la política de privacidad.</div>'
   );
 }
 
 function onStep1Submit() {
-  var nombre  = document.getElementById("f-nombre").value.trim();
-  var empresa = document.getElementById("f-empresa").value.trim();
-  var rgpd    = document.getElementById("f-rgpd").checked;
-  var errEl   = document.getElementById("e-step1");
-  if (!nombre || !empresa || !rgpd) { errEl.style.display = "block"; return; }
+  var nombre  = document.getElementById("i40ev-f-nombre").value.trim();
+  var empresa = document.getElementById("i40ev-f-empresa").value.trim();
+  var rgpd    = document.getElementById("i40ev-f-rgpd").checked;
+  var errEl   = document.getElementById("i40ev-e-step1");
+  if (!nombre) { errEl.style.display = "block"; return; }
+  if (!empresa) { errEl.style.display = "block"; return; }
+  if (!rgpd) { errEl.style.display = "block"; return; }
   errEl.style.display = "none";
   STATE.nombre    = nombre;
   STATE.empresa   = empresa;
-  STATE.municipio = document.getElementById("f-municipio").value.trim();
+  STATE.municipio = document.getElementById("i40ev-f-municipio").value.trim();
   STATE.rgpd      = rgpd;
   avanzar();
 }
@@ -499,7 +531,7 @@ function onStep1Submit() {
 function listaRefHtml(preg) {
   var lr = preg.lista_referencia;
   if (!lr || !lr.items || !lr.items.length) return '';
-  var uid = 'lref-' + escHtml(String(preg.id));
+  var uid = 'i40ev-lref-' + escHtml(String(preg.id));
   var itemsHtml = lr.items.map(function(it) { return '<li>' + escHtml(it) + '</li>'; }).join('');
   return '<button type="button" class="lista-ref-toggle" data-target="' + uid + '" onclick="toggleListaRef(this.dataset.target)">Ver ' + escHtml(lr.titulo || 'listado completo') + '</button>' +
     '<div class="lista-ref-box" id="' + uid + '">' +
@@ -519,8 +551,9 @@ function renderEleg(idx) {
   var saved = STATE.respuestas[preg.id];
 
   var optsHtml = preg.opciones.map(function(opt, opIdx) {
-    var sel = (saved && saved.opIdx === opIdx) ? " selected" : "";
-    return '<button class="opcion' + sel + '" id="eleg-opt-' + idx + '-' + opIdx + '" ' +
+    var sel = "";
+    if (saved) { if (saved.opIdx === opIdx) { sel = " selected"; } }
+    return '<button class="opcion' + sel + '" id="i40ev-eleg-opt-' + idx + '-' + opIdx + '" ' +
       'onclick="onElegOpt(' + idx + ',' + opIdx + ')" type="button">' +
       '<span class="opcion-radio"></span><span>' + escHtml(opt.label) + '</span>' +
       '</button>';
@@ -547,7 +580,7 @@ function onElegOpt(pregIdx, opIdx) {
 
   // update UI selection
   preg.opciones.forEach(function(_, i) {
-    var btn = document.getElementById("eleg-opt-" + pregIdx + "-" + i);
+    var btn = document.getElementById("i40ev-eleg-opt-" + pregIdx + "-" + i);
     if (btn) btn.classList.toggle("selected", i === opIdx);
   });
 
@@ -587,7 +620,8 @@ function renderGrupo(groupIdx) {
     var g = grupos[groupIdx];
     nombre      = g.nombre || ("Bloque " + (groupIdx + 1));
     preguntas   = (CFG.baremo || []).filter(function(p) {
-      return (g.ids || []).indexOf(p.id) !== -1 && isObjetivo(p);
+      if ((g.ids || []).indexOf(p.id) === -1) { return false; }
+      return isObjetivo(p);
     });
     grupoNum    = groupIdx + 1;
     totalGrupos = grupos.length;
@@ -600,10 +634,11 @@ function renderGrupo(groupIdx) {
   var pregsHtml = preguntas.map(function(preg) {
     var saved = STATE.respuestas[preg.id];
     var optsHtml = preg.opciones.map(function(opt, opIdx) {
-      var sel = (saved && saved.opIdx === opIdx) ? " selected" : "";
+      var sel = "";
+      if (saved) { if (saved.opIdx === opIdx) { sel = " selected"; } }
       // Los puntos por opción NO se muestran al cliente: siguen en los datos (opt.puntos),
       // en el cálculo (calcularScore) y en el email interno a Innóvate 4.0.
-      return '<button class="opcion' + sel + '" id="bo-' + escHtml(preg.id) + '-' + opIdx + '" ' +
+      return '<button class="opcion' + sel + '" id="i40ev-bo-' + escHtml(preg.id) + '-' + opIdx + '" ' +
         'data-pregid="' + escHtml(preg.id) + '" data-opidx="' + opIdx + '" ' +
         'onclick="onBaremoOpt(this.dataset.pregid,+this.dataset.opidx)" type="button">' +
         '<span class="opcion-radio"></span>' +
@@ -626,7 +661,7 @@ function renderGrupo(groupIdx) {
   setContent(
     '<p class="section-header">' + escHtml(headerLabel) + '</p>' +
     pregsHtml +
-    '<div class="form-error" id="e-grupo">Por favor, responde todas las preguntas de este bloque para continuar.</div>' +
+    '<div class="form-error" id="i40ev-e-grupo">Por favor, responde todas las preguntas de este bloque para continuar.</div>' +
     '<div class="step-nav">' + backBtn +
     '<button class="btn btn-primary" data-ids="' + escHtml(pregIds) + '" onclick="onGrupoNext(this.dataset.ids)">Continuar →</button>' +
     '</div>'
@@ -639,7 +674,7 @@ function onBaremoOpt(pregId, opIdx) {
   var opt = preg.opciones[opIdx];
 
   preg.opciones.forEach(function(_, i) {
-    var btn = document.getElementById("bo-" + pregId + "-" + i);
+    var btn = document.getElementById("i40ev-bo-" + pregId + "-" + i);
     if (btn) btn.classList.toggle("selected", i === opIdx);
   });
 
@@ -657,8 +692,11 @@ function onBaremoOpt(pregId, opIdx) {
 
 function onGrupoNext(idsStr) {
   var ids       = idsStr ? idsStr.split(',') : [];
-  var pending   = ids.filter(function(id) { return id && !STATE.respuestas[id]; });
-  var errEl     = document.getElementById("e-grupo");
+  var pending   = ids.filter(function(id) {
+    if (!id) { return false; }
+    return !STATE.respuestas[id];
+  });
+  var errEl     = document.getElementById("i40ev-e-grupo");
   if (pending.length > 0) { if (errEl) errEl.style.display = "block"; return; }
   if (errEl) errEl.style.display = "none";
   avanzar();
@@ -674,8 +712,9 @@ function renderProyecto() {
     var campoHtml;
     if (preg.tipo === "seleccion") {
       var optsHtml = (preg.opciones || []).map(function(opt, opIdx) {
-        var sel = (saved && saved.opIdx === opIdx) ? " selected" : "";
-        return '<button class="opcion' + sel + '" id="dp-' + escHtml(preg.id) + '-' + opIdx + '" ' +
+        var sel = "";
+        if (saved) { if (saved.opIdx === opIdx) { sel = " selected"; } }
+        return '<button class="opcion' + sel + '" id="i40ev-dp-' + escHtml(preg.id) + '-' + opIdx + '" ' +
           'data-pregid="' + escHtml(preg.id) + '" data-opidx="' + opIdx + '" ' +
           'onclick="onProyectoOpt(this.dataset.pregid,+this.dataset.opidx)" type="button">' +
           '<span class="opcion-radio"></span><span>' + escHtml(opt) + '</span>' +
@@ -684,8 +723,9 @@ function renderProyecto() {
       campoHtml = '<div class="opciones-lista">' + optsHtml + '</div>';
     } else {
       var inputType = preg.tipo === "numero" ? "number" : preg.tipo === "fecha" ? "date" : "text";
-      var val = (saved && saved.value != null) ? saved.value : "";
-      campoHtml = '<div class="field"><input type="' + inputType + '" id="dp-input-' + escHtml(preg.id) + '" ' +
+      var val = "";
+      if (saved) { if (saved.value != null) { val = saved.value; } }
+      campoHtml = '<div class="field"><input type="' + inputType + '" id="i40ev-dp-input-' + escHtml(preg.id) + '" ' +
         'data-pregid="' + escHtml(preg.id) + '" value="' + escHtml(val) + '" ' +
         'onchange="onProyectoInput(this.dataset.pregid,this.value)" /></div>';
     }
@@ -711,7 +751,7 @@ function onProyectoOpt(pregId, opIdx) {
   var opt = preg.opciones[opIdx];
 
   preg.opciones.forEach(function(_, i) {
-    var btn = document.getElementById("dp-" + pregId + "-" + i);
+    var btn = document.getElementById("i40ev-dp-" + pregId + "-" + i);
     if (btn) btn.classList.toggle("selected", i === opIdx);
   });
 
@@ -738,15 +778,15 @@ function renderContacto() {
   setContent(
     '<p class="section-header">Último paso</p>' +
     '<p class="intro-lead" style="margin-bottom:24px;">Para mostrarte el resultado de la evaluación y poder comentarlo contigo, necesitamos tus datos de contacto. Recibirás también una copia por correo electrónico.</p>' +
-    '<div class="field"><label for="f-email">Email *</label>' +
-    '<input type="email" id="f-email" placeholder="email@empresa.com" autocomplete="email" value="' + escHtml(STATE.email) + '" /></div>' +
-    '<div class="field"><label for="f-tel">Teléfono *</label>' +
-    '<input type="tel" id="f-tel" placeholder="Número de contacto" autocomplete="tel" value="' + escHtml(STATE.tel) + '" /></div>' +
-    '<input class="hp-field" type="text" id="f-website" name="website" tabindex="-1" autocomplete="off" />' +
+    '<div class="field"><label for="i40ev-f-email">Email *</label>' +
+    '<input type="email" id="i40ev-f-email" placeholder="email@empresa.com" autocomplete="email" value="' + escHtml(STATE.email) + '" /></div>' +
+    '<div class="field"><label for="i40ev-f-tel">Teléfono *</label>' +
+    '<input type="tel" id="i40ev-f-tel" placeholder="Número de contacto" autocomplete="tel" value="' + escHtml(STATE.tel) + '" /></div>' +
+    '<input class="hp-field" type="text" id="i40ev-f-website" name="website" tabindex="-1" autocomplete="off" />' +
     '<div class="step-nav">' + backBtn +
-    '<button class="btn btn-primary" id="btn-ver-resultado" onclick="onContactoSubmit()">Ver mi resultado →</button>' +
+    '<button class="btn btn-primary" id="i40ev-btn-ver-resultado" onclick="onContactoSubmit()">Ver mi resultado →</button>' +
     '</div>' +
-    '<div class="form-error" id="e-contacto">Por favor, completa tu email y teléfono para ver el resultado.</div>'
+    '<div class="form-error" id="i40ev-e-contacto">Por favor, completa tu email y teléfono para ver el resultado.</div>'
   );
 }
 
@@ -761,16 +801,16 @@ function isValidTel(v) {
 }
 
 async function onContactoSubmit() {
-  var emailEl = document.getElementById("f-email");
-  var telEl   = document.getElementById("f-tel");
+  var emailEl = document.getElementById("i40ev-f-email");
+  var telEl   = document.getElementById("i40ev-f-tel");
   var email = emailEl.value.trim();
   var tel   = telEl.value.trim();
-  var errEl = document.getElementById("e-contacto");
-  var btnEl = document.getElementById("btn-ver-resultado");
+  var errEl = document.getElementById("i40ev-e-contacto");
+  var btnEl = document.getElementById("i40ev-btn-ver-resultado");
 
   // Honeypot: si el campo oculto viene relleno, es un envío automatizado.
   // Se descarta en silencio, sin mostrar resultado ni enviar nada.
-  var honeypot = (document.getElementById("f-website") || {}).value || "";
+  var honeypot = (document.getElementById("i40ev-f-website") || {}).value || "";
   if (honeypot.trim()) { return; }
 
   emailEl.classList.remove("error");
@@ -823,16 +863,16 @@ function renderBloqueo() {
     '<div class="bloqueo-panel">' +
     '<h2>' + escHtml(titulo) + '</h2>' +
     '<p>' + escHtml(texto) + '</p>' +
-    '<div id="bloqueo-form">' +
-    '<div class="field"><label for="b-email">Tu email *</label>' +
-    '<input type="email" id="b-email" placeholder="email@empresa.com" /></div>' +
-    '<div class="field"><label for="b-tel">Teléfono *</label>' +
-    '<input type="tel" id="b-tel" placeholder="Número de contacto" /></div>' +
-    '<input class="hp-field" type="text" id="b-website" name="website" tabindex="-1" autocomplete="off" />' +
-    '<button class="btn btn-red" id="btn-bloqueo-enviar" onclick="enviarLeadBloqueo()">Recibir información de otras ayudas</button>' +
-    '<div class="form-error" id="e-bloqueo">Revisa los datos de contacto.</div>' +
+    '<div id="i40ev-bloqueo-form">' +
+    '<div class="field"><label for="i40ev-b-email">Tu email *</label>' +
+    '<input type="email" id="i40ev-b-email" placeholder="email@empresa.com" /></div>' +
+    '<div class="field"><label for="i40ev-b-tel">Teléfono *</label>' +
+    '<input type="tel" id="i40ev-b-tel" placeholder="Número de contacto" /></div>' +
+    '<input class="hp-field" type="text" id="i40ev-b-website" name="website" tabindex="-1" autocomplete="off" />' +
+    '<button class="btn btn-red" id="i40ev-btn-bloqueo-enviar" onclick="enviarLeadBloqueo()">Recibir información de otras ayudas</button>' +
+    '<div class="form-error" id="i40ev-e-bloqueo">Revisa los datos de contacto.</div>' +
     '</div>' +
-    '<div id="bloqueo-confirm" style="display:none">' +
+    '<div id="i40ev-bloqueo-confirm" style="display:none">' +
     '<p class="bloqueo-confirm-msg">✓ Gracias. Nos pondremos en contacto contigo para orientarte hacia las ayudas que mejor se adapten a tu empresa.</p>' +
     '</div>' +
     '<button class="bloqueo-volver" onclick="retroceder()">← Volver al cuestionario para cambiar mi respuesta</button>' +
@@ -841,14 +881,14 @@ function renderBloqueo() {
 }
 
 async function enviarLeadBloqueo() {
-  var emailEl = document.getElementById("b-email");
-  var telEl   = document.getElementById("b-tel");
-  var errEl   = document.getElementById("e-bloqueo");
-  var btnEl   = document.getElementById("btn-bloqueo-enviar");
+  var emailEl = document.getElementById("i40ev-b-email");
+  var telEl   = document.getElementById("i40ev-b-tel");
+  var errEl   = document.getElementById("i40ev-e-bloqueo");
+  var btnEl   = document.getElementById("i40ev-btn-bloqueo-enviar");
   var email = emailEl ? emailEl.value.trim() : "";
   var tel   = telEl ? telEl.value.trim() : "";
 
-  var honeypot = (document.getElementById("b-website") || {}).value || "";
+  var honeypot = (document.getElementById("i40ev-b-website") || {}).value || "";
   if (honeypot.trim()) { return; }
 
   if (emailEl) emailEl.classList.remove("error");
@@ -880,8 +920,8 @@ async function enviarLeadBloqueo() {
   var ok = await enviarLeadNoElegible(email, tel);
 
   if (ok) {
-    document.getElementById("bloqueo-form").style.display = "none";
-    document.getElementById("bloqueo-confirm").style.display = "block";
+    document.getElementById("i40ev-bloqueo-form").style.display = "none";
+    document.getElementById("i40ev-bloqueo-confirm").style.display = "block";
   } else {
     if (btnEl) { btnEl.disabled = false; btnEl.textContent = "Recibir información de otras ayudas"; }
     if (errEl) {
@@ -896,19 +936,19 @@ async function enviarLeadBloqueo() {
 // se encarga de la memoria y se asume puntuación máxima en todos ellos.
 function autoFillRedaccion() {
   (CFG.baremo || []).forEach(function(preg) {
-    if (preg.tipo === "redaccion" && !STATE.respuestas[preg.id]) {
-      STATE.respuestas[preg.id] = {
-        opIdx: -1,
-        puntos: preg.puntos_max || 0,
-        label: "Redacción a cargo de Innóvate 4.0",
-        esBloqueo: false,
-        bloquea: false,
-        preguntaLabel: preg.pregunta,
-        puntosMax: preg.puntos_max || 0,
-        influenciable: false,
-        autoRedaccion: true,
-      };
-    }
+    if (preg.tipo !== "redaccion") { return; }
+    if (STATE.respuestas[preg.id]) { return; }
+    STATE.respuestas[preg.id] = {
+      opIdx: -1,
+      puntos: preg.puntos_max || 0,
+      label: "Redacción a cargo de Innóvate 4.0",
+      esBloqueo: false,
+      bloquea: false,
+      preguntaLabel: preg.pregunta,
+      puntosMax: preg.puntos_max || 0,
+      influenciable: false,
+      autoRedaccion: true,
+    };
   });
 }
 
@@ -925,10 +965,12 @@ function calcularScore() {
       redaccion += r.puntos || 0;
     } else {
       objetivo += r.puntos || 0;
-      if (r.influenciable && r.puntosMax > (r.puntos || 0)) {
-        var g = r.puntosMax - (r.puntos || 0);
-        ganancia += g;
-        mejoras.push({ pregunta: r.preguntaLabel, puntos_ganables: g });
+      if (r.influenciable) {
+        if (r.puntosMax > (r.puntos || 0)) {
+          var g = r.puntosMax - (r.puntos || 0);
+          ganancia += g;
+          mejoras.push({ pregunta: r.preguntaLabel, puntos_ganables: g });
+        }
       }
     }
   });
@@ -971,8 +1013,8 @@ function buildPendingActions(score) {
 
 // ── Render resultado ─────────────────────────────
 function renderResultado(score) {
-  document.getElementById("progress-bar-wrap").style.display = "block";
-  document.getElementById("progress-bar-inner").style.width = "100%";
+  document.getElementById("i40ev-progress-bar-wrap").style.display = "block";
+  document.getElementById("i40ev-progress-bar-inner").style.width = "100%";
 
   var empresa  = STATE.empresa;
   // Sin baremo puntuable (max 0), quien llega aquí ha superado todos los
@@ -1011,8 +1053,8 @@ function renderResultado(score) {
       '<div class="score-box"><div class="score-num">' + score.actual + '</div>' +
       '<div class="score-label">Puntuación estimada</div></div>' +
       margenBox + '</div>' +
-      '<div class="score-bar-wrap"><div class="score-bar-inner" id="bar-act"></div></div>' +
-      '<p style="font-size:0.75rem;color:rgba(29,37,76,0.55);margin-top:6px;">Puntuación estimada sobre ' + score.max + ' puntos totales</p>' +
+      '<div class="score-bar-wrap"><div class="score-bar-inner" id="i40ev-bar-act"></div></div>' +
+      '<p style="font-size:0.75rem;color:rgba(27,32,96,0.55);margin-top:6px;">Puntuación estimada sobre ' + score.max + ' puntos totales</p>' +
       '</div>';
   } else {
     html +=
@@ -1040,9 +1082,9 @@ function renderResultado(score) {
       '<div class="calc-block"><h3>Calculadora de ayuda estimada</h3>' +
       '<p class="calc-formula">' + escHtml(inv.formula_texto || "") + '</p>';
     if (inv.tiene_campo) {
-      html += '<div class="field"><label for="calc-inv">' + escHtml(inv.etiqueta_campo || "Inversión elegible prevista (€)") + '</label>' +
-        '<input type="number" id="calc-inv" placeholder="Ej: 150000" min="0" step="1000" /></div>' +
-        '<div class="calc-result" id="calc-result"></div>';
+      html += '<div class="field"><label for="i40ev-calc-inv">' + escHtml(inv.etiqueta_campo || "Inversión elegible prevista (€)") + '</label>' +
+        '<input type="number" id="i40ev-calc-inv" placeholder="Ej: 150000" min="0" step="1000" /></div>' +
+        '<div class="calc-result" id="i40ev-calc-result"></div>';
     } else if (inv.importe_fijo) {
       html += '<div class="calc-result">' + formatEur(inv.importe_fijo) + '</div>';
     }
@@ -1067,24 +1109,28 @@ function renderResultado(score) {
   // Animate bar
   if (score.max > 0) {
     var pctA = Math.round((score.actual / score.max) * 100);
-    setTimeout(function() { var b = document.getElementById("bar-act"); if (b) b.style.width = pctA + "%"; }, 100);
+    setTimeout(function() { var b = document.getElementById("i40ev-bar-act"); if (b) b.style.width = pctA + "%"; }, 100);
   }
 
   // Bind investment calculator
-  if (inv && inv.tiene_campo) {
-    var inp = document.getElementById("calc-inv");
-    var res = document.getElementById("calc-result");
-    if (inp && res) {
-      inp.addEventListener("input", function() {
-        var val  = parseFloat(inp.value) || 0;
-        if (val <= 0) { res.textContent = ""; return; }
-        var pMin = inv.pct_min || 0, pMax = inv.pct_max || 0, tope = inv.tope_euros || Infinity;
-        var aMin = Math.min(val * pMin / 100, tope);
-        var aMax = Math.min(val * pMax / 100, tope);
-        res.textContent = pMin !== pMax
-          ? "Ayuda estimada: " + formatEur(aMin) + " – " + formatEur(aMax)
-          : "Ayuda estimada: " + formatEur(aMax);
-      });
+  if (inv) {
+    if (inv.tiene_campo) {
+      var inp = document.getElementById("i40ev-calc-inv");
+      var res = document.getElementById("i40ev-calc-result");
+      if (inp) {
+        if (res) {
+          inp.addEventListener("input", function() {
+            var val  = parseFloat(inp.value) || 0;
+            if (val <= 0) { res.textContent = ""; return; }
+            var pMin = inv.pct_min || 0, pMax = inv.pct_max || 0, tope = inv.tope_euros || Infinity;
+            var aMin = Math.min(val * pMin / 100, tope);
+            var aMax = Math.min(val * pMax / 100, tope);
+            res.textContent = pMin !== pMax
+              ? "Ayuda estimada: " + formatEur(aMin) + " – " + formatEur(aMax)
+              : "Ayuda estimada: " + formatEur(aMax);
+          });
+        }
+      }
     }
   }
 }
@@ -1109,7 +1155,7 @@ async function enviarEvaluacion(score) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         source: "Evaluador de encaje Innóvate 4.0",
-        tool: CFG.titulo_corto || (CFG.textos && CFG.textos.titulo_evaluador) || "",
+        tool: CFG.titulo_corto || getTituloEvaluador() || "",
         created_at: new Date().toISOString(),
         page_url: getPageUrl(),
         lead: {
@@ -1118,7 +1164,7 @@ async function enviarEvaluacion(score) {
           poblacion: STATE.municipio,
           telefono: STATE.tel,
           email: STATE.email,
-          website: (document.getElementById("f-website") || {}).value || "",
+          website: (document.getElementById("i40ev-f-website") || {}).value || "",
           privacy: !!STATE.rgpd,
         },
         summary: buildResumen(score, veredicto),
@@ -1129,7 +1175,8 @@ async function enviarEvaluacion(score) {
     });
     var data = {};
     try { data = await res.json(); } catch (e) {}
-    return res.ok && data.success !== false;
+    if (!res.ok) { return false; }
+    return data.success !== false;
   } catch (e) {
     return false;
   }
@@ -1144,7 +1191,7 @@ async function enviarLeadNoElegible(email, tel) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         source: "Evaluador de encaje Innóvate 4.0 (no elegible)",
-        tool: CFG.titulo_corto || (CFG.textos && CFG.textos.titulo_evaluador) || "",
+        tool: CFG.titulo_corto || getTituloEvaluador() || "",
         created_at: new Date().toISOString(),
         page_url: getPageUrl(),
         lead: {
@@ -1153,7 +1200,7 @@ async function enviarLeadNoElegible(email, tel) {
           poblacion: STATE.municipio,
           telefono: tel,
           email: email,
-          website: (document.getElementById("b-website") || {}).value || "",
+          website: (document.getElementById("i40ev-b-website") || {}).value || "",
           privacy: !!STATE.rgpd,
         },
         summary: [{ label: "Motivo de no elegibilidad", value: STATE.bloqueoMotivo || "No especificado" }],
@@ -1164,21 +1211,54 @@ async function enviarLeadNoElegible(email, tel) {
     });
     var data = {};
     try { data = await res.json(); } catch (e) {}
-    return res.ok && data.success !== false;
+    if (!res.ok) { return false; }
+    return data.success !== false;
   } catch (e) {
     return false;
   }
 }
 
 // ── Init ─────────────────────────────────────────
-document.addEventListener("DOMContentLoaded", function() {
-  try {
-    buildScreens();
-    renderScreen();
-  } catch (err) {
-    document.getElementById("screen-content").innerHTML =
-      '<div style="background:#c50339;color:#fff;padding:24px;margin:40px 0;">' +
-      '<strong>Error al cargar el evaluador:</strong> ' + String(err) + '</div>';
+// No depende solo de DOMContentLoaded: si el fragmento se inserta en el DOM
+// después de ese evento (habitual con constructores de página, pestañas,
+// popups o bloques de carga diferida en WordPress), un listener único nunca
+// dispararía y el widget se quedaría sin inicializar, sin ningún aviso.
+// En su lugar, reintenta hasta encontrar su propio contenedor raíz.
+(function() {
+  "use strict";
+
+  var initialized = false;
+  var attempts = 0;
+
+  function initEvaluador() {
+    var root = document.getElementById("i40-evaluador");
+
+    if (!root) {
+      attempts += 1;
+      if (attempts < 50) {
+        setTimeout(initEvaluador, 100);
+      }
+      return;
+    }
+
+    if (initialized) { return; }
+    if (root.dataset.ready === "1") { return; }
+
+    initialized = true;
+    root.dataset.ready = "1";
+
+    try {
+      buildScreens();
+      renderScreen();
+    } catch (err) {
+      document.getElementById("i40ev-screen-content").innerHTML =
+        '<div style="background:#be0034;color:#fff;padding:24px;margin:40px 0;">' +
+        '<strong>Error al cargar el evaluador:</strong> ' + String(err) + '</div>';
+    }
   }
-});
+
+  initEvaluador();
+  setTimeout(initEvaluador, 250);
+  setTimeout(initEvaluador, 1000);
+})();
 </script>

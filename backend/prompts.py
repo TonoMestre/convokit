@@ -1144,7 +1144,7 @@ Estructura HTML obligatoria, siempre en este orden (el bloque 9 solo si hay dato
 9. CONVOCATORIA OFICIAL Y ACTUALIZACIONES — enlace a la fuente oficial y cronología fechada de la convocatoria:
 <section class="bloque"><div class="wrap">
   <h2 class="bloque-titulo">Convocatoria oficial y actualizaciones</h2>
-  <p>Consulta la <a href="URL_OFICIAL" target="_blank" rel="noopener">publicación oficial de la convocatoria</a> en la web del organismo.</p>
+  <p>Consulta la <a href="URL_OFICIAL" target="_blank" rel="noopener noreferrer">publicación oficial de la convocatoria</a> en la web del organismo.</p>
   <ul class="lista">
     <li><strong>12 de mayo de 2026.</strong> Publicación de la convocatoria en el DOGV.</li>
     <li><strong>3 de junio de 2026.</strong> Corrección de errores del anexo II.</li>

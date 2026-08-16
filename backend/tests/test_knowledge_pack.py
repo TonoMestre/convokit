@@ -310,44 +310,136 @@ class TestDeliverableContextSanitization(unittest.TestCase):
         kp.sanitize_deliverable_context(original)
         self.assertEqual(original, copy_of_original)
 
+    # --- ajuste 1: puntuación condicional (casos 1-6 numerados) -----------
+
+    def test_1_un_punto_si_se_supera_el_30_por_ciento(self):
+        text = "1 punto si se supera el 30 %"
+        out, hits = kp.sanitize_deliverable_context(text)
+        self.assertNotIn("1 punto", out)
+        self.assertIn(kp.NORMATIVE_VALUE_OMITTED_PLACEHOLDER, out)
+        # la condición en sí (no es una cifra de puntuación) permanece legible
+        self.assertIn("si se supera el 30", out)
+
+    def test_2_dos_puntos_cuando_se_aporte(self):
+        text = "2 puntos cuando se aporte la certificación correspondiente"
+        out, hits = kp.sanitize_deliverable_context(text)
+        self.assertNotIn("2 puntos", out)
+        self.assertIn(kp.NORMATIVE_VALUE_OMITTED_PLACEHOLDER, out)
+        self.assertIn("cuando se aporte la certificación correspondiente", out)
+
+    def test_3_cero_coma_cinco_puntos_por_cada(self):
+        text = "0,5 puntos por cada contrato indefinido formalizado"
+        out, hits = kp.sanitize_deliverable_context(text)
+        self.assertNotIn("0,5 puntos", out)
+        self.assertIn(kp.NORMATIVE_VALUE_OMITTED_PLACEHOLDER, out)
+        self.assertIn("por cada contrato indefinido formalizado", out)
+
+    def test_4_se_otorgaran_diez_puntos_si(self):
+        text = "Se otorgarán 10 puntos si el proyecto se ubica en un enclave tecnológico"
+        out, hits = kp.sanitize_deliverable_context(text)
+        self.assertNotIn("10 puntos", out)
+        self.assertIn(kp.NORMATIVE_VALUE_OMITTED_PLACEHOLDER, out)
+        self.assertEqual([h.rule for h in hits], ["puntuacion_concesion"])
+
+    def test_5_obtendra_cuatro_puntos(self):
+        text = "Obtendrá 4 puntos el proyecto que acredite la reducción de emisiones"
+        out, hits = kp.sanitize_deliverable_context(text)
+        self.assertNotIn("4 puntos", out)
+        self.assertIn(kp.NORMATIVE_VALUE_OMITTED_PLACEHOLDER, out)
+        self.assertEqual([h.rule for h in hits], ["puntuacion_concesion"])
+
+    def test_6_iib_apartado_2_anexo_ii_2026_permanece_intacto(self):
+        """Regresión explícita pedida en el ajuste 1: ningún código de
+        apartado, referencia estructural o año se ve afectado por las reglas
+        nuevas de puntuación condicional, aunque contengan dígitos sueltos."""
+        text = "II.B — apartado 2 — Anexo II — 2026"
+        out, hits = kp.sanitize_deliverable_context(text)
+        self.assertEqual(out, text)
+        self.assertEqual(hits, [])
+
+    def test_variantes_adicionales_razonables(self):
+        """Más variantes de la lista del encargo, no numeradas pero
+        explícitamente mencionadas como ejemplos a cubrir."""
+        cases = [
+            "hasta 4 puntos cuando se cumplan las condiciones",
+            "10 puntos para proyectos que reduzcan residuos",
+            "puntuación de 2 puntos si se justifica documentalmente",
+        ]
+        for text in cases:
+            out, hits = kp.sanitize_deliverable_context(text)
+            self.assertTrue(hits, f"no se ocultó ninguna cifra en: {text!r}")
+            self.assertIn(kp.NORMATIVE_VALUE_OMITTED_PLACEHOLDER, out)
+
+    def test_gender_agreement_puntuacion_maxima_femenino(self):
+        """Caso real de INPYME 2026: 'la puntuación MÁXIMA de 4 puntos' (con
+        concordancia de género femenino) debe ocultarse igual que 'el importe
+        MÁXIMO'. El calificador de magnitud cubre ambos géneros."""
+        text = "Conforme a la Ley 14/2018 (se otorgará en este caso la puntuación máxima de 4 puntos)."
+        out, hits = kp.sanitize_deliverable_context(text)
+        self.assertNotIn("4 puntos", out)
+
+    def test_abreviatura_ptos_con_o(self):
+        """Caso real de INPYME 2026: el documento abrevia 'puntos' como
+        'ptos' (con o), no solo 'pts'."""
+        text = "4 ptos si el 100% del coste del proyecto se provee de empresas de la Comunitat Valenciana."
+        out, hits = kp.sanitize_deliverable_context(text)
+        self.assertNotIn("4 ptos", out)
+        self.assertIn(kp.NORMATIVE_VALUE_OMITTED_PLACEHOLDER, out)
+
+    def test_puntuacion_aislada_entre_parentesis(self):
+        """Caso real de INPYME 2026: anotaciones de puntuación entre
+        paréntesis sin calificador ni nexo condicional pegado, propias de
+        listas de opciones alternativas dentro de un mismo apartado."""
+        text = "Aportar factura o presupuesto (2,5 puntos); aportar varios de los documentos anteriores (5 puntos)."
+        out, hits = kp.sanitize_deliverable_context(text)
+        self.assertNotIn("2,5 puntos", out)
+        self.assertNotIn("5 puntos)", out)
+        self.assertEqual(len(hits), 2)
+
 
 class TestScoringExpectation(unittest.TestCase):
-    """Endurecimiento 2. Deriva scoring_expectation EXCLUSIVAMENTE de entidades
-    del Knowledge Pack — nunca de texto de plantilla (estas pruebas ni siquiera
-    construyen un documento de entregable, solo codigo/nombre + pack)."""
+    """Endurecimiento 2 (y su corrección posterior — ajuste 2). Deriva
+    scoring_expectation EXCLUSIVAMENTE de entidades del Knowledge Pack —
+    nunca de texto de plantilla (estas pruebas ni siquiera construyen un
+    documento de entregable, solo codigo/nombre + pack)."""
 
-    def test_scored_when_criterion_usable_with_value(self):
+    # --- casos numerados 7-14 del ajuste 2 -----------------------------
+
+    def test_07_criterion_usable_con_max_score_es_scored(self):
         pack = kp.parse_knowledge_pack(_pack([_entity(value={"puntos_max": 4})]))
         match = kp.match_section_to_knowledge("II.B", "Viabilidad económica de la inversión", pack)
         self.assertEqual(kp.compute_scoring_expectation(match), "scored")
 
-    def test_not_scored_when_pack_marks_not_applicable(self):
+    def test_08_criterion_human_validated_con_score_es_scored(self):
         pack = kp.parse_knowledge_pack(_pack([
-            _entity(evidence_status="not_applicable", review_state="human_validated", value=None),
+            _entity(evidence_status="accredited", review_state="human_validated", value={"puntos_max": 4}),
         ]))
         match = kp.match_section_to_knowledge("II.B", "Viabilidad económica de la inversión", pack)
-        self.assertEqual(kp.compute_scoring_expectation(match), "not_scored")
+        entity = pack.entities[0]
+        self.assertTrue(entity.is_canonical())
+        self.assertEqual(kp.compute_scoring_expectation(match), "scored")
 
-    def test_unknown_when_no_criterion_matched_at_all(self):
+    def test_09_criterion_accredited_unvalidated_es_scored_pero_marcado(self):
+        """Permitido por las reglas ya existentes (accredited-sin-validar es
+        utilizable): scoring_expectation sigue siendo 'scored' — la cautela
+        de 'no validado' no vive en scoring_expectation (que es un estado de
+        3 valores, no 4), sino en SectionProvenance.unvalidated_knowledge_used
+        y en la marca '[PENDIENTE DE VALIDACIÓN HUMANA]' de
+        format_normative_context. Se verifican ambas aquí."""
         pack = kp.parse_knowledge_pack(_pack([
-            _entity(entity_type="documentation", label="Certificado exigido", value="x"),
+            _entity(evidence_status="accredited", review_state="unvalidated", value={"puntos_max": 4}),
         ]))
         match = kp.match_section_to_knowledge("II.B", "Viabilidad económica de la inversión", pack)
-        self.assertEqual(kp.compute_scoring_expectation(match), "unknown")
+        entity = pack.entities[0]
+        self.assertTrue(entity.is_usable_but_unvalidated())
+        self.assertFalse(entity.is_canonical())
+        self.assertEqual(kp.compute_scoring_expectation(match), "scored")
+        gaps = kp.compute_knowledge_gaps(match, "scored")
+        prov = kp.build_section_provenance(match, gaps)
+        self.assertIn(entity.entity_id, prov.unvalidated_knowledge_used)
+        self.assertIn("[PENDIENTE DE VALIDACIÓN HUMANA]", kp.format_normative_context(match))
 
-    def test_unknown_when_only_missing_criterion(self):
-        """not_located/not_provided = desconocido, no 'no puntúa'. No debe
-        derivarse ni 'scored' ni 'not_scored' de una entidad missing."""
-        pack = kp.parse_knowledge_pack(_pack([
-            _entity(evidence_status="not_located", review_state="unvalidated", value=None),
-        ]))
-        match = kp.match_section_to_knowledge("II.B", "Viabilidad económica de la inversión", pack)
-        self.assertEqual(kp.compute_scoring_expectation(match), "unknown")
-
-    def test_conflict_criterion_never_becomes_scored_firmly(self):
-        """Un criterion en conflicto no convierte automáticamente el apartado
-        en 'scored': una de las versiones contradictorias podría tener puntos,
-        pero no se eleva a hecho firme."""
+    def test_10_criterion_conflict_es_unknown_nunca_scored_firme(self):
         pack = kp.parse_knowledge_pack(_pack([
             _entity(evidence_status="conflict", review_state="unvalidated",
                     conflicting_values=[{"puntos_max": 4}, {"puntos_max": 6}]),
@@ -355,9 +447,27 @@ class TestScoringExpectation(unittest.TestCase):
         match = kp.match_section_to_knowledge("II.B", "Viabilidad económica de la inversión", pack)
         self.assertEqual(kp.compute_scoring_expectation(match), "unknown")
 
-    def test_unknown_never_produces_missing_criterion_gap(self):
-        """El requisito central del endurecimiento 2: unknown -> NUNCA
-        missing_entity_type, en su lugar un gap explícito scoring_status_unknown."""
+    def test_11_criterion_not_located_es_unknown(self):
+        pack = kp.parse_knowledge_pack(_pack([
+            _entity(evidence_status="not_located", review_state="unvalidated", value=None),
+        ]))
+        match = kp.match_section_to_knowledge("II.B", "Viabilidad económica de la inversión", pack)
+        self.assertEqual(kp.compute_scoring_expectation(match), "unknown")
+
+    def test_12_not_applicable_sin_declaracion_explicita_es_unknown(self):
+        """Ajuste 2 — el núcleo de la corrección: 'not_applicable' en un
+        'criterion' YA NO se interpreta como 'not_scored'. 'not_applicable'
+        significa 'este hecho concreto no procede en este caso' (vocabulario
+        real de i40 Analiza), no 'este apartado carece de puntuación'. Sin
+        una señal explícita adicional que lo confirme, el resultado correcto
+        es 'unknown' — ni scored ni not_scored."""
+        pack = kp.parse_knowledge_pack(_pack([
+            _entity(evidence_status="not_applicable", review_state="human_validated", value=None),
+        ]))
+        match = kp.match_section_to_knowledge("II.B", "Viabilidad económica de la inversión", pack)
+        self.assertEqual(kp.compute_scoring_expectation(match), "unknown")
+
+    def test_13_ausencia_de_criterion_es_unknown_mas_scoring_status_unknown_gap(self):
         pack = kp.parse_knowledge_pack(_pack([
             _entity(entity_type="documentation", label="Certificado exigido", value="x"),
         ]))
@@ -369,17 +479,29 @@ class TestScoringExpectation(unittest.TestCase):
         self.assertNotIn("missing_entity_type", kinds)
         self.assertIn("scoring_status_unknown", kinds)
 
-    def test_not_scored_never_produces_missing_criterion_gap(self):
+    def test_14_not_scored_reservado_pero_nunca_inferido_hoy(self):
+        """No existe hoy en el modelo interno (entity_type/evidence_status/
+        review_state) ninguna señal explícita e inequívoca de 'este apartado
+        no puntúa' que no sea inventarla — ni siquiera con el criterion
+        'not_applicable' más fuerte posible (human_validated). Por eso
+        compute_scoring_expectation NUNCA devuelve 'not_scored' en esta
+        iteración: queda reservado en el tipo y compute_knowledge_gaps ya lo
+        trata correctamente (sin exigir 'criterion', sin scoring_status_unknown)
+        para cuando un Knowledge Pack real lo declare de forma estructurada."""
         pack = kp.parse_knowledge_pack(_pack([
             _entity(evidence_status="not_applicable", review_state="human_validated", value=None),
         ]))
         match = kp.match_section_to_knowledge("II.B", "Viabilidad económica de la inversión", pack)
-        scoring_expectation = kp.compute_scoring_expectation(match)
-        self.assertEqual(scoring_expectation, "not_scored")
-        gaps = kp.compute_knowledge_gaps(match, scoring_expectation)
+        self.assertEqual(kp.compute_scoring_expectation(match), "unknown")
+        # uso futuro reservado: si se pasara "not_scored" a mano, la lógica de
+        # gaps ya está preparada, aunque compute_scoring_expectation no lo
+        # produzca todavía por sí sola.
+        gaps = kp.compute_knowledge_gaps(match, "not_scored")
         kinds = {g.kind for g in gaps}
         self.assertNotIn("missing_entity_type", kinds)
         self.assertNotIn("scoring_status_unknown", kinds)
+
+    # --- cobertura adicional ya existente, mantenida ---------------------
 
     def test_scored_still_produces_missing_criterion_gap_when_absent(self):
         """Comportamiento sin cambios respecto al expects_scoring=True original:

@@ -322,12 +322,32 @@ class SectionMatch:
 # defecto. Se deriva EXCLUSIVAMENTE de las entidades del Knowledge Pack ya
 # emparejadas por match_section_to_knowledge — nunca del entregable.
 #
-# Mecanismo: el vocabulario real de i40 Analiza ya distingue "not_applicable"
-# ("el criterio no procede en el caso concreto", contracts/evidence-status
-# .schema.json + docs/14_NOMENCLATURA_GLOSARIO.md) de "not_located"/
-# "not_provided" (desconocido). Una entidad 'criterion' con evidence_status
-# 'not_applicable' es el pack afirmando explícitamente que el apartado no
-# puntúa; eso basta para 'not_scored' sin inventar un mecanismo nuevo.
+# Ajuste 2 (tras revisión de la versión inicial): la primera implementación
+# derivaba 'not_scored' de una entidad 'criterion' con evidence_status
+# 'not_applicable'. Es semánticamente inseguro: 'not_applicable' significa
+# "este hecho concreto no procede en este caso" (contracts/evidence-status
+# .schema.json + docs/14_NOMENCLATURA_GLOSARIO.md: "el criterio no procede en
+# el caso concreto y su peso se redistribuye dentro del bloque"), no "este
+# apartado de la convocatoria carece de puntuación". Un apartado puntuable
+# puede tener varios subcriterios y que uno de ellos sea 'not_applicable' no
+# dice nada sobre si el apartado en su conjunto puntúa — el peso se
+# redistribuye entre los demás, la puntuación del bloque sigue existiendo.
+#
+# 'not_scored' solo debería producirse cuando el Knowledge Pack contiene una
+# afirmación EXPLÍCITA y UTILIZABLE equivalente a "este apartado no puntúa"
+# (no puntuable / informativo / criterio habilitante sin puntos, o un
+# atributo estructurado que lo declare). El modelo interno actual (entities
+# con entity_type/evidence_status/review_state, sin ningún campo de scoring
+# a nivel de apartado) no tiene ninguna forma de representar eso sin
+# ambigüedad. Añadir un campo nuevo solo para esto ampliaría el modelo del
+# Knowledge Pack más allá de lo que este ajuste pide resolver.
+#
+# Por eso, en esta iteración: 'scored' se mantiene igual (criterion usable
+# con valor); todo lo demás es 'unknown', incluida una entidad 'criterion'
+# 'not_applicable' en solitario. 'not_scored' queda RESERVADO en el tipo y en
+# la lógica de compute_knowledge_gaps (que ya lo trata correctamente si algún
+# día se le pasa), pero compute_scoring_expectation NUNCA lo produce todavía
+# — es preferible no inferir nada a inferir algo semánticamente incorrecto.
 
 ScoringExpectation = Literal["scored", "not_scored", "unknown"]
 
@@ -339,21 +359,19 @@ def compute_scoring_expectation(section_match: SectionMatch) -> ScoringExpectati
     otro entregable.
 
     - 'scored': hay al menos una entidad 'criterion' usable (canónica o
-      accreditada-sin-validar) con un valor real distinto de 'no aplica'.
-    - 'not_scored': hay al menos una entidad 'criterion' usable cuyo
-      evidence_status es 'not_applicable' — el pack afirma expresamente que
-      este apartado no puntúa.
+      accreditada-sin-validar) con un valor real.
     - 'unknown' en cualquier otro caso: sin entidad 'criterion' emparejada,
-      solo entidades en conflicto, o solo entidades missing (not_located/
-      not_provided). Un 'criterion' en conflicto NUNCA convierte el apartado
-      en 'scored' de forma firme, aunque una de sus versiones contradictorias
-      tenga puntos.
+      solo entidades en conflicto, solo entidades missing (not_located/
+      not_provided), o solo entidades 'not_applicable' (que NO equivale a
+      "no puntúa": ver nota de ajuste 2 arriba). Un 'criterion' en conflicto
+      NUNCA convierte el apartado en 'scored' de forma firme, aunque una de
+      sus versiones contradictorias tenga puntos.
+    - 'not_scored': reservado. Esta función nunca lo devuelve hoy — no existe
+      todavía en el modelo interno una señal explícita e inequívoca de "este
+      apartado no puntúa" que no sea inventarla. Queda preparado para cuando
+      un Knowledge Pack real la declare de forma estructurada.
     """
     criteria = section_match.by_type("criterion")
-
-    not_scored_entities = [e for e in criteria if e.evidence_status == "not_applicable"]
-    if not_scored_entities:
-        return "not_scored"
 
     scored_entities = [
         e for e in criteria
@@ -439,10 +457,17 @@ def compute_knowledge_gaps(
         anterior).
       - 'not_scored': no se exige ningún 'criterion' (el pack ya afirma que
         este apartado no puntúa); no se genera 'missing_entity_type' por su
-        ausencia.
+        ausencia. Reservado: `compute_scoring_expectation` no produce este
+        valor todavía (ver ajuste 2 — 'not_applicable' NO equivale a "no
+        puntúa"), pero si algún día se le pasa explícitamente (un futuro
+        Knowledge Pack real con una señal estructurada), esta función ya lo
+        trata correctamente.
       - 'unknown': tampoco se exige 'criterion' — asumirlo sería la misma
         inferencia no respaldada que este endurecimiento evita — y en su
-        lugar se registra un gap explícito 'scoring_status_unknown'.
+        lugar se registra un gap explícito 'scoring_status_unknown'. Este es
+        el resultado hoy tanto para "sin ningún criterion" como para "solo
+        hay un criterion 'not_applicable'" (ese hecho no confirma ni descarta
+        que el apartado puntúe).
     En los tres casos, los gaps por entidad individual (conflicto, missing)
     se calculan igual, sin relación con `scoring_expectation`.
     """
@@ -567,10 +592,11 @@ def format_normative_context(section_match: SectionMatch) -> str:
 #
 # Alcance deliberadamente estrecho: solo enmascara expresiones cuantitativas
 # con un calificador de magnitud normativa inequívoco pegado (máximo/mínimo/
-# hasta/tope/límite/umbral) seguido de la unidad típica de un baremo o límite
-# (puntos, %, €, días/meses/años). Un código de apartado ("II.B"), un nombre
-# de sección, o un número estructural suelto ("3 columnas", "Anexo II") no
-# lleva ese calificador pegado al número y por tanto nunca coincide.
+# hasta/tope/límite/umbral, o un verbo/nexo de concesión condicional de
+# puntos — ver ajuste 1 más abajo) seguido de la unidad típica de un baremo o
+# límite (puntos, %, €, días/meses/años). Un código de apartado ("II.B"), un
+# nombre de sección, o un número estructural suelto ("3 columnas", "Anexo
+# II") no lleva ese calificador pegado al número y por tanto nunca coincide.
 
 NORMATIVE_VALUE_OMITTED_PLACEHOLDER = "[VALOR NORMATIVO OMITIDO — consultar NORMATIVE_CONTEXT]"
 
@@ -580,41 +606,101 @@ NORMATIVE_VALUE_OMITTED_PLACEHOLDER = "[VALOR NORMATIVO OMITIDO — consultar NO
 # superar el 15%... ni el importe de 20.000 €") — verificada en el documento
 # real, no una suposición.
 _MAGNITUDE_QUALIFIER = (
-    r"(?:m[aá]x(?:imo|\.)?|m[ií]n(?:imo|\.)?|hasta|tope|l[ií]mite"
+    # "máximo/mínimo" en sus dos géneros (Spanish gramatical agreement:
+    # "importe máximo" vs "puntuación máxima" — caso real detectado en
+    # INPYME: "se otorgará ... la puntuación máxima de 4 puntos").
+    r"(?:m[aá]x(?:imo|ima|\.)?|m[ií]n(?:imo|ima|\.)?|hasta|tope|l[ií]mite"
     r"|umbral\s+m[ií]nimo|umbral\s+m[aá]ximo"
     r"|no\s+podr[aá]\s+super(?:ar|ior)|no\s+puede\s+super(?:ar|ior)"
     r"|no\s+podr[aá]\s+exceder|no\s+superior\s+a)"
 )
 _OPTIONAL_ARTICLE = r"(?:el\s+|la\s+|los\s+|las\s+)?"
+# Enlace "de"/"del" opcional tras el artículo (p.ej. "puntuación máxima DE 4
+# puntos", "importe máximo DE 20.000 €", "límite DEL 15%"): se aplica siempre
+# pegado a _OPTIONAL_ARTICLE para no repetirlo en cada regla.
+_OPTIONAL_LINKER = _OPTIONAL_ARTICLE + r"(?:del?\s+)?"
+
+# Ajuste 1 (tras la ejecución real de INPYME 2026): las cuatro reglas de más
+# abajo cubren la forma "calificador antes del número" (máx./límite/umbral N
+# puntos). No cubrían la puntuación CONDICIONAL, donde el número precede a la
+# condición ("1 punto SI se supera el 30%", "0,5 puntos POR CADA contrato") o
+# va precedido de un verbo de concesión ("se otorgarán 10 puntos", "obtendrá
+# 4 puntos", "puntuación de 2 puntos") en vez de un calificador de magnitud.
+# Dos reglas nuevas, mismo principio (enmascarar solo lo pegado a un
+# desencadenante normativo inequívoco, nunca un número suelto):
+_GRANT_QUALIFIER = (
+    r"(?:se\s+otorgar[aá]n?|otorgar[aá]n?|obtendr[aá]n?|conceder[aá]n?"
+    r"|sumar[aá]n?|puntuar[aá]\s+con|puntuaci[oó]n\s+de)"
+)
+_SCORING_TRIGGER = r"(?:si\b|cuando\b|por\b|para\b)"
+# Unidad "puntos" y sus abreviaturas reales (caso detectado en INPYME: el
+# documento usa "ptos", con o, no solo "pts"): punto/puntos/pto/ptos/pt/pts,
+# con punto final opcional en las abreviadas.
+_POINTS_UNIT = r"(?:puntos?|ptos?\.?|pts?\.?)"
 
 _SANITIZE_RULES: tuple[tuple[str, re.Pattern], ...] = (
     (
         "puntuacion",
         re.compile(
-            rf"\(?{_MAGNITUDE_QUALIFIER}\s*\.?\s*{_OPTIONAL_ARTICLE}\d+([.,]\d+)?\s*(?:puntos?|pts?\.?)\)?",
+            rf"\(?{_MAGNITUDE_QUALIFIER}\s*\.?\s*{_OPTIONAL_LINKER}\d+([.,]\d+)?\s*{_POINTS_UNIT}\)?",
             re.IGNORECASE,
         ),
     ),
     (
         "porcentaje",
         re.compile(
-            rf"\(?{_MAGNITUDE_QUALIFIER}\s*\.?\s*{_OPTIONAL_ARTICLE}(?:del?\s+)?\d+([.,]\d+)?\s*%\)?",
+            rf"\(?{_MAGNITUDE_QUALIFIER}\s*\.?\s*{_OPTIONAL_LINKER}\d+([.,]\d+)?\s*%\)?",
             re.IGNORECASE,
         ),
     ),
     (
         "importe",
         re.compile(
-            rf"\(?{_MAGNITUDE_QUALIFIER}\s*\.?\s*{_OPTIONAL_ARTICLE}(?:de\s+)?\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?\s*(?:€|eur(?:os)?\.?)\)?",
+            rf"\(?{_MAGNITUDE_QUALIFIER}\s*\.?\s*{_OPTIONAL_LINKER}\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?\s*(?:€|eur(?:os)?\.?)\)?",
             re.IGNORECASE,
         ),
     ),
     (
         "plazo",
         re.compile(
-            rf"\(?(?:plazo\s+)?{_MAGNITUDE_QUALIFIER}\s*\.?\s*{_OPTIONAL_ARTICLE}(?:de\s+)?\d+\s*(?:d[ií]as|meses|a[nñ]os)\)?",
+            rf"\(?(?:plazo\s+)?{_MAGNITUDE_QUALIFIER}\s*\.?\s*{_OPTIONAL_LINKER}\d+\s*(?:d[ií]as|meses|a[nñ]os)\)?",
             re.IGNORECASE,
         ),
+    ),
+    (
+        # "se otorgarán 10 puntos si...", "obtendrá 4 puntos...", "puntuación
+        # de 2 puntos si...": el verbo/nexo de concesión forma parte del
+        # enmascarado, igual que el calificador de magnitud en las reglas de
+        # arriba — es también framing normativo, no solo la cifra.
+        "puntuacion_concesion",
+        re.compile(
+            rf"{_GRANT_QUALIFIER}\s*{_OPTIONAL_ARTICLE}\d+([.,]\d+)?\s*{_POINTS_UNIT}",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        # "1 punto si se supera el 30%", "2 puntos cuando...", "0,5 puntos
+        # por cada...": el número precede a la condición, sin ningún
+        # calificador ni verbo delante. Se usa un lookahead para no consumir
+        # el nexo (si/cuando/por/para): la condición que sigue ("si se supera
+        # el 30%") no es en sí una cifra de puntuación y queda visible, solo
+        # se oculta "N puntos".
+        "puntuacion_condicional",
+        re.compile(
+            rf"\d+([.,]\d+)?\s*{_POINTS_UNIT}(?=\s*,?\s+{_SCORING_TRIGGER})",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        # "(2,5 puntos)", "(5 puntos)": anotación de puntuación aislada entre
+        # paréntesis, sin calificador ni nexo condicional pegado (caso real:
+        # opciones alternativas de un mismo apartado, cada una con su cifra
+        # entre paréntesis). El paréntesis es aquí la señal estructural: en
+        # este tipo de documento, un número seguido de "puntos" dentro de
+        # paréntesis es siempre una anotación de baremo, nunca un número
+        # estructural (esos nunca llevan la palabra "puntos" pegada).
+        "puntuacion_parentesis_aislada",
+        re.compile(rf"\(\s*\d+([.,]\d+)?\s*{_POINTS_UNIT}\s*\)", re.IGNORECASE),
     ),
 )
 

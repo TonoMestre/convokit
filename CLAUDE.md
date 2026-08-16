@@ -748,29 +748,40 @@ modificar. Detalle completo, decisiones y limitaciones en
   del subcriterio de pay-back, "(máx. 1 punto)") llegaba al modelo mencionada con una
   salvedad ("aunque el Knowledge Pack no confirma este peso"). `_generate_output_4_kp`
   ahora sanitiza en código, después de `_slice_context_for_section` (sin tocarla, la
-  sigue usando también el modo tradicional) y antes de ensamblar el mensaje: cualquier
-  expresión con un calificador de magnitud normativa (máximo/mínimo/hasta/tope/límite/
-  umbral, o la formulación real de INPYME "no podrá superar...") pegado a puntos/%/€/
-  plazo se sustituye por `NORMATIVE_VALUE_OMITTED_PLACEHOLDER`. No toca códigos de
-  apartado, nombres ni números estructurales (sin ese calificador pegado, nunca
-  coincide). Las redacciones aplicadas quedan en `audit["sections"][cod]
-  ["deliverable_sanitization"]` (interno, nunca a MemorAI). Limitación conocida: no
-  cubre tramos de puntuación condicional tipo "1 punto si se supera el 30%, 2 puntos
-  si..." (forma sintáctica distinta a la exigida; verificado con el texto real de
-  INPYME, documentado, no resuelto a propósito para no arriesgar sobre-redacción de
-  prosa legítima).
+  sigue usando también el modo tradicional) y antes de ensamblar el mensaje. Seis familias
+  de reglas, todas ancladas a un desencadenante normativo inequívoco (nunca a un número
+  suelto): calificador de magnitud pegado al número (máximo/mínimo/hasta/tope/límite/
+  umbral, en ambos géneros — "importe máximo"/"puntuación máxima" — y la formulación real
+  de INPYME "no podrá superar..."), verbo de concesión ("se otorgarán N puntos",
+  "obtendrá N puntos", "puntuación de N puntos"), puntuación condicional donde el número
+  precede a la condición ("N puntos si/cuando/por/para...", vía lookahead que no consume
+  la condición) y anotaciones aisladas entre paréntesis ("(N puntos)"). Cubre las
+  abreviaturas reales del corpus (puntos/pts/ptos, esta última con "o", detectada en el
+  texto real). No toca códigos de apartado, nombres ni números estructurales (sin
+  desencadenante pegado, nunca coincide). Las redacciones aplicadas quedan en
+  `audit["sections"][cod]["deliverable_sanitization"]` (interno, nunca a MemorAI).
+  Limitación conocida, verificada contra el texto real y documentada, no resuelta a
+  propósito por ser una dependencia de clausula larga (mayor riesgo de sobre-redactar
+  prosa legítima): reiteraciones de un umbral ya enunciado antes en la misma frase
+  ("umbral mínimo... si la suma... no alcanza los N puntos") y expresiones de rango
+  ("de X a Y puntos").
 - **Endurecimiento 2 — `scoring_expectation` en tres estados** (`kp.compute_scoring_expectation`,
   sustituye al `expects_scoring: bool` anterior, que siempre pasaba `True`): si un
   apartado puntúa se deriva EXCLUSIVAMENTE de las entidades `criterion` ya emparejadas
   del Knowledge Pack, nunca de la plantilla. `"scored"` si hay una entidad `criterion`
-  usable con valor; `"not_scored"` si el pack marca una `criterion` con
-  `evidence_status: "not_applicable"` (vocabulario real de i40 Analiza: "el criterio no
-  procede en el caso concreto", `contracts/evidence-status.schema.json` +
-  `docs/14_NOMENCLATURA_GLOSARIO.md`); `"unknown"` en cualquier otro caso (sin
-  `criterion` emparejado, o solo en conflicto/missing) — nunca se asume `scored` por
-  defecto. `compute_knowledge_gaps` ya no exige un `criterion` cuando el estado es
-  `"not_scored"` o `"unknown"`; en `"unknown"` registra en su lugar un gap explícito
-  `scoring_status_unknown` en vez de un `missing_entity_type` falso.
+  usable con valor; `"unknown"` en cualquier otro caso (sin `criterion` emparejado, solo
+  en conflicto/missing, o solo con `evidence_status: "not_applicable"`) — nunca se asume
+  `scored` por defecto. `"not_scored"` queda **reservado en el tipo pero nunca se produce
+  todavía**: la primera versión lo derivaba de `evidence_status: "not_applicable"`, pero
+  ese valor significa "este hecho concreto no procede en este caso" (vocabulario real de
+  i40 Analiza, `contracts/evidence-status.schema.json` + `docs/14_NOMENCLATURA_GLOSARIO.md`:
+  "el criterio no procede... y su peso se redistribuye dentro del bloque"), no "este
+  apartado carece de puntuación" — un apartado puntuable puede tener un subcriterio
+  `not_applicable` sin dejar de puntuar. Sin una señal explícita e inequívoca de "este
+  apartado no puntúa" en el modelo interno actual, se prefiere `unknown` a una inferencia
+  semánticamente incorrecta. `compute_knowledge_gaps` ya no exige un `criterion` cuando el
+  estado es `"not_scored"` o `"unknown"`; en `"unknown"` registra en su lugar un gap
+  explícito `scoring_status_unknown` en vez de un `missing_entity_type` falso.
 
 ## Las dos apps (importante)
 

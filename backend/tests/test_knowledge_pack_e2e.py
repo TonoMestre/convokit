@@ -157,6 +157,47 @@ class TestKnowledgePackPipelineOffline(unittest.TestCase):
         for c in iib_calls:
             self.assertNotIn("Subcriterio nunca localizado", c["user"])
 
+    def test_deliverable_context_value_absent_from_normative_context_never_reaches_model(self):
+        """Caso G del encargo de endurecimiento: un valor visible en la plantilla
+        (deliverable) pero ausente del Knowledge Pack no debe llegar al modelo NI
+        SIQUIERA con salvedad. Fixture deliberado: II.B en NORMATIVE_CONTEXT solo
+        trae 3 puntos (nunca 1), y el deliverable de la plantilla SÍ contiene un
+        subcriterio de pay-back a "(máx. 1 punto)" que el pack no cubre — el mismo
+        patrón real detectado en la ejecución de INPYME 2026. Con la sanitización
+        determinista (endurecimiento 1), esa cifra debe desaparecer del mensaje
+        antes de construirse, sin depender de que el modelo respete la instrucción."""
+        calls = []
+        deliverable_docs = [{
+            "etiqueta": "plantilla_memoria",
+            "texto": (
+                "II.B Viabilidad económica de la inversión\n"
+                "Periodo de recuperación de la inversión (pay-back) y método para su "
+                "obtención (máx. 1 punto)"
+            ),
+            "nombre_archivo": "plantilla.docx",
+        }]
+        with mock.patch.object(main, "_claude", side_effect=_fake_claude_dispatcher(calls)):
+            with mock.patch("time.sleep"):
+                _, root, audit = main._generate_output_4_kp(
+                    client=None, conv_name="FAKE 2026",
+                    deliverable_documents_json=deliverable_docs, knowledge_pack_raw=_FAKE_KP,
+                )
+
+        iib_calls = [c for c in calls if "Apartado: II.B" in c["user"] and c["system"] == main.p.SECTION_PROMPT_SYSTEM_KP]
+        self.assertTrue(iib_calls)
+        for c in iib_calls:
+            # ni la cifra cruda ni la unidad quedan en el mensaje enviado al modelo
+            self.assertNotIn("1 punto", c["user"])
+            self.assertNotIn("máx. 1", c["user"])
+            self.assertIn(kp.NORMATIVE_VALUE_OMITTED_PLACEHOLDER, c["user"])
+
+        # auditoría interna: la sanitización queda registrada, sin enviarse a MemorAI
+        sanitization = audit["sections"]["II.B"]["deliverable_sanitization"]
+        self.assertTrue(any("1 punto" in h["original"] or "1  punto" in h["original"] for h in sanitization) or
+                         any("punto" in h["original"].lower() for h in sanitization))
+        exported = exporters.export_output_4(json.dumps(root, ensure_ascii=False))
+        self.assertNotIn("deliverable_sanitization", json.dumps(exported, ensure_ascii=False))
+
     def test_traditional_mode_still_works_unchanged(self):
         """El pipeline documental tradicional (_generate_output_4) no depende de
         knowledge_pack.py y sigue produciendo v2.5 exactamente igual que antes."""

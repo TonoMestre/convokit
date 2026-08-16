@@ -313,6 +313,58 @@ class SectionMatch:
         return [m.entity for m in self.matched if m.entity.entity_type == entity_type]
 
 
+# ---------------------------------------------------------------------------
+# Endurecimiento 2 — expectativa de puntuación en tres estados
+# ---------------------------------------------------------------------------
+#
+# Saber si un apartado puntúa es en sí mismo conocimiento normativo: no puede
+# derivarse de la plantilla ("(máx. X puntos)" no cuenta) ni asumirse por
+# defecto. Se deriva EXCLUSIVAMENTE de las entidades del Knowledge Pack ya
+# emparejadas por match_section_to_knowledge — nunca del entregable.
+#
+# Mecanismo: el vocabulario real de i40 Analiza ya distingue "not_applicable"
+# ("el criterio no procede en el caso concreto", contracts/evidence-status
+# .schema.json + docs/14_NOMENCLATURA_GLOSARIO.md) de "not_located"/
+# "not_provided" (desconocido). Una entidad 'criterion' con evidence_status
+# 'not_applicable' es el pack afirmando explícitamente que el apartado no
+# puntúa; eso basta para 'not_scored' sin inventar un mecanismo nuevo.
+
+ScoringExpectation = Literal["scored", "not_scored", "unknown"]
+
+
+def compute_scoring_expectation(section_match: SectionMatch) -> ScoringExpectation:
+    """
+    Deriva si el apartado puntúa exclusivamente de las entidades 'criterion'
+    emparejadas del Knowledge Pack. Nunca lee la plantilla, el Excel ni ningún
+    otro entregable.
+
+    - 'scored': hay al menos una entidad 'criterion' usable (canónica o
+      accreditada-sin-validar) con un valor real distinto de 'no aplica'.
+    - 'not_scored': hay al menos una entidad 'criterion' usable cuyo
+      evidence_status es 'not_applicable' — el pack afirma expresamente que
+      este apartado no puntúa.
+    - 'unknown' en cualquier otro caso: sin entidad 'criterion' emparejada,
+      solo entidades en conflicto, o solo entidades missing (not_located/
+      not_provided). Un 'criterion' en conflicto NUNCA convierte el apartado
+      en 'scored' de forma firme, aunque una de sus versiones contradictorias
+      tenga puntos.
+    """
+    criteria = section_match.by_type("criterion")
+
+    not_scored_entities = [e for e in criteria if e.evidence_status == "not_applicable"]
+    if not_scored_entities:
+        return "not_scored"
+
+    scored_entities = [
+        e for e in criteria
+        if (e.is_canonical() or e.is_usable_but_unvalidated()) and e.value is not None
+    ]
+    if scored_entities:
+        return "scored"
+
+    return "unknown"
+
+
 def match_section_to_knowledge(codigo: str, nombre: str, pack: KnowledgePack) -> SectionMatch:
     """
     Empareja un apartado (codigo+nombre, obtenidos de la plantilla) con las
@@ -359,6 +411,7 @@ class KnowledgeGap:
     codigo: str
     kind: Literal[
         "no_match", "weak_match", "missing_entity_type", "conflict_unresolved", "entity_unknown",
+        "scoring_status_unknown",
     ]
     detail: str
     entity_type: str | None = None
@@ -373,7 +426,26 @@ class KnowledgeGap:
 _EXPECTED_FOR_SCORED_SECTION: tuple[EntityType, ...] = ("criterion",)
 
 
-def compute_knowledge_gaps(section_match: SectionMatch, expects_scoring: bool) -> list[KnowledgeGap]:
+def compute_knowledge_gaps(
+    section_match: SectionMatch, scoring_expectation: ScoringExpectation
+) -> list[KnowledgeGap]:
+    """
+    `scoring_expectation` (endurecimiento 2) sustituye al antiguo booleano
+    `expects_scoring`. Se calcula con `compute_scoring_expectation` — siempre
+    a partir del Knowledge Pack, nunca de la plantilla — y cambia el
+    tratamiento del hueco de puntuación:
+      - 'scored': se exige una entidad 'criterion' utilizable; si falta, gap
+        'missing_entity_type' (comportamiento idéntico al `expects_scoring=True`
+        anterior).
+      - 'not_scored': no se exige ningún 'criterion' (el pack ya afirma que
+        este apartado no puntúa); no se genera 'missing_entity_type' por su
+        ausencia.
+      - 'unknown': tampoco se exige 'criterion' — asumirlo sería la misma
+        inferencia no respaldada que este endurecimiento evita — y en su
+        lugar se registra un gap explícito 'scoring_status_unknown'.
+    En los tres casos, los gaps por entidad individual (conflicto, missing)
+    se calculan igual, sin relación con `scoring_expectation`.
+    """
     gaps: list[KnowledgeGap] = []
 
     if section_match.match_state == "none":
@@ -395,7 +467,7 @@ def compute_knowledge_gaps(section_match: SectionMatch, expects_scoring: bool) -
             ),
         ))
 
-    if expects_scoring:
+    if scoring_expectation == "scored":
         for entity_type in _EXPECTED_FOR_SCORED_SECTION:
             candidates = section_match.by_type(entity_type)
             usable = [e for e in candidates if e.is_canonical() or e.is_usable_but_unvalidated()]
@@ -409,6 +481,18 @@ def compute_knowledge_gaps(section_match: SectionMatch, expects_scoring: bool) -
                         "no se toma de ahí: se registra como hueco de conocimiento."
                     ),
                 ))
+    elif scoring_expectation == "unknown":
+        gaps.append(KnowledgeGap(
+            codigo=section_match.codigo, kind="scoring_status_unknown",
+            detail=(
+                f"El Knowledge Pack no permite determinar si {section_match.codigo} puntúa: no hay "
+                "ninguna entidad 'criterion' utilizable ni ninguna marcada 'not_applicable'. No se "
+                "asume ni 'scored' ni 'not_scored', y no se infiere de la plantilla ni del Excel."
+            ),
+        ))
+    # scoring_expectation == "not_scored": el pack ya afirma que este apartado
+    # no puntúa (entidad 'criterion' con evidence_status 'not_applicable');
+    # no se exige ni se echa en falta ninguna puntuación.
 
     for entity in section_match.entities():
         if entity.is_conflict():
@@ -466,6 +550,118 @@ def format_normative_context(section_match: SectionMatch) -> str:
         tag = "" if entity.review_state == "human_validated" else " [PENDIENTE DE VALIDACIÓN HUMANA]"
         lines.append(f"- ({entity.entity_type}) {entity.label}: {entity.value}{tag}")
     return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# Endurecimiento 1 — aislamiento determinista de DELIVERABLE_CONTEXT
+# ---------------------------------------------------------------------------
+#
+# SECTION_PROMPT_SYSTEM_KP ya prohibía por instrucción usar una cifra de
+# DELIVERABLE_CONTEXT como normativa. En la ejecución real de INPYME 2026 esa
+# instrucción se cumplió en espíritu (nunca se presentó como hecho firme) pero
+# no al pie de la letra: el modelo llegó a mencionar "hasta 1 punto" del
+# pay-back con una salvedad, porque la cifra seguía siendo visible en el
+# texto. Este módulo elimina esa posibilidad en código, antes de que el texto
+# llegue al modelo: si el valor no está en el Knowledge Pack, no hay ninguna
+# cifra que mencionar, con o sin salvedad.
+#
+# Alcance deliberadamente estrecho: solo enmascara expresiones cuantitativas
+# con un calificador de magnitud normativa inequívoco pegado (máximo/mínimo/
+# hasta/tope/límite/umbral) seguido de la unidad típica de un baremo o límite
+# (puntos, %, €, días/meses/años). Un código de apartado ("II.B"), un nombre
+# de sección, o un número estructural suelto ("3 columnas", "Anexo II") no
+# lleva ese calificador pegado al número y por tanto nunca coincide.
+
+NORMATIVE_VALUE_OMITTED_PLACEHOLDER = "[VALOR NORMATIVO OMITIDO — consultar NORMATIVE_CONTEXT]"
+
+# Calificadores de magnitud normativa reconocidos: los explícitos (máximo/
+# mínimo/hasta/tope/límite/umbral) más la formulación real que usa la
+# convocatoria INPYME 2026 para el límite de ingeniería industrial ("no podrá
+# superar el 15%... ni el importe de 20.000 €") — verificada en el documento
+# real, no una suposición.
+_MAGNITUDE_QUALIFIER = (
+    r"(?:m[aá]x(?:imo|\.)?|m[ií]n(?:imo|\.)?|hasta|tope|l[ií]mite"
+    r"|umbral\s+m[ií]nimo|umbral\s+m[aá]ximo"
+    r"|no\s+podr[aá]\s+super(?:ar|ior)|no\s+puede\s+super(?:ar|ior)"
+    r"|no\s+podr[aá]\s+exceder|no\s+superior\s+a)"
+)
+_OPTIONAL_ARTICLE = r"(?:el\s+|la\s+|los\s+|las\s+)?"
+
+_SANITIZE_RULES: tuple[tuple[str, re.Pattern], ...] = (
+    (
+        "puntuacion",
+        re.compile(
+            rf"\(?{_MAGNITUDE_QUALIFIER}\s*\.?\s*{_OPTIONAL_ARTICLE}\d+([.,]\d+)?\s*(?:puntos?|pts?\.?)\)?",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "porcentaje",
+        re.compile(
+            rf"\(?{_MAGNITUDE_QUALIFIER}\s*\.?\s*{_OPTIONAL_ARTICLE}(?:del?\s+)?\d+([.,]\d+)?\s*%\)?",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "importe",
+        re.compile(
+            rf"\(?{_MAGNITUDE_QUALIFIER}\s*\.?\s*{_OPTIONAL_ARTICLE}(?:de\s+)?\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?\s*(?:€|eur(?:os)?\.?)\)?",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "plazo",
+        re.compile(
+            rf"\(?(?:plazo\s+)?{_MAGNITUDE_QUALIFIER}\s*\.?\s*{_OPTIONAL_ARTICLE}(?:de\s+)?\d+\s*(?:d[ií]as|meses|a[nñ]os)\)?",
+            re.IGNORECASE,
+        ),
+    ),
+)
+
+
+@dataclass(frozen=True)
+class SanitizationHit:
+    """Auditoría de una redacción concreta: qué regla disparó y qué texto se
+    ocultó. Interna, nunca se envía a MemorAI ni forma parte del contrato v2.5."""
+    rule: str
+    original: str
+
+
+def sanitize_deliverable_context(text: str) -> tuple[str, list[SanitizationHit]]:
+    """
+    Sanitiza DETERMINÍSTICAMENTE (sin IA) la representación de DELIVERABLE_CONTEXT
+    que se envía al modelo en modo Knowledge Pack: sustituye cualquier expresión
+    cuantitativa asociada de forma inequívoca a baremación o requisito normativo
+    (puntuaciones, umbrales de puntuación, porcentajes/intensidades, importes o
+    plazos normativos) por `NORMATIVE_VALUE_OMITTED_PLACEHOLDER`.
+
+    NO toca códigos de apartado, nombres de sección, ni números estructurales
+    (columnas de tabla, referencias a anexos): esos no llevan pegado ningún
+    calificador de magnitud normativa (máximo/mínimo/hasta/tope/límite/umbral),
+    que es la única señal que dispara una sustitución.
+
+    Uso exclusivo del modo Knowledge Pack: `_slice_context_for_section` (usado
+    también por el modo documental tradicional) no se modifica; esta función se
+    aplica SOLO al resultado de esa función, y solo en `_generate_output_4_kp`.
+
+    Devuelve (texto_sanitizado, hits) — `hits` es la auditoría interna (qué
+    texto original se ocultó y con qué regla) para poder responder "por qué
+    ConvoKit escribió esta instrucción" sin releer los documentos originales.
+    El documento/contexto original nunca se modifica ni se descarta: esta
+    función no toca `deliverable_documents_json`, solo la copia de texto que
+    se ensambla para esta llamada concreta al modelo.
+    """
+    sanitized = text or ""
+    hits: list[SanitizationHit] = []
+
+    for rule_name, pattern in _SANITIZE_RULES:
+        def _replace(match: re.Match, _rule=rule_name) -> str:
+            hits.append(SanitizationHit(rule=_rule, original=match.group(0)))
+            return NORMATIVE_VALUE_OMITTED_PLACEHOLDER
+
+        sanitized = pattern.sub(_replace, sanitized)
+
+    return sanitized, hits
 
 
 # ---------------------------------------------------------------------------

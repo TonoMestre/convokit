@@ -1225,8 +1225,9 @@ def _generate_output_4_kp(
     """
     Genera la salida 4 en modo i40 Knowledge Pack. Devuelve (markdown, root_v25,
     audit) donde `audit` es la auditoría interna de procedencia por apartado
-    (knowledge_pack.SectionProvenance.to_dict() por código) más la lista global
-    de knowledge_gaps — nunca se envía a MemorAI, solo sirve para "por qué
+    (knowledge_pack.SectionProvenance.to_dict() por código, más
+    `scoring_expectation` y `deliverable_sanitization`) más la lista global de
+    knowledge_gaps — nunca se envía a MemorAI, solo sirve para "por qué
     ConvoKit escribió esta instrucción" sin releer nada.
 
     `deliverable_documents_json` debe contener EXCLUSIVAMENTE los documentos a
@@ -1234,6 +1235,16 @@ def _generate_output_4_kp(
     formularios operativos) — nunca bases_reguladoras, convocatoria ni
     guia_convocante: en este modo esos tres no aportan normativa (la aporta el
     Knowledge Pack) y no deben leerse.
+
+    Dos endurecimientos sobre la versión inicial, detectados tras la ejecución
+    real de INPYME 2026 (ver analysis/i40-knowledge-pack-mode/00_DELIVERY_REPORT.md):
+    (1) DELIVERABLE_CONTEXT se sanitiza en código antes de enviarse al modelo
+    (kp.sanitize_deliverable_context) — SECTION_PROMPT_SYSTEM_KP ya lo prohibía
+    por instrucción, pero un valor normativo visible en la plantilla podía
+    colarse igualmente, mencionado con salvedad en vez de omitido; (2) si el
+    apartado puntúa se decide en tres estados (kp.compute_scoring_expectation),
+    nunca asumiendo 'scored' por defecto, para no generar un hueco de "falta
+    criterion" en apartados que el Knowledge Pack no dice si puntúan.
     """
     model = model or pricing.MODEL_PER_OUTPUT[4]
     pack = kp.parse_knowledge_pack(knowledge_pack_raw)
@@ -1297,15 +1308,28 @@ def _generate_output_4_kp(
             time.sleep(5)
 
         match = kp.match_section_to_knowledge(seccion["codigo"], seccion["nombre"], pack)
-        gaps = kp.compute_knowledge_gaps(match, expects_scoring=True)
+        # Endurecimiento 2: si el apartado puntúa se decide EXCLUSIVAMENTE a
+        # partir de las entidades 'criterion' del Knowledge Pack (nunca de la
+        # plantilla) — ver knowledge_pack.compute_scoring_expectation.
+        scoring_expectation = kp.compute_scoring_expectation(match)
+        gaps = kp.compute_knowledge_gaps(match, scoring_expectation)
         provenance = kp.build_section_provenance(match, gaps)
-        audit["sections"][seccion["codigo"]] = provenance.to_dict()
+        prov_dict = provenance.to_dict()
+        prov_dict["scoring_expectation"] = scoring_expectation
         audit["knowledge_gaps"].extend(g.__dict__ for g in gaps)
 
         normative_context = kp.format_normative_context(match) or (
             "(sin conocimiento normativo disponible en el Knowledge Pack para este apartado)"
         )
-        deliverable_context = _slice_context_for_section(deliverable_documents_json)
+        # Endurecimiento 1: DELIVERABLE_CONTEXT se sanitiza en código, DESPUÉS
+        # de _slice_context_for_section (compartida con el modo documental,
+        # que nunca se toca) y ANTES de ensamblar el mensaje al modelo. Ningún
+        # valor normativo (puntos, umbrales, %, importes, plazos) sobrevive en
+        # el texto que ve Claude si no está también en normative_context.
+        deliverable_context_raw = _slice_context_for_section(deliverable_documents_json)
+        deliverable_context, sanitization_hits = kp.sanitize_deliverable_context(deliverable_context_raw)
+        prov_dict["deliverable_sanitization"] = [h.__dict__ for h in sanitization_hits]
+        audit["sections"][seccion["codigo"]] = prov_dict
 
         user_msg = (
             f"Convocatoria: {conv_name}\n"

@@ -737,18 +737,40 @@ modificar. Detalle completo, decisiones y limitaciones en
   `POST /convocatorias/{id}/generate/kp`, `GET /convocatorias/{id}/json/4-kp` (mismo
   `exporters.export_output_4`, sin cambios) y `GET /convocatorias/{id}/audit/4-kp` (la
   auditoría interna de procedencia, nunca se envía a MemorAI).
-- Tests: `backend/tests/test_knowledge_pack.py` (20, unidad pura del modelo interno) y
-  `backend/tests/test_knowledge_pack_e2e.py` (4, pipeline completo con `main._claude`
+- Tests: `backend/tests/test_knowledge_pack.py` (37, unidad pura del modelo interno) y
+  `backend/tests/test_knowledge_pack_e2e.py` (5, pipeline completo con `main._claude`
   monkeypatcheado, sin red — incluye una validación de solo lectura contra
   `MemorAI/backend/app/services/convokit_validator.py`, que se salta si ese repo no está
   presente en la máquina).
-- Limitación conocida: `expects_scoring` en `compute_knowledge_gaps` se pasa siempre en
-  `True` en `_generate_output_4_kp` — saber si un apartado puntúa es en sí mismo
-  conocimiento normativo, así que no puede derivarse de la estructura del entregable sin
-  el Knowledge Pack; para apartados genuinamente sin baremo esto puede sobre-señalar un
-  gap de tipo `missing_entity_type` que en realidad no aplica. No se ha resuelto para no
-  inferirlo de la plantilla, que sería exactamente la reinterpretación normativa prohibida
-  por el punto 4 del encargo.
+- **Endurecimiento 1 — aislamiento determinista de `DELIVERABLE_CONTEXT`**
+  (`kp.sanitize_deliverable_context`): tras la ejecución real de INPYME 2026 se detectó
+  que, pese a la prohibición del prompt, una cifra visible solo en la plantilla (el peso
+  del subcriterio de pay-back, "(máx. 1 punto)") llegaba al modelo mencionada con una
+  salvedad ("aunque el Knowledge Pack no confirma este peso"). `_generate_output_4_kp`
+  ahora sanitiza en código, después de `_slice_context_for_section` (sin tocarla, la
+  sigue usando también el modo tradicional) y antes de ensamblar el mensaje: cualquier
+  expresión con un calificador de magnitud normativa (máximo/mínimo/hasta/tope/límite/
+  umbral, o la formulación real de INPYME "no podrá superar...") pegado a puntos/%/€/
+  plazo se sustituye por `NORMATIVE_VALUE_OMITTED_PLACEHOLDER`. No toca códigos de
+  apartado, nombres ni números estructurales (sin ese calificador pegado, nunca
+  coincide). Las redacciones aplicadas quedan en `audit["sections"][cod]
+  ["deliverable_sanitization"]` (interno, nunca a MemorAI). Limitación conocida: no
+  cubre tramos de puntuación condicional tipo "1 punto si se supera el 30%, 2 puntos
+  si..." (forma sintáctica distinta a la exigida; verificado con el texto real de
+  INPYME, documentado, no resuelto a propósito para no arriesgar sobre-redacción de
+  prosa legítima).
+- **Endurecimiento 2 — `scoring_expectation` en tres estados** (`kp.compute_scoring_expectation`,
+  sustituye al `expects_scoring: bool` anterior, que siempre pasaba `True`): si un
+  apartado puntúa se deriva EXCLUSIVAMENTE de las entidades `criterion` ya emparejadas
+  del Knowledge Pack, nunca de la plantilla. `"scored"` si hay una entidad `criterion`
+  usable con valor; `"not_scored"` si el pack marca una `criterion` con
+  `evidence_status: "not_applicable"` (vocabulario real de i40 Analiza: "el criterio no
+  procede en el caso concreto", `contracts/evidence-status.schema.json` +
+  `docs/14_NOMENCLATURA_GLOSARIO.md`); `"unknown"` en cualquier otro caso (sin
+  `criterion` emparejado, o solo en conflicto/missing) — nunca se asume `scored` por
+  defecto. `compute_knowledge_gaps` ya no exige un `criterion` cuando el estado es
+  `"not_scored"` o `"unknown"`; en `"unknown"` registra en su lugar un gap explícito
+  `scoring_status_unknown` en vez de un `missing_entity_type` falso.
 
 ## Las dos apps (importante)
 

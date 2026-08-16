@@ -10,6 +10,7 @@ Ejecutar: python -m unittest backend.tests.test_knowledge_pack -v
 """
 import copy
 import os
+import re
 import sys
 import unittest
 
@@ -395,6 +396,195 @@ class TestDeliverableContextSanitization(unittest.TestCase):
         self.assertNotIn("2,5 puntos", out)
         self.assertNotIn("5 puntos)", out)
         self.assertEqual(len(hits), 2)
+
+    # --- ajuste 2: capa general por cláusula (rangos, reiteraciones, --------
+    # enumeraciones), casos 1-7 numerados del encargo ------------------------
+
+    def test_1_rango_de_x_a_y_puntos(self):
+        text = "Se otorgarán de 1 a 3 puntos según el grado de mejora"
+        out, hits = kp.sanitize_deliverable_context(text)
+        self.assertNotIn("1 a 3 puntos", out)
+        self.assertNotIn("3 puntos", out)
+        self.assertIn(kp.NORMATIVE_VALUE_OMITTED_PLACEHOLDER, out)
+        self.assertIn("según el grado de mejora", out)
+        self.assertEqual([h.rule for h in hits], ["clausula_baremacion"])
+
+    def test_2_rango_entre_x_y_y_puntos(self):
+        text = "Se valorará con entre 2 y 5 puntos la experiencia acreditada"
+        out, hits = kp.sanitize_deliverable_context(text)
+        self.assertNotIn("2 y 5 puntos", out)
+        self.assertIn(kp.NORMATIVE_VALUE_OMITTED_PLACEHOLDER, out)
+
+    def test_3_rango_guion_puntos(self):
+        text = "Este criterio otorga 1-4 puntos según el caso"
+        out, hits = kp.sanitize_deliverable_context(text)
+        self.assertNotIn("1-4 puntos", out)
+        self.assertIn(kp.NORMATIVE_VALUE_OMITTED_PLACEHOLDER, out)
+
+    def test_4_condicion_experiencia_preserva_anios_oculta_puntos(self):
+        """'>10 años' es la CONDICIÓN del criterio, no la puntuación en sí:
+        se conserva como texto (no se inventa ni se eleva a regla normativa
+        firme por sí sola), pero la cifra de puntos que depende de ella deja
+        de estar disponible como dato utilizable desde DELIVERABLE_CONTEXT."""
+        text = "Experiencia superior a 10 años: 3 puntos"
+        out, hits = kp.sanitize_deliverable_context(text)
+        self.assertIn("10 años", out)
+        self.assertNotIn("3 puntos", out)
+        self.assertIn(kp.NORMATIVE_VALUE_OMITTED_PLACEHOLDER, out)
+
+    def test_5_se_otorgaran_2_puntos_por_cada(self):
+        text = "Se otorgarán 2 puntos por cada contrato indefinido formalizado"
+        out, hits = kp.sanitize_deliverable_context(text)
+        self.assertNotIn("2 puntos", out)
+        self.assertIn(kp.NORMATIVE_VALUE_OMITTED_PLACEHOLDER, out)
+
+    def test_6_enumeracion_puntuacion_0_1_2_3_puntos(self):
+        text = "Puntuación: 0 / 1 / 2 / 3 puntos"
+        out, hits = kp.sanitize_deliverable_context(text)
+        for token in ("0 /", "1 /", "2 /", "3 puntos"):
+            self.assertNotIn(token, out)
+        self.assertIn(kp.NORMATIVE_VALUE_OMITTED_PLACEHOLDER, out)
+        self.assertEqual([h.rule for h in hits], ["clausula_baremacion"])
+
+    def test_7_iib_apartado_anexo_tabla_pagina_ejercicio_intacto(self):
+        text = "II.B — apartado 2 — Anexo II — tabla 3 — página 4 — ejercicio 2026"
+        out, hits = kp.sanitize_deliverable_context(text)
+        self.assertEqual(out, text)
+        self.assertEqual(hits, [])
+
+    def test_rango_no_sobre_redacta_condicion_no_normativa(self):
+        """El rango solo se oculta cuando está pegado a la unidad de puntos:
+        un rango de años (condición, no puntuación) no debe verse afectado
+        aunque aparezca cerca de la palabra 'puntúa'."""
+        text = "Puntúa la antigüedad de la empresa: entre 2 y 5 años de actividad no computan a efectos de este apartado."
+        out, hits = kp.sanitize_deliverable_context(text)
+        self.assertIn("entre 2 y 5 años", out)
+        self.assertEqual(hits, [])
+
+
+class _F88114FixtureMixin:
+    @classmethod
+    def setUpClass(cls):
+        fixture_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "fixtures", "f88114_deliverable_context.txt",
+        )
+        with open(fixture_path, encoding="utf-8") as f:
+            cls.RAW_TEXT = f.read()
+
+
+class TestF88114RealDocumentSanitization(_F88114FixtureMixin, unittest.TestCase):
+    """Caso 8 del encargo (ajuste 2): DELIVERABLE_CONTEXT real de
+    F88114.docx, la plantilla oficial de memoria de INPYME 2026 (texto
+    reutilizado tal cual de la convocatoria histórica id 8 en convokit.db —
+    mismos bytes que ConvoKit extraería del documento original). Antes de
+    esta iteración, dos formulaciones reales de este documento sobrevivían
+    a la sanitización sin ocultarse:
+
+      1. Reiteración de un umbral ya enunciado antes en la misma frase, sin
+         calificador pegado al número: "No se supera el umbral mínimo si la
+         suma de las puntuaciones no alcanza los 3 puntos" / "... 15 puntos".
+      2. Rango con la unidad repetida en ambos extremos: "(de 2,5 puntos a
+         5 puntos)".
+
+    Estas pruebas comprueban el RESULTADO sanitizado completo, no solo
+    ejemplos aislados sobre fragmentos mínimos."""
+
+    def test_previously_confirmed_leaks_no_longer_present(self):
+        sanitized, _ = kp.sanitize_deliverable_context(self.RAW_TEXT)
+        self.assertNotIn("los 3 puntos", sanitized)
+        self.assertNotIn("los 15 puntos", sanitized)
+        self.assertNotIn("2,5 puntos a 5 puntos", sanitized)
+        self.assertNotIn("de 2,5 puntos a 5 puntos", sanitized)
+
+    def test_no_number_remains_attached_to_a_points_unit(self):
+        """Invariante fuerte: tras sanitizar, ningún dígito queda pegado a
+        punto/puntos/pto/ptos/pt/pts en todo el documento real."""
+        sanitized, _ = kp.sanitize_deliverable_context(self.RAW_TEXT)
+        leak_re = re.compile(r"\d+(?:[.,]\d+)?\s*(?:puntos?|ptos?\.?|pts?\.?)\b", re.IGNORECASE)
+        leaks = leak_re.findall(sanitized)
+        self.assertEqual(leaks, [], f"cifra de puntuación sin ocultar: {leaks!r}")
+
+    def test_full_sanitized_output_manually_triaged_for_residual_leaks(self):
+        """No basta comprobar las redacciones aplicadas: se busca también en
+        el TEXTO SANITIZADO COMPLETO cualquier línea que combine vocabulario
+        de baremo (punto/puntos/pto/ptos/pt/pts/puntuación/baremo/umbral) con
+        un dígito, y cada coincidencia se clasifica a mano. Las únicas
+        supervivientes conocidas, verificadas una a una contra el documento
+        real, no son fugas normativas:
+
+        - código de apartado "0." + "no puntuable" (cualitativo, sin cifra
+          de puntuación pegada al vocabulario de baremo).
+        - "puntuación [PLACEHOLDER]" — ya sanitizada; el único dígito que
+          queda en esa línea es la referencia "Ley 14/2018", estructural.
+        - condiciones porcentuales del criterio de proveedores locales
+          ("100 %", "75 %", "50 %", "30 %"): son la CONDICIÓN del criterio,
+          no la puntuación que otorgan (las cifras de puntos de esa misma
+          línea sí quedan ocultas, cubierto por el test anterior).
+        - "los 3 apartados anteriores" (referencia estructural a apartados
+          previos) coincidiendo en la misma frase con "ausencia de
+          puntuación": el número no está pegado a la unidad de puntos.
+        - "la puntuación de este apartado sea 0": un resultado nulo
+          (consecuencia de una falta de acreditación), no un valor de peso
+          o umbral de baremo — limitación conocida y deliberadamente fuera
+          de alcance de esta capa (ver comentario sobre porcentaje/importe/
+          plazo en `knowledge_pack.py`, junto a `_POINTS_CHAIN_RE`).
+
+        Si aparece una línea nueva no cubierta por esta lista, el test debe
+        fallar: es la señal de que hay una fuga normativa nueva por revisar.
+        """
+        sanitized, _ = kp.sanitize_deliverable_context(self.RAW_TEXT)
+        vocab_re = re.compile(
+            r"punt[oa]s?\b|pto\.?s?\b|pt\.?s?\b|puntuaci[oó]n(?:es)?|baremo|umbral",
+            re.IGNORECASE,
+        )
+        digit_re = re.compile(r"\d")
+
+        KNOWN_INOCUOUS_SUBSTRINGS = (
+            "no puntuable pero sí excluyente",
+            "la puntuación " + kp.NORMATIVE_VALUE_OMITTED_PLACEHOLDER,
+            "los 3 apartados anteriores, supondrá la ausencia de puntuación",
+            "conllevará que la puntuación de este apartado sea 0",
+        )
+
+        unclassified = []
+        for line in sanitized.split("\n"):
+            if not vocab_re.search(line) or not digit_re.search(line):
+                continue
+            if any(known in line for known in KNOWN_INOCUOUS_SUBSTRINGS):
+                continue
+            unclassified.append(line)
+
+        self.assertEqual(unclassified, [], f"línea con posible fuga normativa sin triar: {unclassified!r}")
+
+    def test_structural_codes_and_headings_survive(self):
+        """Códigos de apartado y encabezados de bloque siguen legibles: la
+        estructura de la memoria (lo único que este modo necesita de la
+        plantilla) no se pierde por la sanitización."""
+        sanitized, _ = kp.sanitize_deliverable_context(self.RAW_TEXT)
+        for marker in (
+            "0. | JUSTIFICACIÓN DE LA VINCULACIÓN",
+            "I. | DESCRIPCIÓN DE LA EMPRESA",
+            "A. | Antecedentes y evolución",
+            "B. | Actividades actuales de la empresa",
+            "C. | Experiencia en la actividad proyectada",
+            "II. | MOTIVACIÓN, VIABILIDAD Y DESCRIPCIÓN TÉCNICA DEL PROYECTO",
+            "B. | Viabilidad económica de la inversión",
+            "V. | LA CONTRIBUCIÓN A LA SOLUCIÓN DE PROBLEMAS SOCIALES",
+        ):
+            self.assertIn(marker, sanitized)
+
+    def test_experience_years_condition_preserved_as_qualitative(self):
+        """Caso real (apartado I.C): los tramos de años de experiencia son
+        la condición del criterio, no la puntuación — deben seguir legibles
+        aunque las cifras de puntos asociadas a cada tramo se oculten."""
+        sanitized, _ = kp.sanitize_deliverable_context(self.RAW_TEXT)
+        for tramo in ("menos de 5 años", "entre 5 y 7 años", "entre 7 y 10 años", "más de 10 años"):
+            self.assertIn(tramo, sanitized)
+        self.assertNotRegex(
+            sanitized,
+            r"\d\s*puntos?\s+si\s+(?:la\s+experiencia|es\s+(?:menos|entre|más))",
+        )
 
 
 class TestScoringExpectation(unittest.TestCase):

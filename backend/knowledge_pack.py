@@ -704,6 +704,48 @@ _SANITIZE_RULES: tuple[tuple[str, re.Pattern], ...] = (
     ),
 )
 
+# Ajuste 2 (tras una segunda revisión sobre el DELIVERABLE_CONTEXT real de
+# F88114.docx, plantilla de memoria de INPYME 2026): las reglas de arriba
+# cubren patrones sintácticos concretos (calificador+número, concesión,
+# condicional, paréntesis aislado) pero fallan ante dos formas que el
+# encargo pedía cubrir de forma GENERAL, sin seguir añadiendo regex
+# específicas una a una:
+#
+#   1. Rangos: "de 1 a 3 puntos", "entre 2 y 5 puntos", "1-4 puntos".
+#   2. Reiteraciones: un umbral ya enunciado antes en la misma frase, donde
+#      el calificador de magnitud NO queda pegado al número (caso real
+#      confirmado en F88114.docx: "No se supera el umbral mínimo si la suma
+#      de las puntuaciones no alcanza los 3 puntos" — entre "umbral mínimo"
+#      y "3 puntos" hay texto intermedio que ninguna regla de arriba salta).
+#
+# En vez de seguir enumerando plantillas sintácticas, esta capa aplica el
+# invariante arquitectónico pedido directamente: en este corpus (memorias
+# de baremo de ayudas públicas), CUALQUIER número pegado a la unidad de
+# puntuación (puntos/pts/ptos/pt) es por construcción una cifra de
+# baremación — la propia palabra "puntos" ya es el vocabulario inequívoco
+# de una "cláusula de baremación" que pide el encargo, así que no hace
+# falta partir el texto en frases para decidirlo caso a caso. Por eso
+# `_POINTS_CHAIN_RE` no exige ningún calificador ni verbo de concesión
+# alrededor: busca directamente cadenas de números conectados por "a"/"y"/
+# "/"/"-" que terminan en la unidad de puntos, y oculta la cadena completa
+# (todos los números, no solo el último) — cubre de una sola vez el rango,
+# la reiteración suelta y la enumeración tipo "0 / 1 / 2 / 3 puntos".
+#
+# Deliberadamente NO se generaliza así el porcentaje/importe/plazo: a
+# diferencia de "puntos" (que en este corpus es siempre baremo), un
+# porcentaje o un plazo sueltos son con frecuencia una CONDICIÓN del
+# criterio ("más del 75 %", "superior a 10 años"), no la puntuación en sí
+# — generalizarlos igual habría ocultado también las condiciones que el
+# encargo pide conservar (ver ejemplo "Experiencia superior a 10 años").
+# Esos tres siguen limitados a los patrones con calificador pegado de las
+# reglas de arriba, a propósito.
+_NUM_TOKEN = r"\d+(?:[.,]\d+)?"
+_CHAIN_CONNECTOR = r"(?:\s*[/,\-]\s*|\s+(?:a|y)\s+)"
+_POINTS_CHAIN_RE = re.compile(
+    rf"(?:{_NUM_TOKEN}(?:\s*{_POINTS_UNIT})?{_CHAIN_CONNECTOR})*{_NUM_TOKEN}\s*{_POINTS_UNIT}",
+    re.IGNORECASE,
+)
+
 
 @dataclass(frozen=True)
 class SanitizationHit:
@@ -724,7 +766,9 @@ def sanitize_deliverable_context(text: str) -> tuple[str, list[SanitizationHit]]
     NO toca códigos de apartado, nombres de sección, ni números estructurales
     (columnas de tabla, referencias a anexos): esos no llevan pegado ningún
     calificador de magnitud normativa (máximo/mínimo/hasta/tope/límite/umbral),
-    que es la única señal que dispara una sustitución.
+    ni forman una cadena de números que termine en la unidad de puntos — las
+    dos únicas señales que disparan una sustitución (ver `_POINTS_CHAIN_RE`
+    para la segunda, capa general de rangos/reiteraciones de puntuación).
 
     Uso exclusivo del modo Knowledge Pack: `_slice_context_for_section` (usado
     también por el modo documental tradicional) no se modifica; esta función se
@@ -740,12 +784,21 @@ def sanitize_deliverable_context(text: str) -> tuple[str, list[SanitizationHit]]
     sanitized = text or ""
     hits: list[SanitizationHit] = []
 
-    for rule_name, pattern in _SANITIZE_RULES:
-        def _replace(match: re.Match, _rule=rule_name) -> str:
-            hits.append(SanitizationHit(rule=_rule, original=match.group(0)))
+    def _make_replace(rule_name: str):
+        def _replace(match: re.Match) -> str:
+            hits.append(SanitizationHit(rule=rule_name, original=match.group(0)))
             return NORMATIVE_VALUE_OMITTED_PLACEHOLDER
+        return _replace
 
-        sanitized = pattern.sub(_replace, sanitized)
+    for rule_name, pattern in _SANITIZE_RULES:
+        sanitized = pattern.sub(_make_replace(rule_name), sanitized)
+
+    # Capa general (ajuste 2): aplicada DESPUÉS de las reglas específicas de
+    # arriba, para que la auditoría siga nombrando la regla más precisa
+    # cuando una específica ya cubre el caso (p.ej. "puntuacion_concesion"
+    # para "se otorgarán 10 puntos"); esta solo captura lo que sobrevive —
+    # rangos, enumeraciones y reiteraciones sueltas de la unidad de puntos.
+    sanitized = _POINTS_CHAIN_RE.sub(_make_replace("clausula_baremacion"), sanitized)
 
     return sanitized, hits
 

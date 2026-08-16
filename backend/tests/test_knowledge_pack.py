@@ -314,12 +314,17 @@ class TestDeliverableContextSanitization(unittest.TestCase):
     # --- ajuste 1: puntuación condicional (casos 1-6 numerados) -----------
 
     def test_1_un_punto_si_se_supera_el_30_por_ciento(self):
+        """Superado por el ajuste 3: en el ajuste 1 la condición ('se supera
+        el 30 %') se dejaba legible a propósito, porque entonces solo se
+        perseguía la PUNTUACIÓN. El ajuste 3 revisa esa decisión: el 30 % es
+        también la condición normativa del tramo, así que ahora se oculta
+        junto con el punto (ver TestConditionalThresholdSanitization más
+        abajo para los casos nuevos numerados del ajuste 3)."""
         text = "1 punto si se supera el 30 %"
         out, hits = kp.sanitize_deliverable_context(text)
         self.assertNotIn("1 punto", out)
+        self.assertNotIn("30 %", out)
         self.assertIn(kp.NORMATIVE_VALUE_OMITTED_PLACEHOLDER, out)
-        # la condición en sí (no es una cifra de puntuación) permanece legible
-        self.assertIn("si se supera el 30", out)
 
     def test_2_dos_puntos_cuando_se_aporte(self):
         text = "2 puntos cuando se aporte la certificación correspondiente"
@@ -421,14 +426,17 @@ class TestDeliverableContextSanitization(unittest.TestCase):
         self.assertNotIn("1-4 puntos", out)
         self.assertIn(kp.NORMATIVE_VALUE_OMITTED_PLACEHOLDER, out)
 
-    def test_4_condicion_experiencia_preserva_anios_oculta_puntos(self):
-        """'>10 años' es la CONDICIÓN del criterio, no la puntuación en sí:
-        se conserva como texto (no se inventa ni se eleva a regla normativa
-        firme por sí sola), pero la cifra de puntos que depende de ella deja
-        de estar disponible como dato utilizable desde DELIVERABLE_CONTEXT."""
+    def test_4_condicion_experiencia_oculta_anios_y_puntos(self):
+        """Superado por el ajuste 3: en el ajuste 2 '>10 años' (la CONDICIÓN
+        del criterio) se dejaba visible a propósito, ocultando solo la
+        cifra de puntos. El ajuste 3 revisa esa decisión — la condición
+        cuantitativa de un tramo de baremo es tan normativa como los
+        puntos que otorga — y ahora oculta ambas (ver
+        TestConditionalThresholdSanitization para los casos numerados
+        nuevos del ajuste 3)."""
         text = "Experiencia superior a 10 años: 3 puntos"
         out, hits = kp.sanitize_deliverable_context(text)
-        self.assertIn("10 años", out)
+        self.assertNotIn("10 años", out)
         self.assertNotIn("3 puntos", out)
         self.assertIn(kp.NORMATIVE_VALUE_OMITTED_PLACEHOLDER, out)
 
@@ -453,12 +461,66 @@ class TestDeliverableContextSanitization(unittest.TestCase):
         self.assertEqual(hits, [])
 
     def test_rango_no_sobre_redacta_condicion_no_normativa(self):
-        """El rango solo se oculta cuando está pegado a la unidad de puntos:
-        un rango de años (condición, no puntuación) no debe verse afectado
-        aunque aparezca cerca de la palabra 'puntúa'."""
+        """Un rango de años solo se oculta dentro de una cláusula de
+        baremación de verdad (vocabulario inequívoco: puntos/puntuación/
+        baremo/otorgar/valorar con — ver `_SCORING_CLAUSE_VOCAB_RE`);
+        'Puntúa' (verbo distinto, sin ese vocabulario) no basta para
+        activarlo, así que este rango sin relación real con puntuación
+        queda intacto."""
         text = "Puntúa la antigüedad de la empresa: entre 2 y 5 años de actividad no computan a efectos de este apartado."
         out, hits = kp.sanitize_deliverable_context(text)
         self.assertIn("entre 2 y 5 años", out)
+        self.assertEqual(hits, [])
+
+
+class TestConditionalThresholdSanitization(unittest.TestCase):
+    """Ajuste 3 (tercera revisión sobre F88114.docx real): las reglas
+    anteriores ya ocultaban la PUNTUACIÓN (puntos, rangos, reiteraciones).
+    Pero dejaban legible la CONDICIÓN cuantitativa que determina el tramo
+    de puntos (umbral de años, porcentaje o importe a superar) — igual de
+    normativa que los puntos si no está respaldada por NORMATIVE_CONTEXT.
+    Casos 1-8 numerados del encargo."""
+
+    def test_1_experiencia_superior_a_10_anios_oculta_anios_y_puntos(self):
+        text = "Experiencia superior a 10 años = 3 puntos"
+        out, hits = kp.sanitize_deliverable_context(text)
+        self.assertNotIn("10 años", out)
+        self.assertNotIn("3 puntos", out)
+
+    def test_2_entre_5_y_7_anios_oculta_rango_y_puntos(self):
+        text = "Entre 5 y 7 años = 1 punto"
+        out, hits = kp.sanitize_deliverable_context(text)
+        self.assertNotIn("5 y 7 años", out)
+        self.assertNotIn("1 punto", out)
+
+    def test_3_un_punto_si_se_supera_el_30_por_ciento_oculta_ambos(self):
+        text = "1 punto si se supera el 30 %"
+        out, hits = kp.sanitize_deliverable_context(text)
+        self.assertNotIn("1 punto", out)
+        self.assertNotIn("30 %", out)
+
+    def test_4_cuatro_puntos_superior_al_75_por_ciento_oculta_ambos(self):
+        text = "4 puntos cuando la reducción sea superior al 75 %"
+        out, hits = kp.sanitize_deliverable_context(text)
+        self.assertNotIn("4 puntos", out)
+        self.assertNotIn("75 %", out)
+
+    def test_5_se_otorgaran_2_puntos_si_supera_100000_euros_oculta_ambos(self):
+        text = "Se otorgarán 2 puntos si la inversión supera 100.000 €"
+        out, hits = kp.sanitize_deliverable_context(text)
+        self.assertNotIn("2 puntos", out)
+        self.assertNotIn("100.000 €", out)
+
+    def test_6_serie_historica_ultimos_5_anios_sin_puntos_permanece(self):
+        text = "Serie histórica de los últimos 5 años"
+        out, hits = kp.sanitize_deliverable_context(text)
+        self.assertEqual(out, text)
+        self.assertEqual(hits, [])
+
+    def test_7_ejercicio_anexo_apartado_intacto(self):
+        text = "Ejercicio 2026 — Anexo II — apartado 2"
+        out, hits = kp.sanitize_deliverable_context(text)
+        self.assertEqual(out, text)
         self.assertEqual(hits, [])
 
 
@@ -574,17 +636,43 @@ class TestF88114RealDocumentSanitization(_F88114FixtureMixin, unittest.TestCase)
         ):
             self.assertIn(marker, sanitized)
 
-    def test_experience_years_condition_preserved_as_qualitative(self):
-        """Caso real (apartado I.C): los tramos de años de experiencia son
-        la condición del criterio, no la puntuación — deben seguir legibles
-        aunque las cifras de puntos asociadas a cada tramo se oculten."""
+    def test_experience_years_thresholds_hidden_ajuste_3(self):
+        """Caso real (apartado I.C), ajuste 3: los tramos de años de
+        experiencia son la CONDICIÓN normativa del criterio (determinan qué
+        puntuación corresponde), así que se ocultan igual que los puntos —
+        superan la decisión anterior del ajuste 2, que los dejaba legibles."""
         sanitized, _ = kp.sanitize_deliverable_context(self.RAW_TEXT)
         for tramo in ("menos de 5 años", "entre 5 y 7 años", "entre 7 y 10 años", "más de 10 años"):
-            self.assertIn(tramo, sanitized)
-        self.assertNotRegex(
-            sanitized,
-            r"\d\s*puntos?\s+si\s+(?:la\s+experiencia|es\s+(?:menos|entre|más))",
-        )
+            self.assertNotIn(tramo, sanitized)
+
+    def test_iiic_local_supply_percentage_tiers_hidden_ajuste_3(self):
+        """Caso real (apartado III.C, huella de carbono): los tramos por
+        porcentaje de proveedores de la Comunitat Valenciana (100/75/50/30 %)
+        determinan el punto que se otorga — condición de baremo, no solo la
+        cifra de puntos. El primer tramo ('si el 100%...') ni siquiera lleva
+        un comparativo pegado, es la condición de barrido ciego por cláusula
+        que ajuste 3 añade específicamente para este caso real."""
+        sanitized, _ = kp.sanitize_deliverable_context(self.RAW_TEXT)
+        for pct in ("100%", "100 %", "75%", "75 %", "50%", "50 %", "30%", "30 %"):
+            self.assertNotIn(pct, sanitized)
+
+    def test_last_five_years_reporting_window_still_preserved(self):
+        """Caso real (apartado I.A): 'los últimos 5 años' es la ventana de
+        datos económicos a reportar, no un umbral de tramo — convive en la
+        misma línea que 'máx. 2 puntos' pero no es su condición. Debe seguir
+        legible: es precisamente el caso que impide tratar años con barrido
+        ciego dentro de una cláusula de baremación."""
+        sanitized, _ = kp.sanitize_deliverable_context(self.RAW_TEXT)
+        self.assertIn("los últimos 5 años", sanitized)
+
+    def test_law_reference_and_structural_apartado_count_preserved(self):
+        """'Ley 14/2018' (III.A) y 'los 3 apartados anteriores' (cierre del
+        bloque V) conviven en líneas con vocabulario de baremación pero no
+        son condiciones cuantitativas de puntuación — no deben verse
+        afectados por el barrido de porcentajes/años por cláusula."""
+        sanitized, _ = kp.sanitize_deliverable_context(self.RAW_TEXT)
+        self.assertIn("Ley 14/2018", sanitized)
+        self.assertIn("los 3 apartados anteriores", sanitized)
 
 
 class TestScoringExpectation(unittest.TestCase):

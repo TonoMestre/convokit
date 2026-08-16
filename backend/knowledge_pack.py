@@ -605,6 +605,18 @@ NORMATIVE_VALUE_OMITTED_PLACEHOLDER = "[VALOR NORMATIVO OMITIDO — consultar NO
 # convocatoria INPYME 2026 para el límite de ingeniería industrial ("no podrá
 # superar el 15%... ni el importe de 20.000 €") — verificada en el documento
 # real, no una suposición.
+#
+# Ajuste 3 (tercera revisión, F88114.docx real): las reglas de "porcentaje"/
+# "importe"/"plazo" de abajo reutilizan este mismo calificador para decidir
+# cuándo un % / importe / plazo es la CONDICIÓN de un tramo de baremación
+# (no solo la puntuación en sí) y por tanto tampoco puede llegar al modelo
+# desde DELIVERABLE_CONTEXT. El calificador original solo cubría "no podrá
+# superar" (formulación de límite superior); el corpus real usa también
+# comparativos sin la negación ("superior a", "más de", "menos de", "se
+# supera") para expresar el mismo tipo de umbral — caso real confirmado en
+# I.C de F88114.docx ("0 puntos si la experiencia es MENOS DE 5 años; ...
+# 3 puntos si es MÁS DE 10 años") y en III.C ("puntuación... si SE SUPERA
+# el 50%"). Se añaden como alternativas nuevas, no se sustituye nada.
 _MAGNITUDE_QUALIFIER = (
     # "máximo/mínimo" en sus dos géneros (Spanish gramatical agreement:
     # "importe máximo" vs "puntuación máxima" — caso real detectado en
@@ -612,7 +624,12 @@ _MAGNITUDE_QUALIFIER = (
     r"(?:m[aá]x(?:imo|ima|\.)?|m[ií]n(?:imo|ima|\.)?|hasta|tope|l[ií]mite"
     r"|umbral\s+m[ií]nimo|umbral\s+m[aá]ximo"
     r"|no\s+podr[aá]\s+super(?:ar|ior)|no\s+puede\s+super(?:ar|ior)"
-    r"|no\s+podr[aá]\s+exceder|no\s+superior\s+a)"
+    r"|no\s+podr[aá]\s+exceder|no\s+superior\s+a"
+    r"|superior(?:es)?\s+al?|inferior(?:es)?\s+al?"
+    r"|mayor(?:es)?\s+(?:de|que)|menor(?:es)?\s+(?:de|que)"
+    r"|m[aá]s\s+de|menos\s+de|por\s+encima\s+de|por\s+debajo\s+de"
+    r"|al\s+menos|como\s+m[ií]nimo|como\s+m[aá]ximo"
+    r"|(?:se\s+)?super(?:a|an|e|ar))"
 )
 _OPTIONAL_ARTICLE = r"(?:el\s+|la\s+|los\s+|las\s+)?"
 # Enlace "de"/"del" opcional tras el artículo (p.ej. "puntuación máxima DE 4
@@ -731,20 +748,114 @@ _SANITIZE_RULES: tuple[tuple[str, re.Pattern], ...] = (
 # (todos los números, no solo el último) — cubre de una sola vez el rango,
 # la reiteración suelta y la enumeración tipo "0 / 1 / 2 / 3 puntos".
 #
-# Deliberadamente NO se generaliza así el porcentaje/importe/plazo: a
-# diferencia de "puntos" (que en este corpus es siempre baremo), un
-# porcentaje o un plazo sueltos son con frecuencia una CONDICIÓN del
-# criterio ("más del 75 %", "superior a 10 años"), no la puntuación en sí
-# — generalizarlos igual habría ocultado también las condiciones que el
-# encargo pide conservar (ver ejemplo "Experiencia superior a 10 años").
-# Esos tres siguen limitados a los patrones con calificador pegado de las
-# reglas de arriba, a propósito.
+# En el ajuste 2, el porcentaje/importe/plazo se dejaron deliberadamente
+# fuera de esta generalización: un porcentaje o un plazo sueltos son con
+# frecuencia una CONDICIÓN del criterio ("más del 75 %", "superior a 10
+# años"), no la puntuación en sí, y en ese momento el encargo pedía
+# preservarlos. El ajuste 3 (más abajo) revisa esa decisión: la condición
+# normativa de un tramo de baremo (el umbral en sí, no solo los puntos que
+# otorga) tampoco puede llegar al modelo desde DELIVERABLE_CONTEXT — ver
+# `_MAGNITUDE_QUALIFIER` (ampliado con comparativos) y `_YEARS_CHAIN_RE` /
+# `_redact_bare_percentages_in_scoring_clauses` más abajo.
 _NUM_TOKEN = r"\d+(?:[.,]\d+)?"
 _CHAIN_CONNECTOR = r"(?:\s*[/,\-]\s*|\s+(?:a|y)\s+)"
 _POINTS_CHAIN_RE = re.compile(
     rf"(?:{_NUM_TOKEN}(?:\s*{_POINTS_UNIT})?{_CHAIN_CONNECTOR})*{_NUM_TOKEN}\s*{_POINTS_UNIT}",
     re.IGNORECASE,
 )
+
+# Ajuste 3 (tercera revisión sobre F88114.docx real): las reglas de arriba
+# ya ocultan la PUNTUACIÓN en sí (puntos, rangos, reiteraciones). Pero
+# dentro de una cláusula de baremación, la CONDICIÓN que determina el
+# tramo de puntos (el umbral de años, el porcentaje que hay que superar,
+# el importe a partir del cual se otorga el punto) es normativa exactamente
+# igual que los puntos: si no está en NORMATIVE_CONTEXT, DELIVERABLE_CONTEXT
+# tampoco puede dársela al modelo. Dos mecanismos, cada uno ajustado al
+# riesgo real de sobre-redactar de su unidad:
+#
+#   - un solo número con comparativo pegado (años/meses/días/%/€): se
+#     añaden a `_MAGNITUDE_QUALIFIER` (arriba) los comparativos reales del
+#     corpus que aún faltaban (superior a/inferior a/más de/menos de/
+#     supera/al menos...), así que las reglas "plazo"/"porcentaje"/
+#     "importe" ya existentes los cazan sin necesidad de una regla nueva.
+#     Esto se deja GLOBAL (no acotado por cláusula), igual que ya lo estaba
+#     la regla "no podrá superar el 15%" del ajuste 1: un comparativo
+#     normativo pegado a un número ya es en sí mismo la señal inequívoca,
+#     sin necesidad de mirar el resto de la frase.
+#   - rango sin comparativo de un solo número ("entre 5 y 7 años") o
+#     porcentaje suelto sin comparativo ("si el 100% del coste..."): aquí
+#     SÍ hace falta la cláusula, porque el patrón por sí solo no basta para
+#     distinguir una condición de baremo de dato estructural — "la serie
+#     histórica de los últimos 5 años" (I.A, ventana de datos a reportar)
+#     usa la misma forma superficial ("N años") que un umbral de tramo y
+#     convive en la misma línea que "máx. 2 puntos" sin serlo. Por eso
+#     `_YEARS_CHAIN_RE` y `_BARE_PERCENT_RE` solo se aplican dentro de una
+#     línea que en el texto ORIGINAL ya contenía vocabulario de baremación
+#     (`_redact_within_scoring_clauses`), nunca al documento completo — así
+#     "últimos 5 años" (sin rango, sin comparativo) nunca llega a
+#     coincidir con `_YEARS_CHAIN_RE` (que exige dos números conectados) y
+#     queda fuera, mientras que "entre 5 y 7 años" sí se oculta.
+_YEARS_UNIT = r"a[nñ]os?"
+_YEARS_CHAIN_RE = re.compile(
+    rf"(?:{_NUM_TOKEN}(?:\s*{_YEARS_UNIT})?{_CHAIN_CONNECTOR})+{_NUM_TOKEN}\s*{_YEARS_UNIT}",
+    re.IGNORECASE,
+)
+_BARE_PERCENT_RE = re.compile(rf"{_NUM_TOKEN}\s*%", re.IGNORECASE)
+
+# Vocabulario que marca una línea/cláusula como "de baremación": la unidad
+# de puntos en cualquiera de sus formas, "puntuación"/"baremo", o un verbo
+# de concesión/valoración de puntos. Deliberadamente el mismo vocabulario
+# ya usado como desencadenante en el resto del módulo (nada nuevo que
+# mantener en paralelo).
+_SCORING_CLAUSE_VOCAB_RE = re.compile(
+    rf"{_POINTS_UNIT}|puntuaci[oó]n(?:es)?|baremo|{_GRANT_QUALIFIER}"
+    rf"|se\s+valorar[aá]\s+con|valorar[aá]\s+con",
+    re.IGNORECASE,
+)
+
+# (nombre de regla, patrón) aplicados SOLO dentro de una cláusula de
+# baremación — ver el comentario de arriba sobre por qué estos dos, a
+# diferencia del resto de `_SANITIZE_RULES`, necesitan ese acotamiento.
+_SCORING_CLAUSE_ONLY_RULES: tuple[tuple[str, re.Pattern], ...] = (
+    ("clausula_condicion_anios", _YEARS_CHAIN_RE),
+    ("clausula_condicion_porcentaje", _BARE_PERCENT_RE),
+)
+
+
+def _redact_within_scoring_clauses(
+    original_text: str, working_text: str, hits: list["SanitizationHit"]
+) -> str:
+    """Aplica `_SCORING_CLAUSE_ONLY_RULES` línea a línea, solo dentro de las
+    líneas que en el texto ORIGINAL (sin sanitizar) ya contenían vocabulario
+    de baremación — necesario porque a estas alturas del pipeline las
+    reglas anteriores ya han sustituido buena parte de ese vocabulario por
+    el placeholder, y clasificar la cláusula sobre el texto ya sanitizado la
+    volvería invisible para esta función. Se aplica línea a línea (no a todo
+    el documento) para no arrastrar un barrido ciego a párrafos sin ninguna
+    relación con puntuación."""
+    original_lines = original_text.split("\n")
+    working_lines = working_text.split("\n")
+    if len(original_lines) != len(working_lines):
+        # Ninguna regla anterior inserta o elimina saltos de línea, pero si
+        # alguna vez dejara de ser cierto, es más seguro no tocar nada que
+        # desalinear las líneas y redactar el documento equivocado.
+        return working_text
+
+    def _make_replace(rule_name: str):
+        def _replace(match: re.Match) -> str:
+            hits.append(SanitizationHit(rule=rule_name, original=match.group(0)))
+            return NORMATIVE_VALUE_OMITTED_PLACEHOLDER
+        return _replace
+
+    for i, original_line in enumerate(original_lines):
+        if not _SCORING_CLAUSE_VOCAB_RE.search(original_line):
+            continue
+        line = working_lines[i]
+        for rule_name, pattern in _SCORING_CLAUSE_ONLY_RULES:
+            line = pattern.sub(_make_replace(rule_name), line)
+        working_lines[i] = line
+
+    return "\n".join(working_lines)
 
 
 @dataclass(frozen=True)
@@ -761,14 +872,22 @@ def sanitize_deliverable_context(text: str) -> tuple[str, list[SanitizationHit]]
     que se envía al modelo en modo Knowledge Pack: sustituye cualquier expresión
     cuantitativa asociada de forma inequívoca a baremación o requisito normativo
     (puntuaciones, umbrales de puntuación, porcentajes/intensidades, importes o
-    plazos normativos) por `NORMATIVE_VALUE_OMITTED_PLACEHOLDER`.
+    plazos normativos) por `NORMATIVE_VALUE_OMITTED_PLACEHOLDER`. Desde el
+    ajuste 3, esto incluye también la CONDICIÓN de un tramo de baremo (el
+    umbral de años, el porcentaje o el importe que hay que superar para
+    obtener los puntos), no solo los puntos que otorga: "Experiencia
+    superior a 10 años: 3 puntos" oculta tanto "10 años" como "3 puntos".
 
     NO toca códigos de apartado, nombres de sección, ni números estructurales
-    (columnas de tabla, referencias a anexos): esos no llevan pegado ningún
-    calificador de magnitud normativa (máximo/mínimo/hasta/tope/límite/umbral),
-    ni forman una cadena de números que termine en la unidad de puntos — las
-    dos únicas señales que disparan una sustitución (ver `_POINTS_CHAIN_RE`
-    para la segunda, capa general de rangos/reiteraciones de puntuación).
+    (columnas de tabla, referencias a anexos, "los últimos 5 años" como
+    ventana de datos a reportar en vez de umbral de tramo): esos no llevan
+    pegado ningún calificador de magnitud/comparación normativa (máximo/
+    mínimo/hasta/tope/límite/umbral/superior a/más de/menos de/supera...),
+    no forman una cadena de números que termine en la unidad de puntos o de
+    años (ver `_POINTS_CHAIN_RE` / `_YEARS_CHAIN_RE`), ni son un porcentaje
+    suelto dentro de una línea que ya contenía vocabulario de baremación
+    (ver `_redact_bare_percentages_in_scoring_clauses`) — las únicas señales
+    que disparan una sustitución.
 
     Uso exclusivo del modo Knowledge Pack: `_slice_context_for_section` (usado
     también por el modo documental tradicional) no se modifica; esta función se
@@ -799,6 +918,14 @@ def sanitize_deliverable_context(text: str) -> tuple[str, list[SanitizationHit]]
     # para "se otorgarán 10 puntos"); esta solo captura lo que sobrevive —
     # rangos, enumeraciones y reiteraciones sueltas de la unidad de puntos.
     sanitized = _POINTS_CHAIN_RE.sub(_make_replace("clausula_baremacion"), sanitized)
+
+    # Condición de un tramo sin comparativo de un solo número (ajuste 3):
+    # rango de años ("entre 5 y 7 años") o porcentaje suelto ("si el 100%
+    # del coste..."). Acotado a las líneas que ya eran de baremación en el
+    # texto ORIGINAL — ver `_redact_within_scoring_clauses` sobre por qué
+    # estos dos, a diferencia del resto de reglas de arriba, necesitan ese
+    # acotamiento por cláusula en vez de aplicarse al documento completo.
+    sanitized = _redact_within_scoring_clauses(text or "", sanitized, hits)
 
     return sanitized, hits
 

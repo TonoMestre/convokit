@@ -1,0 +1,1276 @@
+{
+  "version_esquema": "2.5",
+  "convocatoria": {
+    "nombre": "INPYME 2026 · i40 Knowledge Pack test",
+    "anio": 2026,
+    "organismo": "Conselleria de Industria, Turismo, Innovación y Comercio (GVA)",
+    "tipo_ayuda": "inversion_productiva",
+    "fecha_generacion": "2026-08-16"
+  },
+  "campos_empresa": [
+    {
+      "id": "cnae-principal",
+      "nombre": "CNAE principal de la empresa",
+      "descripcion": "Clasificación Nacional de Actividades Económicas que identifica la actividad económica principal de la empresa.",
+      "formato": "texto"
+    },
+    {
+      "id": "descripcion-actividad-principal",
+      "nombre": "Descripción de la actividad principal de la empresa",
+      "descripcion": "Descripción de la actividad industrial, productos o servicios que fabrica o transforma la empresa.",
+      "formato": "texto"
+    },
+    {
+      "id": "sector-presentacion",
+      "nombre": "Sector bajo el que se presenta la solicitud",
+      "descripcion": "Clasificación sectorial general y específica bajo la que se solicitan las ayudas.",
+      "formato": "texto"
+    },
+    {
+      "id": "constitucion-forma-juridica",
+      "nombre": "Fecha de constitución y forma jurídica",
+      "descripcion": "Fecha en que se constituyó la empresa y su forma jurídica.",
+      "formato": "texto"
+    },
+    {
+      "id": "historia-empresa-propiedad",
+      "nombre": "Historia de la empresa y evolución de la propiedad",
+      "descripcion": "Evolución histórica de la empresa, cambios accionariales y estructura de propiedad.",
+      "formato": "texto"
+    },
+    {
+      "id": "estructura-accionarial-grupos",
+      "nombre": "Estructura accionarial actual y pertenencia a grupos empresariales",
+      "descripcion": "Distribución actual del capital accionarial y vínculos con grupos empresariales o matrices.",
+      "formato": "texto"
+    },
+    {
+      "id": "serie-historica-empleos",
+      "nombre": "Serie histórica de empleos",
+      "descripcion": "Evolución del número de empleados a lo largo de los últimos años.",
+      "formato": "tabla_historica",
+      "variables": [
+        "empleados"
+      ],
+      "num_anios": 5
+    },
+    {
+      "id": "serie-historica-ventas",
+      "nombre": "Serie histórica de ventas",
+      "descripcion": "Evolución de la facturación o ventas totales de los últimos años.",
+      "formato": "tabla_historica",
+      "variables": [
+        "ventas"
+      ],
+      "num_anios": 5
+    },
+    {
+      "id": "serie-historica-beneficios",
+      "nombre": "Serie histórica de beneficios",
+      "descripcion": "Evolución del resultado neto o beneficios de los últimos años.",
+      "formato": "tabla_historica",
+      "variables": [
+        "beneficios"
+      ],
+      "num_anios": 5
+    },
+    {
+      "id": "serie-historica-exportaciones",
+      "nombre": "Serie histórica de exportaciones",
+      "descripcion": "Evolución del volumen o valor de exportaciones de los últimos años.",
+      "formato": "tabla_historica",
+      "variables": [
+        "exportaciones"
+      ],
+      "num_anios": 5
+    },
+    {
+      "id": "sectores-mercados-destino",
+      "nombre": "Sectores o mercados destino de la producción",
+      "descripcion": "Identificación de los sectores o mercados a los que se dirige la producción de la empresa.",
+      "formato": "texto"
+    },
+    {
+      "id": "procesos-productivos-instalaciones",
+      "nombre": "Procesos productivos e instalaciones",
+      "descripcion": "Descripción de los procesos productivos llevados a cabo en las instalaciones de la empresa.",
+      "formato": "texto"
+    },
+    {
+      "id": "fecha-inicio-operaciones-industrial",
+      "nombre": "Fecha de inicio de operaciones en la actividad industrial",
+      "descripcion": "Fecha en que la empresa comenzó operaciones en la actividad industrial relacionada con la inversión.",
+      "formato": "texto"
+    },
+    {
+      "id": "datos-economicos-actuales",
+      "nombre": "Datos económicos actuales de la empresa",
+      "descripcion": "Facturación, beneficios, estructura financiera y situación económica actual de la empresa.",
+      "formato": "texto"
+    },
+    {
+      "id": "medios-humanos-responsables-etapas",
+      "nombre": "Responsables internos de cada etapa",
+      "descripcion": "Identificación de los responsables internos de cada etapa del proceso productivo.",
+      "formato": "texto"
+    },
+    {
+      "id": "catalogo-productos-familias",
+      "nombre": "Catálogo actual de productos o familias de producto",
+      "descripcion": "Relación de productos o familias de producto que la empresa fabrica o transforma actualmente.",
+      "formato": "texto"
+    },
+    {
+      "id": "mercados-operacion-actual",
+      "nombre": "Mercados nacionales e internacionales actuales",
+      "descripcion": "Mercados geográficos nacionales e internacionales en los que opera actualmente la empresa.",
+      "formato": "texto"
+    },
+    {
+      "id": "tipologia-clientes-actuales",
+      "nombre": "Tipología de clientes actuales",
+      "descripcion": "Perfil, sectores, volúmenes y características de los clientes actuales de la empresa.",
+      "formato": "texto"
+    },
+    {
+      "id": "procesos-recursos-energeticos-hidricos",
+      "nombre": "Procesos productivos y recursos energéticos, hídricos y de materias primas",
+      "descripcion": "Descripción del proceso productivo actual con identificación de recursos energéticos, hídricos y de materias primas consumidos.",
+      "formato": "texto"
+    },
+    {
+      "id": "procesos-residuos-emisiones-efluentes",
+      "nombre": "Procesos productivos y generación de residuos, emisiones y efluentes",
+      "descripcion": "Descripción del proceso productivo actual e identificación de puntos donde se generan residuos, emisiones o efluentes.",
+      "formato": "texto"
+    }
+  ],
+  "campos_proyecto": [],
+  "apartados": [
+    {
+      "codigo": "0",
+      "nombre": "Justificación de la vinculación de la PYME industrial con el sector",
+      "puntos_max": null,
+      "contexto_evaluador": "Este apartado no puntúa, pero es excluyente: su insuficiencia provoca la inadmisión inmediata de la solicitud, sin posibilidad de subsanación. El evaluador verifica dos cosas concretas:\n\n1. Que la empresa identifica su CNAE de forma expresa y que ese código está recogido en el anexo I de la convocatoria.\n2. Que la memoria justifica de forma detallada la vinculación directa de la actividad real de la empresa con el sector industrial al que se presenta.\n\nLa ausencia de cualquiera de estos dos elementos, o una justificación que el órgano instructor considere insuficiente, genera la exclusión automática del expediente.",
+      "requiere_calculo_rentabilidad": false,
+      "usa_tabla_inversiones": false,
+      "inputs": [
+        {
+          "id": "cnae-principal",
+          "label": "CNAE principal de la empresa",
+          "tipo": "dato_empresa",
+          "nivel": "minimo",
+          "ref_campo_empresa": "cnae-principal"
+        },
+        {
+          "id": "descripcion-actividad-industrial",
+          "label": "Descripción de la actividad industrial habitual de la empresa",
+          "tipo": "dato_empresa",
+          "nivel": "minimo",
+          "ref_campo_empresa": "descripcion-actividad-principal"
+        },
+        {
+          "id": "sector-general-presentacion",
+          "label": "Sector general bajo el que se presenta la solicitud",
+          "tipo": "dato_empresa",
+          "nivel": "minimo",
+          "ref_campo_empresa": "sector-presentacion"
+        },
+        {
+          "id": "sector-especifico-presentacion",
+          "label": "Sector específico bajo el que se presenta la solicitud",
+          "tipo": "dato_empresa",
+          "nivel": "minimo",
+          "ref_campo_empresa": "sector-presentacion"
+        },
+        {
+          "id": "cnae-en-anexo-i",
+          "label": "Confirmación de que el CNAE figura en el anexo I de la convocatoria",
+          "tipo": "texto_libre",
+          "nivel": "minimo",
+          "ayuda": "Indicar expresamente si el CNAE declarado está incluido o, si hay discrepancia, cuál es el CNAE que sí figura en el listado de sectores elegibles"
+        },
+        {
+          "id": "justificacion-discrepancia-sectores",
+          "label": "Justificación de discrepancia entre sectores (si la hay)",
+          "tipo": "texto_libre",
+          "nivel": "minimo",
+          "ayuda": "Solo si el sector indicado en la memoria no coincide con el de la declaración responsable"
+        }
+      ],
+      "documentos_requeridos": [],
+      "prompt": "Redacta el apartado 0 de la memoria, titulado \"Justificación de la vinculación de la PYME industrial con el sector\". Este apartado no otorga puntuación, pero es un criterio excluyente: una justificación insuficiente o la ausencia del CNAE provoca la inadmisión automática de la solicitud sin trámite de subsanación.\n\nTienes adjunto el Perfil Estratégico de Empresa (Ruta i40) como fuente principal de datos sobre la actividad, el CNAE y el sector de la empresa.\n\nEl texto debe cumplir estos requisitos de forma explícita:\n\n1. Identificar el CNAE de la empresa de forma literal y expresa. Si los datos aportados no incluyen el CNAE o no permiten confirmar que figura en el listado de sectores elegibles, escribe [DATO PENDIENTE: CNAE de la empresa y confirmación de su inclusión en el anexo I de la convocatoria] en el lugar correspondiente.\n\n2. Describir con detalle suficiente la actividad industrial real de la empresa: qué fabrica o transforma, cómo lo hace y dónde se desarrolla esa actividad. La descripción debe ser lo bastante concreta para que el evaluador pueda establecer por sí mismo la conexión entre esa actividad y el sector declarado, sin necesidad de inferencias.\n\n3. Conectar de forma explícita la actividad descrita con el sector general y el sector específico bajo los que se presenta la solicitud. Si hay discrepancia entre el sector que figura en la declaración responsable y el indicado en la memoria, incluir la justificación de esa discrepancia; si no hay discrepancia, no es necesario mencionarla.\n\nExtensión orientativa: entre 150 y 300 palabras. El tono debe ser descriptivo y directo, sin valoraciones genéricas. Cada afirmación sobre la actividad de la empresa debe estar respaldada por los datos del Perfil Estratégico o por los datos aportados; no inventes hechos ni actividades.\n\nSi cualquier dato necesario para redactar este apartado está ausente en las fuentes, señálalo con [DATO PENDIENTE: descripción del dato que falta] en el lugar exacto donde correspondería, sin rellenar ese hueco con suposiciones."
+    },
+    {
+      "codigo": "I.A",
+      "nombre": "Antecedentes y evolución",
+      "puntos_max": 4,
+      "contexto_evaluador": "El baremo asigna hasta 4 puntos distribuidos en los siguientes subcriterios:\n\n- Cómo se creó la empresa: hasta 0,5 puntos.\n- Cuándo se constituyó la empresa: hasta 0,5 puntos.\n- Evolución de la empresa y su propiedad: hasta 0,5 puntos.\n- Estructura accionarial actual y posible pertenencia a grupos empresariales: hasta 0,5 puntos.\n- Datos económicos actuales y su variación en los últimos 5 años (hasta 2 puntos, a razón de 0,5 puntos por cada uno de los cuatro ítems siguientes): empleos, ventas, beneficios y exportaciones.",
+      "requiere_calculo_rentabilidad": false,
+      "usa_tabla_inversiones": false,
+      "inputs": [
+        {
+          "id": "fecha-constitucion-forma-juridica",
+          "label": "Fecha de constitución y forma jurídica",
+          "tipo": "dato_empresa",
+          "nivel": "minimo",
+          "ref_campo_empresa": "constitucion-forma-juridica"
+        },
+        {
+          "id": "historia-empresa-evolucion-propiedad",
+          "label": "Historia de la empresa y evolución de la propiedad",
+          "tipo": "dato_empresa",
+          "nivel": "minimo",
+          "ref_campo_empresa": "historia-empresa-propiedad"
+        },
+        {
+          "id": "estructura-accionarial-grupos",
+          "label": "Estructura accionarial actual y pertenencia a grupos empresariales",
+          "tipo": "dato_empresa",
+          "nivel": "minimo",
+          "ref_campo_empresa": "estructura-accionarial-grupos"
+        },
+        {
+          "id": "serie-historica-empleos-5anios",
+          "label": "Serie histórica de empleos de los últimos 5 años",
+          "tipo": "dato_empresa",
+          "nivel": "minimo",
+          "ref_campo_empresa": "serie-historica-empleos"
+        },
+        {
+          "id": "serie-historica-ventas-5anios",
+          "label": "Serie histórica de ventas de los últimos 5 años",
+          "tipo": "dato_empresa",
+          "nivel": "minimo",
+          "ref_campo_empresa": "serie-historica-ventas"
+        },
+        {
+          "id": "serie-historica-beneficios-5anios",
+          "label": "Serie histórica de beneficios de los últimos 5 años",
+          "tipo": "dato_empresa",
+          "nivel": "minimo",
+          "ref_campo_empresa": "serie-historica-beneficios"
+        },
+        {
+          "id": "serie-historica-exportaciones-5anios",
+          "label": "Serie histórica de exportaciones de los últimos 5 años",
+          "tipo": "dato_empresa",
+          "nivel": "minimo",
+          "ref_campo_empresa": "serie-historica-exportaciones",
+          "ayuda": "Confirmación o corrección explícita si el Perfil Estratégico no lo recoge de forma clara; puede quedar en blanco si no aplica"
+        }
+      ],
+      "documentos_requeridos": [],
+      "prompt": "Redacta el apartado I.A \"Antecedentes y evolución\" de la memoria descriptiva de solicitud de ayuda.\nEste apartado tiene un peso máximo de 4 puntos en el baremo, distribuidos así:\n- Cómo se creó la empresa: hasta 0,5 puntos.\n- Cuándo se constituyó: hasta 0,5 puntos.\n- Evolución de la empresa y su propiedad: hasta 0,5 puntos.\n- Estructura accionarial actual y posible pertenencia a grupos empresariales: hasta 0,5 puntos.\n- Datos económicos con variación en los últimos 5 años, a 0,5 puntos por ítem: empleos, ventas, beneficios y exportaciones (hasta 2 puntos en total).\n\nTienes adjunto el Perfil Estratégico de Empresa (Ruta i40), que es tu fuente principal para todos los datos de empresa: historia, constitución, accionariado, estructura, y la serie histórica de los cuatro indicadores económicos.\n\nRedacta cada subcriterio de forma explícita y diferenciada, de modo que el evaluador pueda identificarlos sin ambigüedad. No agrupes la fecha de constitución con la historia en un único párrafo: el baremo los valora por separado. Para los datos económicos, presenta la serie de los últimos 5 años en formato de tabla o lista estructurada que incluya los cuatro ítems (empleos, ventas, beneficios, exportaciones) y la variación entre el primer y el último año disponible. Si alguno de los cuatro ítems no consta en el Perfil Estratégico de Empresa, escribe [DATO PENDIENTE: serie histórica de (nombre del ítem) de los últimos 5 años] en el lugar que le correspondería en la tabla, sin inventar cifras.\n\nSi cualquier otro dato necesario para cubrir un subcriterio puntuable no está disponible en la fuente, señálalo con [DATO PENDIENTE: descripción] en el lugar exacto donde iría, nunca lo omitas en silencio ni lo rellenes con suposiciones.\n\nExtensión orientativa: entre 350 y 550 palabras, incluyendo la tabla de datos económicos. Tono directo y factual, sin valoraciones genéricas. Cada afirmación debe apoyarse en un dato concreto extraído de la fuente."
+    },
+    {
+      "codigo": "I.B",
+      "nombre": "Actividades actuales de la empresa",
+      "puntos_max": 1,
+      "contexto_evaluador": "El baremo asigna hasta 1 punto a una descripción breve de las actividades económicas y/o industriales que la empresa realiza en la actualidad. Según el Knowledge Pack (pendiente de validación humana), la puntuación máxima es 1 punto. No se especifican subcriterios de desagregación dentro de este punto: la valoración responde a que la descripción sea suficientemente completa y comprensible para un evaluador externo.",
+      "requiere_calculo_rentabilidad": false,
+      "usa_tabla_inversiones": false,
+      "inputs": [
+        {
+          "id": "actividad-industrial-principal-productos",
+          "label": "Actividad industrial principal y productos o servicios que fabrica o transforma la empresa",
+          "tipo": "dato_empresa",
+          "ref_campo_empresa": "descripcion-actividad-principal",
+          "nivel": "minimo"
+        },
+        {
+          "id": "sectores-mercados-destino-produccion",
+          "label": "Sectores o mercados a los que va dirigida la producción",
+          "tipo": "dato_empresa",
+          "ref_campo_empresa": "sectores-mercados-destino",
+          "nivel": "minimo"
+        },
+        {
+          "id": "procesos-productivos-instalaciones",
+          "label": "Procesos productivos que se llevan a cabo en las instalaciones",
+          "tipo": "dato_empresa",
+          "ref_campo_empresa": "procesos-productivos-instalaciones",
+          "nivel": "minimo"
+        }
+      ],
+      "documentos_requeridos": [],
+      "prompt": "Redacta el apartado I.B — Actividades actuales de la empresa de la memoria descriptiva. El baremo asigna hasta 1 punto a este apartado (dato pendiente de validación humana según el Knowledge Pack). El objetivo es que un evaluador externo, sin conocimiento previo de la empresa, entienda con claridad qué hace la empresa, cómo lo hace y qué produce.\n\nEl Perfil Estratégico de Empresa (Ruta i40) está adjunto como fuente principal. A partir de él extrae la actividad industrial habitual, los productos o familias de productos que fabrica o transforma, los procesos productivos que se desarrollan en planta y los mercados o sectores a los que se dirige la producción.\n\nTen en cuenta que el CNAE, el sector general y el sector específico de la convocatoria ya han sido descritos en el apartado 0 de esta misma memoria. No los repitas literalmente: usa este apartado para dar contenido industrial concreto a esa clasificación, es decir, para explicar qué se fabrica, con qué procesos y para quién.\n\nRedacta en prosa continua, sin listas ni tablas. La extensión orientativa es de 150 a 250 palabras. Usa un tono técnico y descriptivo, evitando afirmaciones genéricas sin respaldo en los datos del Perfil. Si algún dato necesario no aparece en el Perfil, indícalo con el marcador [DATO PENDIENTE: descripción del dato que falta] en el lugar exacto del texto donde correspondería, sin inventarlo ni sustituirlo por una aproximación."
+    },
+    {
+      "codigo": "I.C",
+      "nombre": "Experiencia en la actividad proyectada",
+      "puntos_max": 3,
+      "contexto_evaluador": "El Knowledge Pack no contiene entidades normativas validadas para este apartado. Sin embargo, DELIVERABLE_CONTEXT describe con precisión suficiente el mecanismo de puntuación, que se reproduce aquí a efectos de estructura del prompt, con la salvedad de que no ha sido validado como entidad normativa por ConvoKit:\n\n[DATO PENDIENTE: validación normativa del baremo de experiencia en el Knowledge Pack] Según la plantilla de memoria, la puntuación se asigna en función de los años de experiencia acreditados en la actividad industrial relacionada con la inversión: 0 puntos si la experiencia es inferior a 5 años; 1 punto si está entre 5 y 7 años; 2 puntos si está entre 7 y 10 años; 3 puntos si supera los 10 años. La acreditación se realiza mediante la fecha de inicio de operaciones que conste en la nota informativa del Registro Mercantil o equivalente, salvo que la empresa indique una fecha inferior. En casos de fusión, absorción, escisión o adquisición, mediante escritura notarial u otro documento externo acreditativo del traspaso de la actividad industrial.",
+      "requiere_calculo_rentabilidad": false,
+      "usa_tabla_inversiones": false,
+      "inputs": [
+        {
+          "id": "fecha-inicio-operaciones-actividad-industrial",
+          "label": "Fecha de inicio de operaciones en la actividad industrial relacionada con la inversión",
+          "tipo": "dato_empresa",
+          "ref_campo_empresa": "fecha-inicio-operaciones-industrial",
+          "nivel": "minimo"
+        },
+        {
+          "id": "nota-registro-mercantil",
+          "label": "Nota informativa del Registro Mercantil o documento equivalente",
+          "tipo": "documento",
+          "nivel": "minimo"
+        },
+        {
+          "id": "justificacion-fecha-anterior-registro",
+          "label": "Justificación documental de fecha de inicio anterior a la del Registro Mercantil (si procede)",
+          "tipo": "documento",
+          "nivel": "minimo",
+          "ayuda": "Requerido solo si la empresa indica una fecha anterior a la que figura en el Registro Mercantil"
+        },
+        {
+          "id": "escritura-traspaso-actividad-industrial",
+          "label": "Escritura notarial u otro documento acreditativo del traspaso de actividades industriales (si procede)",
+          "tipo": "documento",
+          "nivel": "minimo",
+          "ayuda": "Requerido en casos de fusión, absorción, escisión o adquisición"
+        }
+      ],
+      "documentos_requeridos": [
+        {
+          "nombre": "Nota informativa del Registro Mercantil o documento equivalente",
+          "fuente": "cliente"
+        },
+        {
+          "nombre": "Justificación documental de fecha de inicio anterior a la del Registro Mercantil (si procede)",
+          "fuente": "cliente"
+        },
+        {
+          "nombre": "Escritura notarial u otro documento acreditativo del traspaso de actividades industriales (si procede)",
+          "fuente": "cliente"
+        }
+      ],
+      "prompt": "Redacta el apartado I.C de la memoria descriptiva: \"Experiencia en la actividad proyectada\".\n\nEl baremo asigna hasta 3 puntos a este apartado, escalonados según los años de experiencia acreditados en la actividad industrial relacionada con la inversión: 0 puntos si la experiencia es inferior a 5 años; 1 punto si está entre 5 y 7 años; 2 puntos si está entre 7 y 10 años; 3 puntos si supera los 10 años. Nota: este baremo procede de la plantilla de memoria y está pendiente de validación normativa en el Knowledge Pack; úsalo como referencia de estructura pero señala con [DATO PENDIENTE: confirmar baremo normativo de I.C] si consideras que algún extremo necesita contraste con la convocatoria oficial.\n\nLa acreditación de la experiencia se basa en la fecha de inicio de operaciones que conste en la nota informativa del Registro Mercantil o documento equivalente, salvo que la empresa indique una fecha anterior debidamente justificada. Si ha habido fusiones, absorciones, escisiones o adquisiciones, la experiencia puede computarse desde la fecha del traspaso de la actividad industrial acreditada mediante escritura notarial u otro documento externo.\n\nTienes adjunto el Perfil Estratégico de Empresa (Ruta i40) como fuente principal. De él extrae la fecha de constitución, la fecha de inicio de operaciones en la actividad industrial (si consta y difiere de la constitución), y cualquier operación societaria relevante.\n\nTienes también como fuente los documentos acreditativos aportados específicamente para este apartado: nota informativa del Registro Mercantil o equivalente, y, si procede, escritura o documento de traspaso de actividad industrial.\n\nCon esa información, redacta un texto de entre 150 y 300 palabras que:\n- Indique con claridad la fecha desde la que la empresa desarrolla la actividad industrial relacionada con la inversión y cómo se ha calculado el número de años de experiencia.\n- Explique el fundamento documental de esa fecha (Registro Mercantil, escritura notarial, otro documento), citando el documento por su nombre y fecha.\n- Si hay operaciones societarias (fusión, absorción, escisión, adquisición), describa brevemente cómo se produjo el traspaso de la actividad industrial y desde qué momento se computa la experiencia, siempre respaldado por el documento acreditativo correspondiente.\n- Concluya con una frase que cifre el total de años de experiencia acreditados y el tramo de puntuación al que corresponde, de acuerdo con el baremo descrito.\n\nSi falta algún dato necesario para completar el texto (fecha de inicio de operaciones, documento acreditativo, detalles de una operación societaria), indícalo con [DATO PENDIENTE: descripción] en el lugar del texto donde correspondería, sin inventar la información ni estimarla."
+    },
+    {
+      "codigo": "II.A",
+      "nombre": "Estrategia empresarial y motivos de la inversión",
+      "puntos_max": 6,
+      "contexto_evaluador": "El baremo asigna un máximo de 6 puntos, divididos en dos subcriterios de igual peso:\n\n- Descripción detallada de los motivos estratégicos que han llevado a la decisión concreta de realizar la inversión solicitada (hasta 3 puntos).\n- Descripción detallada de los motivos estratégicos que han llevado a seleccionar los activos concretos incluidos en la solicitud (hasta 3 puntos).\n\nLa palabra \"detalladamente\" aparece en ambos subcriterios: la clave está en la concreción y en la trazabilidad del razonamiento, no en la extensión.",
+      "requiere_calculo_rentabilidad": false,
+      "usa_tabla_inversiones": false,
+      "inputs": [
+        {
+          "id": "problema-limitacion-operativa",
+          "label": "Descripción del problema, limitación operativa o palanca de crecimiento concreto que origina la decisión de invertir",
+          "tipo": "texto_libre",
+          "nivel": "minimo",
+          "ayuda": "Por qué ahora y no antes ni después. Sé específico: falta de capacidad, rechazo de pedidos, incumplimiento de tiempos, etc."
+        },
+        {
+          "id": "relacion-activos-funcion-prevista",
+          "label": "Relación de activos a adquirir con descripción resumida de su función prevista",
+          "tipo": "texto_libre",
+          "nivel": "minimo",
+          "ayuda": "No se trata de una ficha técnica completa (eso es II.C), sino de qué harán los activos en el proceso"
+        },
+        {
+          "id": "justificacion-seleccion-activos",
+          "label": "Justificación de por qué se han seleccionado esos activos concretos frente a alternativas posibles",
+          "tipo": "texto_libre",
+          "nivel": "minimo",
+          "ayuda": "Criterios técnicos, de capacidad, de proveedor, de coste, de compatibilidad, o combinación de varios"
+        },
+        {
+          "id": "encargo-contrato-normativa-presion-competitiva",
+          "label": "Descripción del encargo, contrato firmado, cliente nuevo, normativa exigida o presión competitiva identificable (si aplica)",
+          "tipo": "texto_libre",
+          "nivel": "minimo",
+          "ayuda": "Si la inversión responde a un factor externo concreto (no aplica si no hay), descríbelo con la máxima concreción"
+        },
+        {
+          "id": "datos-cuantitativos-respaldan-decision",
+          "label": "Datos cuantitativos que respaldan la decisión estratégica",
+          "tipo": "texto_libre",
+          "nivel": "completo",
+          "ayuda": "Capacidad actual vs. requerida, porcentaje de rechazo, ciclos de tiempo, pedidos perdidos, cuota de mercado target, u otros indicadores verificables"
+        },
+        {
+          "id": "contexto-sectorial-mercado-oportunidad",
+          "label": "Contexto sectorial o de mercado que refuerza la oportunidad",
+          "tipo": "texto_libre",
+          "nivel": "completo",
+          "ayuda": "Tendencias de demanda, requisitos de clientes clave, movimientos competitivos, si la empresa los conoce y puede citarlos"
+        }
+      ],
+      "documentos_requeridos": [],
+      "prompt": "Redacta el apartado II.A de la memoria de ayudas públicas a la inversión industrial: \"Estrategia empresarial y motivos de la inversión\". El baremo asigna hasta 6 puntos, distribuidos en dos subcriterios de 3 puntos cada uno:\n  1. Motivos estratégicos que han llevado a la decisión concreta de realizar esta inversión.\n  2. Motivos estratégicos que han llevado a seleccionar los activos concretos incluidos en la solicitud.\n\nTienes adjunto el Perfil Estratégico de Empresa (Ruta i40) como fuente principal sobre la empresa: actividad, productos, mercados, historia, datos económicos y estructura. Úsalo para contextualizar el argumento estratégico, pero no lo reproduzcas: extrae de él solo lo que sea directamente relevante para explicar por qué esta empresa, en este momento, ha tomado esta decisión de inversión.\n\nPara el primer subcriterio (3 puntos), desarrolla un argumento que explique con precisión qué situación, limitación, oportunidad o palanca de negocio concreto ha generado la necesidad de invertir ahora. El argumento debe ser específico de esta empresa: evita afirmaciones genéricas del tipo \"mejorar la competitividad\" o \"adaptarse a los cambios del mercado\" sin sustentarlas en un hecho concreto. Si dispones de datos cuantitativos (capacidad actual frente a la requerida, pedidos perdidos, tiempos de ciclo, tasas de rechazo, contratos o clientes concretos que exigen la inversión, etc.), incorpóralos directamente en el texto. Si hay una presión regulatoria, un encargo firmado o un movimiento competitivo identificable, nómbralos.\n\nPara el segundo subcriterio (3 puntos), explica con la misma concreción por qué se han elegido los activos específicos que se solicitan y no otras alternativas. Los criterios que fundamenten la selección pueden ser técnicos, de capacidad, de compatibilidad con la instalación existente, de proveedor, de coste de ciclo de vida, de plazo de entrega o cualquier combinación de ellos. El texto debe dejar claro que la elección de esos activos concretos no es aleatoria, sino la consecuencia lógica de los requerimientos identificados en el primer subcriterio.\n\nEstructura el apartado en dos bloques claramente diferenciados, uno por subcriterio, con encabezado propio. La extensión orientativa es de 250 a 400 palabras en total, repartidas de forma equilibrada entre los dos bloques. El tono es técnico-empresarial, directo, sin valoraciones vacías y con datos concretos allí donde los haya.\n\nSeñala con [DATO PENDIENTE: descripción] cualquier información que necesitarías para completar el argumento y no encuentres ni en el Perfil Estratégico ni en los datos específicos del proyecto aportados, incluyendo cualquier pieza normativa o de baremo que no esté disponible en las instrucciones recibidas. No inventes cifras ni completes huecos con suposiciones."
+    },
+    {
+      "codigo": "II.B",
+      "nombre": "Viabilidad económica de la inversión",
+      "puntos_max": 4,
+      "contexto_evaluador": "El baremo asigna un máximo de 4 puntos distribuidos en tres subcriterios:\n\n- Ratio de rentabilidad y método para su obtención: hasta 2 puntos. Se exige aportar al menos una ratio de rentabilidad y explicar con claridad el método empleado para calcularla.\n- Fuentes de financiación: hasta 1 punto. (Pendiente de validación humana en el Knowledge Pack.)\n- Periodo de recuperación de la inversión (pay-back) y método para su obtención: [DATO PENDIENTE: el Knowledge Pack no incluye descripción del subcriterio de pay-back ni confirma su peso de 1 punto; solo consta el subcriterio de fuentes de financiación con esa puntuación, pendiente de validación humana.]",
+      "requiere_calculo_rentabilidad": true,
+      "usa_tabla_inversiones": true,
+      "inputs": [
+        {
+          "id": "datos-economicos-actuales-empresa",
+          "label": "Datos económicos actuales de la empresa (facturación, beneficios, estructura financiera general)",
+          "tipo": "dato_empresa",
+          "ref_campo_empresa": "datos-economicos-actuales",
+          "nivel": "minimo"
+        },
+        {
+          "id": "rentabilidad",
+          "label": "Cálculo de rentabilidad (VAN, TIR, payback)",
+          "tipo": "rentabilidad",
+          "nivel": "completo"
+        },
+        {
+          "id": "inversion",
+          "label": "Desglose de la inversión por partidas",
+          "tipo": "inversion",
+          "nivel": "minimo"
+        },
+        {
+          "id": "fuentes-financiacion-proyecto",
+          "label": "Fuentes de financiación previstas (recursos propios, financiación ajena, subvención solicitada)",
+          "tipo": "texto_libre",
+          "nivel": "minimo"
+        },
+        {
+          "id": "oferta-carta-condiciones-bancarias",
+          "label": "Oferta o carta de condiciones bancarias, póliza de crédito o documento equivalente",
+          "tipo": "documento",
+          "nivel": "completo"
+        },
+        {
+          "id": "hipotesis-ingresos-ahorros-rentabilidad",
+          "label": "Hipótesis de ingresos adicionales o ahorros de coste que sustentan las ratios de rentabilidad",
+          "tipo": "texto_libre",
+          "nivel": "completo"
+        }
+      ],
+      "documentos_requeridos": [
+        {
+          "nombre": "Oferta o carta de condiciones bancarias, póliza de crédito o documento equivalente",
+          "fuente": "cliente"
+        }
+      ],
+      "prompt": "Redacta el apartado II.B — Viabilidad económica de la inversión de la memoria descriptiva.\nEl baremo asigna un máximo de 4 puntos a este apartado, repartidos entre tres subcriterios:\n(1) ratio de rentabilidad y método para su obtención (hasta 2 puntos), (2) fuentes de\nfinanciación (hasta 1 punto, pendiente de validación humana según el Knowledge Pack) y\n(3) periodo de recuperación de la inversión mediante pay-back y método para su obtención\n(hasta 1 punto, aunque el Knowledge Pack no confirma este peso de forma explícita; márcalo\ncon [DATO PENDIENTE] si fuera relevante señalarlo en el texto).\n\nTienes adjunto el Perfil Estratégico de Empresa (Ruta i40) como fuente principal de datos\ngenerales de la empresa. Úsalo para contextualizar la solidez financiera de la empresa y\nsu capacidad para asumir la inversión, pero no repitas información que ya conste en\napartados anteriores de la memoria.\n\nLos cálculos de rentabilidad (ratio o ratios calculadas) y el pay-back los aporta la\naplicación como datos ya calculados. Incorpóralos exactamente tal como se te suministran\nen el bloque de datos: no los recalcules ni modifiques. Lo que sí debes hacer es explicar\ncon claridad el método empleado para obtener cada uno, las hipótesis de partida\n(incremento de ingresos previsto, ahorros de coste, horizonte temporal considerado) y\npor qué esas hipótesis son razonables a la vista de la actividad y los datos de la empresa.\nEl desglose de partidas de inversión proviene de la tabla de inversiones del expediente:\núsalo como dato dado para referirte al importe total cuando sea necesario, sin\nreproducirlo en el texto.\n\nPara el subcriterio de fuentes de financiación, describe de forma precisa cómo se cubre\nel coste total del proyecto: qué parte con recursos propios, qué parte con financiación\najena (indicando instrumento y entidad si se dispone del dato) y qué parte corresponde a\nla subvención solicitada. Si se aporta documentación bancaria que acredite la\ndisponibilidad de los fondos, menciónala expresamente porque refuerza la credibilidad del\napartado.\n\nEstructura el texto en tres bloques claramente diferenciados, uno por subcriterio. Extensión\norientativa: entre 300 y 450 palabras en total. El tono debe ser técnico y concreto: cada\nafirmación sobre rentabilidad o recuperación de la inversión debe quedar respaldada por\nun número o por la referencia explícita a la hipótesis que lo genera. Evita afirmaciones\ngenéricas del tipo \"la inversión es rentable\" sin el dato que las sustente.\n\nDonde falte cualquier dato necesario para completar el texto, escribe\n[DATO PENDIENTE: descripción del dato que falta] en el lugar exacto donde correspondería,\nsin inventar cifras ni suponer valores. Esto incluye cualquier elemento normativo que\nel apartado pudiera requerir y que no esté cubierto por los datos suministrados."
+    },
+    {
+      "codigo": "II.C",
+      "nombre": "Descripción técnica del proyecto",
+      "puntos_max": 40,
+      "contexto_evaluador": "El baremo asigna 40 puntos en total, distribuidos en cuatro subapartados:\n\n- Descripción técnica pormenorizada e individualizada de cada activo, coste e ingeniería del proyecto: hasta 25 puntos.\n- Documentación técnica de los activos (fichas técnicas u otro material de fabricante): de 2,5 a 5 puntos. Se obtienen 2,5 puntos con un único documento; 5 puntos si se aportan varios.\n- Presupuestos, facturas o documentos de encargo: 2,5 puntos con uno; 5 puntos con varios. Este tramo es acumulable con el de documentos técnicos, formando en conjunto la horquilla de 5 a 10 puntos del subcriterio de documentación. [DATO PENDIENTE: confirmar si los 25 puntos de descripción y los tramos de documentación suman 40 en total o si existe algún punto adicional no recogido en el Knowledge Pack para este apartado.]\n- Descripción de la ubicación y conexión de cada activo en el proceso productivo mediante gráfico, diagrama de bloques o de flujo de trabajo: hasta 3 puntos.\n- Plano comprensible de la distribución de los activos o equipamientos subvencionables: hasta 2 puntos.\n\nLa memoria es el único referente para la evaluación. La ausencia, cumplimentación deficiente o difícil comprensión genera minusvaloración directa sin posibilidad de subsanación posterior.",
+      "requiere_calculo_rentabilidad": false,
+      "usa_tabla_inversiones": true,
+      "inputs": [
+        {
+          "id": "descripcion-tecnica-detallada-activos-materiales",
+          "label": "Descripción técnica detallada de cada activo material: función, características técnicas principales, fabricante y modelo",
+          "tipo": "texto_libre",
+          "nivel": "minimo",
+          "ayuda": "Incluye parámetros como potencia, capacidad, velocidad, dimensiones, materiales, protocolo de comunicación u otros relevantes según la naturaleza del activo"
+        },
+        {
+          "id": "descripcion-activos-inmateriales",
+          "label": "Descripción técnica de activos inmateriales: módulos, funcionalidades, tecnología base, integración con sistemas existentes",
+          "tipo": "texto_libre",
+          "nivel": "minimo"
+        },
+        {
+          "id": "descripcion-ingenieria-industrial",
+          "label": "Descripción de costes de ingeniería industrial: trabajo técnico contratado y vinculación a activos",
+          "tipo": "texto_libre",
+          "nivel": "minimo"
+        },
+        {
+          "id": "fichas-tecnicas-fabricante",
+          "label": "Fichas técnicas, catálogos o especificaciones del fabricante de cada activo",
+          "tipo": "documento",
+          "nivel": "minimo",
+          "ayuda": "Al menos una por activo para 2,5 puntos; varias para alcanzar 5 puntos"
+        },
+        {
+          "id": "presupuestos-facturas-encargo",
+          "label": "Proformas, presupuestos, documentos de encargo o facturas pro forma de los proveedores",
+          "tipo": "documento",
+          "nivel": "minimo",
+          "ayuda": "Al menos uno para 2,5 puntos; varios para 5 puntos"
+        },
+        {
+          "id": "diagrama-bloques-proceso",
+          "label": "Diagrama de bloques, diagrama de flujo de trabajo o gráfico equivalente de la ubicación e integración de activos en el proceso productivo",
+          "tipo": "documento",
+          "nivel": "minimo"
+        },
+        {
+          "id": "plano-distribucion-planta",
+          "label": "Plano de distribución en planta de los activos subvencionables en las instalaciones",
+          "tipo": "documento",
+          "nivel": "minimo"
+        },
+        {
+          "id": "especificaciones-tecnicas-adicionales",
+          "label": "Especificaciones técnicas adicionales de segunda o tercera fuente: estudios de ingeniería, informes de ensayo, certificados de producto",
+          "tipo": "documento",
+          "nivel": "completo",
+          "ayuda": "Complementan las fichas del fabricante y refuerzan la valoración técnica"
+        },
+        {
+          "id": "planos-renders-detallados",
+          "label": "Planos o renders en mayor detalle que el mínimo exigido para la integración física de los activos",
+          "tipo": "documento",
+          "nivel": "completo"
+        },
+        {
+          "id": "inversion",
+          "label": "Desglose de la inversión por partidas",
+          "tipo": "inversion",
+          "nivel": "minimo"
+        }
+      ],
+      "documentos_requeridos": [
+        {
+          "nombre": "Fichas técnicas, catálogos o especificaciones del fabricante de cada activo",
+          "fuente": "cliente"
+        },
+        {
+          "nombre": "Proformas, presupuestos, documentos de encargo o facturas pro forma de los proveedores",
+          "fuente": "cliente"
+        },
+        {
+          "nombre": "Diagrama de bloques, diagrama de flujo de trabajo o gráfico equivalente de la ubicación e integración de activos en el proceso productivo",
+          "fuente": "cliente"
+        },
+        {
+          "nombre": "Plano de distribución en planta de los activos subvencionables en las instalaciones",
+          "fuente": "cliente"
+        },
+        {
+          "nombre": "Especificaciones técnicas adicionales de segunda o tercera fuente: estudios de ingeniería, informes de ensayo, certificados de producto",
+          "fuente": "cliente"
+        },
+        {
+          "nombre": "Planos o renders en mayor detalle que el mínimo exigido para la integración física de los activos",
+          "fuente": "cliente"
+        }
+      ],
+      "prompt": "Redacta el apartado II.C — Descripción técnica del proyecto de la memoria descriptiva. Este apartado tiene un peso de 40 puntos en el baremo total, distribuidos así:\n\n- Hasta 25 puntos por la descripción técnica pormenorizada e individualizada de cada activo, coste e ingeniería.\n- Entre 2,5 y 5 puntos por documentación técnica de los activos (fichas, catálogos o especificaciones de fabricante): 2,5 puntos con un documento; 5 puntos con varios.\n- Entre 2,5 y 5 puntos por presupuestos, facturas o documentos de encargo aportados: 2,5 puntos con uno; 5 puntos con varios.\n- Hasta 3 puntos por un gráfico o diagrama de bloques o de flujo de trabajo que muestre la ubicación y conexión de cada activo en el proceso productivo.\n- Hasta 2 puntos por un plano comprensible de la distribución en planta de los activos subvencionables.\n\nEl Perfil Estratégico de Empresa (Ruta i40) está adjunto como fuente principal. Úsalo para contextualizar la actividad industrial, los procesos productivos en curso y los productos que fabrica la empresa, sin repetir información que ya se ha desarrollado en apartados anteriores de la memoria.\n\nEl desglose completo de la inversión por partidas (activos materiales, activos inmateriales, ingeniería y auditoría) ya está recogido en la tabla de costes estimados del expediente. No lo recalcules ni lo inventes: incorpóralo como dato dado en el texto, referenciando cada partida tal como aparece en dicha tabla.\n\nRedacta el apartado siguiendo esta estructura interna:\n\n1. Introducción breve (dos o tres párrafos) que enmarque el conjunto del proyecto técnico: qué se va a adquirir o implantar, en qué instalaciones y con qué finalidad técnica dentro del proceso productivo.\n\n2. Descripción individualizada de cada activo material. Para cada uno: denominación exacta, fabricante y modelo si están definidos, características técnicas relevantes (parámetros de operación, capacidad, precisión, conectividad u otros según el tipo de activo), función específica dentro del proceso productivo y, si procede, mejora cuantificable sobre la situación actual. Usa el mismo orden que la tabla de costes.\n\n3. Descripción individualizada de cada activo inmaterial, con el mismo nivel de detalle: módulos o funcionalidades, tecnología base, integración con sistemas existentes y función concreta en el proceso.\n\n4. Descripción de los costes de ingeniería industrial si los hay: trabajo técnico contratado, a qué activo se vincula y por qué es necesario para ejecutar el proyecto.\n\n5. Referencia expresa a los documentos técnicos y presupuestos que se adjuntan. Menciona cuántos y de qué tipo son, para que el evaluador pueda localizar fácilmente los documentos que soportan la puntuación de este subcriterio.\n\n6. Descripción de la ubicación y conexión de los activos en el proceso productivo. Hazlo en texto, de forma coherente con el diagrama o gráfico que se adjunta. Explica la secuencia lógica del proceso: dónde entra la materia prima o el input, cómo interviene cada activo adquirido, y cuál es el output final. Si el diagrama está adjunto, indícalo con claridad y descríbelo en texto con suficiente detalle para que sea autónomamente comprensible.\n\n7. Referencia al plano de distribución en planta. Describe brevemente qué muestra (zonificación, posición de cada activo, relaciones físicas entre ellos) aunque el plano esté adjunto.\n\nCriterios de redacción para maximizar la puntuación:\n- La descripción de cada activo debe ser suficiente para que un evaluador técnico ajeno a la empresa entienda qué es el equipo, qué hace exactamente en este proceso concreto y por qué tiene sentido incluirlo. Los 25 puntos de este subcriterio premian la especificidad y la trazabilidad entre el texto de la memoria y las partidas de la tabla de costes.\n- Evita descripciones genéricas del tipo \"maquinaria de última generación que mejora la productividad\". Sustituye cada afirmación de ese tipo por el parámetro técnico concreto que la sustenta.\n- Las mejoras sobre activos preexistentes (si las hay) requieren justificación cualitativa y cuantitativa del avance sustancial; la insuficiencia en este punto puede llevar a la exclusión directa de ese gasto.\n- Para los activos de segunda mano, si los hay, asegúrate de indicarlo explícitamente.\n\nExtensión orientativa: entre 1.200 y 2.500 palabras en función del número de activos. Cada activo merece al menos un párrafo propio con datos técnicos concretos.\n\nDonde falte información necesaria para completar la descripción de un activo o de cualquier otro elemento, escribe [DATO PENDIENTE: descripción del dato que falta] en el lugar exacto del texto donde debería aparecer. No inventes fabricantes, modelos, parámetros técnicos ni precios. Si el Knowledge Pack no cubre algún aspecto del baremo que este apartado necesitaría, indícalo igualmente con el marcador [DATO PENDIENTE: descripción]."
+    },
+    {
+      "codigo": "II.D",
+      "nombre": "Adecuación de los recursos",
+      "puntos_max": 3,
+      "contexto_evaluador": "El baremo asigna hasta 3 puntos distribuidos en dos subcriterios de igual peso (según el Knowledge Pack, pendiente de validación humana):\n\n- Capacidades y experiencia de los proveedores seleccionados para el proyecto: hasta 1,5 puntos.\n- Medios técnicos y humanos que la empresa va a utilizar para ejecutar el proyecto: hasta 1,5 puntos.\n\nEl evaluador busca que ambos subcriterios se desarrollen con concreción: nombres, trayectorias, certificaciones, capacidad instalada real o estructura interna del equipo, no afirmaciones genéricas sobre la idoneidad de los proveedores o del personal.",
+      "requiere_calculo_rentabilidad": false,
+      "usa_tabla_inversiones": false,
+      "inputs": [
+        {
+          "id": "proveedores-principales-nombre-servicio",
+          "label": "Nombre comercial y razón social de cada proveedor principal, con indicación del tipo de activo o servicio que suministra",
+          "tipo": "texto_libre",
+          "nivel": "minimo"
+        },
+        {
+          "id": "experiencia-trayectoria-proveedores",
+          "label": "Información sobre la experiencia o trayectoria de cada proveedor: años en el sector, proyectos de referencia, sectores de actuación habitual",
+          "tipo": "texto_libre",
+          "nivel": "minimo"
+        },
+        {
+          "id": "certificaciones-proveedores",
+          "label": "Certificaciones, homologaciones o acreditaciones relevantes de los proveedores",
+          "tipo": "texto_libre",
+          "nivel": "minimo"
+        },
+        {
+          "id": "medios-tecnicos-propios-empresa",
+          "label": "Descripción de los medios técnicos propios que la empresa va a movilizar: instalaciones, equipos auxiliares existentes, infraestructura de recepción o puesta en marcha",
+          "tipo": "texto_libre",
+          "nivel": "minimo"
+        },
+        {
+          "id": "medios-humanos-internos-descripcion",
+          "label": "Descripción de los medios humanos internos que van a participar en la ejecución: perfiles, funciones, experiencia técnica relevante, y personal externo de supervisión si aplica",
+          "tipo": "texto_libre",
+          "nivel": "minimo"
+        },
+        {
+          "id": "documentacion-respaldo-proveedores",
+          "label": "Documentación de respaldo de la experiencia de los proveedores: fichas de empresa, portafolio de proyectos, referencias de clientes o listado de instalaciones análogas",
+          "tipo": "documento",
+          "nivel": "completo"
+        },
+        {
+          "id": "certificados-acreditaciones-equipo-interno",
+          "label": "Certificados o acreditaciones de los medios humanos internos: titulaciones técnicas, formación específica, experiencia acreditada en proyectos anteriores similares",
+          "tipo": "documento",
+          "nivel": "completo"
+        }
+      ],
+      "documentos_requeridos": [
+        {
+          "nombre": "Documentación de respaldo de la experiencia de los proveedores: fichas de empresa, portafolio de proyectos, referencias de clientes o listado de instalaciones análogas",
+          "fuente": "cliente"
+        },
+        {
+          "nombre": "Certificados o acreditaciones de los medios humanos internos: titulaciones técnicas, formación específica, experiencia acreditada en proyectos anteriores similares",
+          "fuente": "cliente"
+        }
+      ],
+      "prompt": "Redacta el apartado II.D \"Adecuación de los recursos\" de la memoria descriptiva de la solicitud de ayuda. El baremo asigna hasta 3 puntos a este apartado, distribuidos en dos subcriterios de igual peso: hasta 1,5 puntos por la especificación de las capacidades y experiencia de los proveedores, y hasta 1,5 puntos por la especificación de los medios técnicos y humanos que se van a utilizar para llevar a cabo el proyecto.\n\nTienes adjunto el Perfil Estratégico de Empresa (Ruta i40), que es tu fuente principal para los datos generales de la empresa.\n\nPara redactar este apartado dispondrás también de los datos específicos del proyecto que se detallan más abajo. Úsalos directamente: no los recalcules ni los sustituyas por suposiciones.\n\nEstructura el texto en dos bloques claramente diferenciados:\n\n1. Capacidades y experiencia de los proveedores (máx. 1,5 puntos)\n\nPara cada proveedor, indica su nombre, el activo o servicio que suministra, y los elementos concretos que acreditan su capacidad: años de actividad en el sector, tipología de proyectos similares ya ejecutados, sectores a los que sirve, y certificaciones o acreditaciones relevantes (ISO, CE, homologaciones de fabricante, etc.). No uses afirmaciones genéricas del tipo \"proveedor de reconocido prestigio\": cada valoración debe respaldarse con un hecho concreto. Si la información disponible sobre algún proveedor es parcial, desarrolla con lo que tengas y señala la laguna con [DATO PENDIENTE: descripción].\n\n2. Medios técnicos y humanos para la ejecución del proyecto (máx. 1,5 puntos)\n\nDescribe los medios técnicos propios que la empresa movilizará: instalaciones, equipos auxiliares existentes, infraestructura de recepción o puesta en marcha de los activos. A continuación, describe los medios humanos: perfiles del personal interno que participará en la ejecución, sus funciones concretas en el proyecto y cualquier dato que acredite su competencia técnica para ello (experiencia en proyectos anteriores, formación específica, titulaciones relevantes). Si hay personal externo de supervisión o coordinación técnica, identifícalo. Evita listas de perfiles sin contenido; cada perfil debe ir acompañado de su función real en este proyecto.\n\nExtensión orientativa: entre 300 y 500 palabras en total para los dos bloques. Sé directo y concreto; el evaluador valora el dato verificable, no la descripción elogiosa.\n\nSi cualquier información necesaria para alguno de los dos subcriterios no está disponible en los datos aportados, señálalo en el lugar correspondiente del texto con el marcador [DATO PENDIENTE: descripción de lo que falta], sin inventar ni rellenar con datos genéricos."
+    },
+    {
+      "codigo": "II.E",
+      "nombre": "Plan de trabajo",
+      "puntos_max": 2,
+      "contexto_evaluador": "Según el Knowledge Pack (pendiente de validación humana), este apartado vale un máximo de 2 puntos. El criterio es la identificación de las etapas del plan de trabajo con el detalle suficiente y con fechas concretas de inicio y finalización para cada una de ellas, dentro del periodo de ejecución admisible del proyecto.",
+      "requiere_calculo_rentabilidad": false,
+      "usa_tabla_inversiones": false,
+      "inputs": [
+        {
+          "id": "etapas-plan-trabajo",
+          "label": "Relación de etapas previstas en la ejecución del proyecto",
+          "tipo": "texto_libre",
+          "nivel": "minimo",
+          "ayuda": "Por ejemplo: selección de proveedores, fabricación, entrega, instalación, puesta en marcha, formación, legalización."
+        },
+        {
+          "id": "fecha-inicio-primera-etapa",
+          "label": "Fecha de inicio prevista para la primera etapa",
+          "tipo": "texto_libre",
+          "nivel": "minimo",
+          "ayuda": "Debe estar dentro del plazo de ejecución admisible del proyecto."
+        },
+        {
+          "id": "fecha-fin-ultima-etapa",
+          "label": "Fecha de finalización prevista para la última etapa",
+          "tipo": "texto_libre",
+          "nivel": "minimo",
+          "ayuda": "Debe estar dentro del plazo de ejecución admisible del proyecto."
+        },
+        {
+          "id": "fechas-duracion-etapas-individuales",
+          "label": "Fechas de inicio y fin para cada etapa individual, o estimación de duración",
+          "tipo": "texto_libre",
+          "nivel": "minimo",
+          "ayuda": "En semanas, meses o fechas concretas que permitan situar cada etapa en el calendario."
+        },
+        {
+          "id": "dependencias-hitos-etapas",
+          "label": "Dependencias o hitos entre etapas",
+          "tipo": "texto_libre",
+          "nivel": "completo",
+          "ayuda": "Por ejemplo: la instalación no puede comenzar hasta que el proveedor entregue el activo. Aporta coherencia y credibilidad al cronograma."
+        },
+        {
+          "id": "medios-humanos-internos-descripcion",
+          "label": "Responsables internos de cada etapa",
+          "tipo": "dato_empresa",
+          "nivel": "completo",
+          "ref_campo_empresa": "medios-humanos-responsables-etapas",
+          "ayuda": "Si existen perfiles diferenciados que ya se hayan descrito en el apartado II.D."
+        }
+      ],
+      "documentos_requeridos": [],
+      "prompt": "Redacta el apartado II.E — Plan de trabajo de la memoria descriptiva de la solicitud de ayuda.\n\nEl baremo asigna un máximo de 2 puntos a este apartado (dato pendiente de validación humana). La puntuación se obtiene identificando de forma clara las etapas del plan de trabajo con indicación del detalle y las fechas concretas de inicio y finalización de cada una, dentro del plazo de ejecución admisible del proyecto.\n\nTienes adjunto el Perfil Estratégico de Empresa (Ruta i40), que es tu fuente principal sobre la actividad, los procesos productivos y la naturaleza de la inversión prevista. Úsalo para dar contexto a las etapas: un plan de trabajo genérico pierde puntos respecto a uno que refleja la realidad concreta del proyecto.\n\nAdemás, tienes disponibles los siguientes datos específicos de este apartado:\n- Relación de etapas previstas del proyecto con sus nombres y contenido.\n- Fechas de inicio y finalización estimadas para cada etapa.\n- Dependencias o hitos relevantes entre etapas, si se han indicado.\n- Responsables o perfiles internos asignados por etapa, si se han indicado.\n\nCon esa información, redacta el apartado de la siguiente manera:\n\n1. Introduce brevemente el plan de trabajo en dos o tres frases: menciona cuántas etapas lo componen, el periodo total de ejecución y la coherencia de ese calendario con la naturaleza de los activos a adquirir.\n\n2. Desarrolla cada etapa en un párrafo o bloque claramente diferenciado, indicando: nombre de la etapa, contenido concreto de las actividades que la integran, fecha de inicio, fecha de finalización y, si procede, su dependencia respecto a la etapa anterior.\n\n3. Si los datos permiten construir un cuadro o tabla con las columnas \"Etapa / Descripción / Fecha inicio / Fecha fin\", inclúyelo a continuación del texto narrativo. Una representación visual refuerza la claridad ante el evaluador.\n\n4. No uses fechas genéricas ni rangos vagos del tipo \"primer trimestre\" o \"a lo largo del año\": usa fechas concretas (mes y año como mínimo) siempre que los datos aportados lo permitan.\n\nLa extensión orientativa es de 200 a 350 palabras para el texto narrativo, más la tabla si procede.\n\nDonde falte cualquier dato necesario para completar el apartado (una fecha, una etapa no descrita, el nombre de un proveedor cuya entrega condiciona el calendario), escríbelo como [DATO PENDIENTE: descripción del dato que falta], sin inventarlo ni rellenarlo con estimaciones propias."
+    },
+    {
+      "codigo": "III.A",
+      "nombre": "Impacto en la competitividad o la productividad",
+      "puntos_max": 4,
+      "contexto_evaluador": "El baremo asigna hasta 4 puntos a este apartado. La puntuación se obtiene por dos vías alternativas:\n\n- Vía general: justificación adecuada con aportación de datos concretos que acrediten cómo los nuevos activos van a mejorar la competitividad o la productividad de la empresa. El evaluador busca datos reales, medibles y atribuibles directamente a los activos solicitados, no afirmaciones genéricas.\n- Vía automática: si la inversión se realiza en un enclave tecnológico o en un área industrial clasificada como avanzada conforme a la Ley 14/2018 de la Comunitat Valenciana, se otorga directamente la puntuación máxima de 4 puntos, sin necesidad de argumentación adicional.",
+      "requiere_calculo_rentabilidad": false,
+      "usa_tabla_inversiones": false,
+      "inputs": [
+        {
+          "id": "enclave-tecnologico-avanzado",
+          "label": "Indicación de si la inversión se realiza en un enclave tecnológico o área industrial clasificada como avanzada conforme a la Ley 14/2018",
+          "tipo": "texto_libre",
+          "nivel": "minimo",
+          "ayuda": "Si aplica, proporciona el nombre exacto del enclave o área y cualquier documento acreditativo (certificado del gestor, ficha del parque, resolución de clasificación)"
+        },
+        {
+          "id": "documento-acreditativo-enclave",
+          "label": "Documento acreditativo de clasificación como enclave tecnológico o área industrial avanzada",
+          "tipo": "documento",
+          "nivel": "minimo",
+          "ayuda": "Certificado del gestor, ficha oficial del parque, resolución de clasificación u otro documento que acredite el estatus"
+        },
+        {
+          "id": "indicadores-productivos-actuales",
+          "label": "Indicadores cuantitativos actuales del proceso productivo afectado por la inversión",
+          "tipo": "texto_libre",
+          "nivel": "minimo",
+          "ayuda": "Unidades por hora, tiempo de ciclo, coste unitario de producción, tasa de rechazo, horas-hombre por unidad, tiempos de preparación de máquina, u otros indicadores relevantes según el proceso"
+        },
+        {
+          "id": "mejora-estimada-por-activo",
+          "label": "Descripción del impacto atribuible a cada activo principal: cuello de botella que elimina, capacidad que añade, coste que reduce, o limitación operativa que resuelve, con valores cuantificados de mejora esperada",
+          "tipo": "texto_libre",
+          "nivel": "minimo",
+          "ayuda": "Para cada activo, explicar qué limitación concreta resuelve y qué valor de mejora se espera en unidades o porcentaje absoluto sobre la situación actual"
+        },
+        {
+          "id": "informe-externo-validacion",
+          "label": "Informe o certificado externo que avale los valores de mejora declarados",
+          "tipo": "documento",
+          "nivel": "completo",
+          "ayuda": "Estudio de ingeniería, informe de fabricante, análisis de consultor técnico u otro informe que respalде las estimaciones"
+        },
+        {
+          "id": "comparativa-datos-sector",
+          "label": "Comparativa con datos de referencia del sector o de instalaciones análogas",
+          "tipo": "texto_libre",
+          "nivel": "completo",
+          "ayuda": "Datos sectoriales, benchmarks o información de proyectos similares que refuercen la credibilidad de las estimaciones"
+        }
+      ],
+      "documentos_requeridos": [
+        {
+          "nombre": "Documento acreditativo de clasificación como enclave tecnológico o área industrial avanzada",
+          "fuente": "cliente"
+        },
+        {
+          "nombre": "Informe o certificado externo que avale los valores de mejora declarados",
+          "fuente": "cliente"
+        }
+      ],
+      "prompt": "Redacta el apartado III.A de la memoria descriptiva, titulado \"Impacto en la competitividad o la productividad\". El baremo asigna hasta 4 puntos a este apartado.\n\nEl Perfil Estratégico de Empresa está adjunto como fuente principal: úsalo para conocer la actividad industrial, los procesos productivos actuales, los productos fabricados y los datos económicos de la empresa. No repitas ni reelabores información que ya figura en apartados anteriores de la memoria; referénciala si es necesario y enfócate en lo que es específico de este apartado.\n\nHay dos vías para alcanzar la puntuación máxima. Evalúa cuál aplica antes de redactar y estructura el texto en consecuencia:\n\nVÍA 1 — Enclave tecnológico o área industrial avanzada (Ley 14/2018): si los datos adjuntos confirman que la inversión se realiza en un enclave tecnológico o área industrial clasificada como avanzada conforme a esa ley, señálalo de forma expresa y con precisión al principio del apartado: nombre del enclave o área, y referencia al documento acreditativo aportado. En este caso, la puntuación máxima es automática. Puedes añadir un párrafo breve sobre el impacto esperado, pero el esfuerzo argumentativo principal corresponde a la VÍA 2 si se acumula con ella, o no es necesario si la acreditación del enclave es suficiente por sí sola.\n\nVÍA 2 — Justificación con datos concretos: si no aplica la vía 1, o si quieres reforzar la argumentación con independencia de ella, desarrolla el siguiente contenido:\n\n1. Situación de partida: describe los indicadores actuales del proceso productivo afectado por la inversión. Usa cifras reales: unidades producidas por turno o por hora, tiempo de ciclo, coste unitario, tasa de rechazo o retrabajo, horas-hombre por unidad, tiempo de preparación de máquina, o cualquier otro indicador cuantitativo que el proceso admita. Si los datos disponibles no cubren todos estos indicadores, usa los que sí estén disponibles y señala con [DATO PENDIENTE: indicador específico que falta] los que no se han podido aportar.\n\n2. Impacto atribuible a cada activo: para cada activo principal del proyecto, explica qué limitación concreta resuelve o qué capacidad añade, y qué valor cuantificado de mejora se espera. Por ejemplo: si un activo elimina una operación manual, indica cuántas horas se liberan por turno; si incrementa la capacidad, indica en cuántas unidades o en qué porcentaje sobre la cifra de partida. Evita afirmaciones genéricas del tipo \"mejorará la eficiencia\": cada afirmación debe apoyarse en el dato concreto que la sustenta.\n\n3. Efecto conjunto sobre la competitividad o la productividad de la empresa: sintetiza en un párrafo cómo el conjunto de los activos transforma la posición competitiva, incluyendo si procede el impacto en capacidad de respuesta a clientes, en costes de producción o en calidad del producto final.\n\nSi se aportan informes técnicos externos, certificados de fabricante o comparativas sectoriales que avalen las estimaciones, menciónalos e intégralos como respaldo de los datos declarados.\n\nExtensión orientativa: entre 400 y 700 palabras, adaptando la longitud a la complejidad y número de activos del proyecto. Usa prosa continua organizada en párrafos; evita listas de puntos si los activos ya están descritos en detalle en el apartado II.C.\n\nSeñala con [DATO PENDIENTE: descripción] cualquier información que falte para redactar este apartado de forma completa, tanto datos de la empresa como cualquier hueco en los criterios o indicadores necesarios. No inventes cifras ni estimaciones sin base en los datos aportados."
+    },
+    {
+      "codigo": "III.B",
+      "nombre": "Innovación de los procesos o en los productos",
+      "puntos_max": 4,
+      "requiere_calculo_rentabilidad": false,
+      "usa_tabla_inversiones": false,
+      "inputs": [
+        {
+          "id": "cambio-proceso-producto-por-activo",
+          "label": "Descripción de qué cambia en el proceso productivo o en el producto final como consecuencia de cada activo adquirido",
+          "tipo": "texto_libre",
+          "nivel": "minimo"
+        },
+        {
+          "id": "datos-cuantitativos-antes-despues",
+          "label": "Datos cuantitativos que midan el cambio antes y después de la inversión",
+          "tipo": "texto_libre",
+          "nivel": "minimo",
+          "ayuda": "Tiempos de ciclo, tasas de rechazo, tolerancias alcanzadas, nuevas especificaciones del producto, nuevas capacidades de fabricación habilitadas"
+        },
+        {
+          "id": "activos-inmateriales-patentes",
+          "label": "Indicación de si alguno de los activos es una patente, royalty, diseño industrial o modelo de utilidad",
+          "tipo": "texto_libre",
+          "nivel": "minimo",
+          "ayuda": "Incluir título o referencia del activo inmaterial correspondiente si aplica"
+        },
+        {
+          "id": "innovacion-reconocida-externamente",
+          "label": "Indicación de si la innovación es reconocida o acreditable externamente",
+          "tipo": "texto_libre",
+          "nivel": "minimo",
+          "ayuda": "Certificación de producto, norma armonizada, homologación sectorial, informe técnico de tercero"
+        },
+        {
+          "id": "informe-tecnico-validacion-cuantitativos",
+          "label": "Informe técnico externo o certificado que valide los datos cuantitativos de mejora declarados",
+          "tipo": "documento",
+          "nivel": "completo"
+        },
+        {
+          "id": "comparativa-estado-arte-sector",
+          "label": "Comparativa con el estado del arte del sector o con la práctica habitual de empresas del mismo segmento",
+          "tipo": "texto_libre",
+          "nivel": "completo",
+          "ayuda": "Para contextualizar el carácter innovador de la solución adoptada"
+        },
+        {
+          "id": "evidencia-producto-proceso-nuevo",
+          "label": "Evidencia de que el producto o proceso resultante no existía previamente en el catálogo o en la planta de la empresa",
+          "tipo": "texto_libre",
+          "nivel": "completo",
+          "ayuda": "Diferenciación clara entre mejora incremental e innovación de mayor alcance"
+        }
+      ],
+      "documentos_requeridos": [
+        {
+          "nombre": "Informe técnico externo o certificado que valide los datos cuantitativos de mejora declarados",
+          "fuente": "cliente"
+        }
+      ],
+      "prompt": "Redacta el apartado III.B de la memoria, titulado \"Innovación de los procesos o en los productos\". El baremo asigna hasta 4 puntos a este apartado. Según la plantilla de memoria, se valoran la adecuada justificación y la aportación de datos concretos cualitativos y cuantitativos que acrediten la repercusión de los activos adquiridos en una innovación del proceso de producción o en el producto final. La plantilla indica también que se otorga la puntuación máxima en caso de inversión en patentes, royalties, diseños industriales o modelos de utilidad. Trata estas reglas como [DATO PENDIENTE: validación normativa del baremo del apartado III.B] si no dispones de confirmación normativa independiente de la plantilla.\n\nTienes adjunto el Perfil Estratégico de Empresa (Ruta i40) como fuente principal de contexto sobre la empresa: actividad, productos, procesos productivos actuales.\n\nPara redactar este apartado, utiliza además los siguientes datos específicos del proyecto que se te proporcionan por separado:\n- Descripción de qué cambia en el proceso productivo o en el producto final como consecuencia de cada activo adquirido\n- Datos cuantitativos antes y después (tiempos de ciclo, tasas de rechazo, tolerancias, nuevas especificaciones, nuevas capacidades habilitadas, u otros indicadores equivalentes)\n- Indicación de si algún activo es una patente, royalty, diseño industrial o modelo de utilidad\n- Certificaciones, informes técnicos externos u homologaciones que acrediten el carácter innovador\n- Comparativa sectorial o con instalaciones análogas, si se ha aportado\n\nEstructura el texto así: empieza situando el estado actual del proceso o producto antes de la inversión, con los datos concretos disponibles. A continuación, describe activo por activo (o agrupados si tienen efecto conjunto coherente) qué innovación genera cada uno: qué función nueva habilita, qué limitación técnica elimina, qué especificación de producto nueva permite alcanzar, o qué paso del proceso transforma. Usa datos cuantitativos en cada afirmación relevante. Cierra con una síntesis del alcance global de la innovación: si afecta al proceso, al producto, o a ambos, y en qué medida representa un avance respecto de la situación anterior.\n\nSi alguno de los activos es una patente, royalty, diseño industrial o modelo de utilidad, identifícalo explícitamente en la redacción y describe su contenido técnico.\n\nSi se han aportado informes externos, certificaciones o comparativas sectoriales, incorpóralos en el texto como respaldo de los datos cuantitativos declarados, no como mero listado documental.\n\nExtensión orientativa: entre 350 y 550 palabras, con densidad de dato suficiente para que cada afirmación de mejora quede respaldada por una cifra o un hecho verificable. Evita afirmaciones genéricas del tipo \"mejorará la eficiencia\" sin cifra o hecho concreto que las sustente.\n\nSeñala con [DATO PENDIENTE: descripción] cualquier información que falte para completar el apartado, incluida cualquier pieza normativa del baremo que no puedas confirmar. No inventes datos ni rellenes huecos con estimaciones propias.",
+      "contexto_evaluador": "El baremo no está disponible en el Knowledge Pack para este apartado. La información que sigue procede exclusivamente de DELIVERABLE_CONTEXT y se reproduce aquí únicamente como referencia de estructura, sin valor normativo verificado.\n\nSegún la plantilla de memoria, este apartado valora hasta 4 puntos y busca dos cosas: la adecuada justificación de la repercusión de los activos adquiridos en la innovación del proceso de producción o en el producto final, acompañada de datos concretos cualitativos y cuantitativos. La plantilla menciona también que se otorga la puntuación máxima cuando la inversión se realiza en patentes, royalties, diseños industriales o modelos de utilidad. Sin embargo, dado que NORMATIVE_CONTEXT llega vacío para este apartado, estos valores deben tratarse como [DATO PENDIENTE: validación normativa del baremo completo del apartado III.B por parte del equipo i40]."
+    },
+    {
+      "codigo": "III.C",
+      "nombre": "Diversificación de productos o apertura de nuevos mercados o clientes",
+      "puntos_max": 4,
+      "contexto_evaluador": "Según la estructura de la plantilla, el apartado puntúa hasta 4 puntos distribuidos en tres subcriterios:\n\n- Justificación con datos concretos cualitativos y cuantitativos de que el proyecto permite diversificar la producción iniciando la fabricación de nuevos productos (hasta 2 puntos).\n- Acreditación de que la inversión abre nuevos mercados nacionales o internacionales (hasta 1 punto).\n- Acreditación de que la inversión permite acceder a nuevos clientes (hasta 1 punto).",
+      "requiere_calculo_rentabilidad": false,
+      "usa_tabla_inversiones": false,
+      "inputs": [
+        {
+          "id": "catalogo-actual-productos",
+          "label": "Catálogo actual de productos o familias de producto que la empresa fabrica o transforma",
+          "tipo": "dato_empresa",
+          "nivel": "minimo",
+          "ref_campo_empresa": "catalogo-productos-familias"
+        },
+        {
+          "id": "mercados-nacionales-internacionales-actuales",
+          "label": "Mercados nacionales e internacionales en los que opera actualmente",
+          "tipo": "dato_empresa",
+          "nivel": "minimo",
+          "ref_campo_empresa": "mercados-operacion-actual"
+        },
+        {
+          "id": "tipologia-clientes-actuales",
+          "label": "Tipología de clientes actuales (sectores, volúmenes, perfil)",
+          "tipo": "dato_empresa",
+          "nivel": "minimo",
+          "ref_campo_empresa": "tipologia-clientes-actuales"
+        },
+        {
+          "id": "nuevo-producto-descripcion-diferencia",
+          "label": "Descripción del nuevo producto o gama de producto que la inversión hace posible, con indicación de en qué se diferencia de la producción actual",
+          "tipo": "texto_libre",
+          "nivel": "minimo"
+        },
+        {
+          "id": "datos-cuantitativos-diversificacion",
+          "label": "Datos cuantitativos que cuantifiquen la diversificación: capacidad de producción, volumen de negocio adicional estimado u otro indicador medible",
+          "tipo": "texto_libre",
+          "nivel": "minimo"
+        },
+        {
+          "id": "nuevos-mercados-identificacion",
+          "label": "Indicación concreta de si se accederá a nuevos mercados geográficos o sectoriales, con identificación de cuáles y vínculo causal con la inversión",
+          "tipo": "texto_libre",
+          "nivel": "minimo"
+        },
+        {
+          "id": "nuevos-clientes-identificacion",
+          "label": "Indicación concreta de si se prevé acceder a nuevos clientes, con descripción del perfil o nombres de clientes potenciales y estado de la relación comercial",
+          "tipo": "texto_libre",
+          "nivel": "minimo"
+        },
+        {
+          "id": "cartas-intencion-demanda-real",
+          "label": "Cartas de intención, peticiones de oferta o documento que acredite demanda real del nuevo producto por parte de clientes nuevos o en mercados nuevos",
+          "tipo": "documento",
+          "nivel": "completo"
+        },
+        {
+          "id": "datos-mercado-referencia",
+          "label": "Datos de mercado de referencia: tamaño del segmento, cuota estimada alcanzable, fuente",
+          "tipo": "texto_libre",
+          "nivel": "completo"
+        },
+        {
+          "id": "contratos-acuerdos-nuevos-clientes",
+          "label": "Contratos firmados o acuerdos marco con nuevos clientes condicionados a la capacidad productiva que aporta la inversión",
+          "tipo": "documento",
+          "nivel": "completo"
+        }
+      ],
+      "documentos_requeridos": [
+        {
+          "nombre": "Cartas de intención, peticiones de oferta o documento que acredite demanda real del nuevo producto por parte de clientes nuevos o en mercados nuevos",
+          "fuente": "cliente"
+        },
+        {
+          "nombre": "Contratos firmados o acuerdos marco con nuevos clientes condicionados a la capacidad productiva que aporta la inversión",
+          "fuente": "cliente"
+        }
+      ],
+      "prompt": "Redacta el apartado III.C de la memoria descriptiva, titulado \"Diversificación de productos o apertura de nuevos mercados o clientes\". El baremo asigna hasta 4 puntos a este apartado, distribuidos en tres subcriterios: hasta 2 puntos por justificar con datos cualitativos y cuantitativos que la inversión permite fabricar nuevos productos; hasta 1 punto por acreditar la apertura de nuevos mercados nacionales o internacionales; y hasta 1 punto por acreditar el acceso a nuevos clientes.\n\nTienes adjunto el Perfil Estratégico de Empresa (Ruta i40), que es tu fuente principal para el catálogo de productos actuales, los mercados en los que opera hoy la empresa y el perfil de su base de clientes.\n\nRedacta los tres subcriterios de forma diferenciada, en este orden:\n\n1. Diversificación de la producción (nuevo producto o nueva gama). Describe con precisión qué producto o familia de producto hace posible la inversión que hoy no está en el catálogo de la empresa. Explica en qué consiste la diferencia respecto de la producción actual y por qué los activos adquiridos son el factor habilitante. Aporta los datos cuantitativos disponibles: capacidad de producción del nuevo producto, volumen de negocio estimado, referencias nuevas, o cualquier otro indicador concreto. Si no hay datos suficientes, escribe [DATO PENDIENTE: indicador cuantitativo de la diversificación productiva] en el lugar donde debería aparecer el dato.\n\n2. Nuevos mercados. Indica si la inversión permite a la empresa operar en mercados geográficos o sectoriales en los que no estaba presente. Especifica cuáles y explica el mecanismo causal: qué capacidad o certificación o producto nuevo lo hace posible. Si aplica, distingue entre mercados nacionales e internacionales. Si no hay datos suficientes, escribe [DATO PENDIENTE: mercados nuevos identificados y vínculo causal con la inversión].\n\n3. Nuevos clientes. Indica si ya existen clientes potenciales identificados, en qué sector o perfil se enmarcan, y si hay algún documento que acredite interés o demanda real. Si aplica, menciona el estado de la relación comercial. Si no hay datos suficientes, escribe [DATO PENDIENTE: descripción de nuevos clientes o acreditación de demanda].\n\nExtensión orientativa: entre 300 y 500 palabras en total para los tres subcriterios. El evaluador valora datos concretos y trazables por encima de afirmaciones genéricas; cada declaración de mejora o impacto debe ir acompañada de un número, un nombre, un documento o una referencia verificable. Si algún dato no está disponible en las fuentes adjuntas, señálalo con [DATO PENDIENTE: descripción] en el lugar exacto donde debería aparecer, sin inventarlo ni sustituirlo por una afirmación genérica."
+    },
+    {
+      "codigo": "IV.A",
+      "nombre": "Inversiones que impliquen una reducción sustancial del consumo de energía, agua o materias primas",
+      "puntos_max": 4,
+      "contexto_evaluador": "El baremo asigna hasta 4 puntos distribuidos en dos subcriterios de igual peso:\n\n- Hasta 2 puntos por la justificación cualitativa y cuantitativa de cómo la inversión reduce de forma sustancial el consumo de energía, agua u otras materias primas o recursos naturales que son inputs del proceso productivo antes de la inversión, o mejora la eficiencia energética de la producción. La descripción debe ser concreta y referida a la situación anterior a la inversión.\n- Hasta 2 puntos por la aportación de cifras comparativas, informes externos o certificados que acrediten las mejoras medioambientales descritas. La convocatoria advierte expresamente que no es suficiente mencionar únicamente porcentajes: se exigen datos absolutos o comparativos respaldados por documentación externa.",
+      "requiere_calculo_rentabilidad": false,
+      "usa_tabla_inversiones": false,
+      "inputs": [
+        {
+          "id": "procesos-productivos-recursos-actuales",
+          "label": "Descripción del proceso productivo actual, con identificación de los recursos energéticos, hídricos o de materias primas que consume",
+          "tipo": "dato_empresa",
+          "nivel": "minimo",
+          "ref_campo_empresa": "procesos-recursos-energeticos-hidricos"
+        },
+        {
+          "id": "consumos-actuales-cuantificados",
+          "label": "Consumos actuales cuantificados del recurso afectado, expresados en unidades absolutas y referidos a un período concreto",
+          "tipo": "texto_libre",
+          "nivel": "minimo",
+          "ayuda": "Ej: kWh/año, m³/año, toneladas de materia prima/año, consumo por unidad producida"
+        },
+        {
+          "id": "consumos-esperados-postinversion",
+          "label": "Consumos esperados tras la inversión para esos mismos indicadores, con indicación del método de cálculo o estimación",
+          "tipo": "texto_libre",
+          "nivel": "minimo"
+        },
+        {
+          "id": "mecanismo-tecnico-reduccion",
+          "label": "Descripción del mecanismo técnico por el que cada activo adquirido produce la reducción",
+          "tipo": "texto_libre",
+          "nivel": "minimo",
+          "ayuda": "Qué hace el activo, en qué punto del proceso actúa y por qué reduce el consumo"
+        },
+        {
+          "id": "identificacion-recursos-afectados-proporcion",
+          "label": "Identificación explícita de qué recurso o recursos se ven afectados y en qué proporción relativa cada activo contribuye a la reducción total",
+          "tipo": "texto_libre",
+          "nivel": "minimo"
+        },
+        {
+          "id": "informe-tecnico-externo-reduccion",
+          "label": "Informe técnico externo, auditoría energética o certificado emitido por un tercero que avale los datos de consumo actuales y las reducciones previstas",
+          "tipo": "documento",
+          "nivel": "completo",
+          "ayuda": "Ej: auditoría energética, certificación de eficiencia energética, informe de organismo de control autorizado, estudio de ingeniería visado"
+        },
+        {
+          "id": "certificados-fabricante-eficiencia",
+          "label": "Certificados o declaraciones del fabricante de los activos sobre parámetros de eficiencia energética o consumo del equipo",
+          "tipo": "documento",
+          "nivel": "completo",
+          "ayuda": "Permiten comparar con los equipos sustituidos o con el proceso anterior"
+        },
+        {
+          "id": "datos-consumo-facturas-contadores",
+          "label": "Datos de consumo procedentes de facturas de suministro, contadores o sistemas de medición internos",
+          "tipo": "documento",
+          "nivel": "completo",
+          "ayuda": "Aportan credibilidad a las cifras de partida declaradas"
+        }
+      ],
+      "documentos_requeridos": [
+        {
+          "nombre": "Informe técnico externo, auditoría energética o certificado emitido por un tercero que avale los datos de consumo actuales y las reducciones previstas",
+          "fuente": "cliente"
+        },
+        {
+          "nombre": "Certificados o declaraciones del fabricante de los activos sobre parámetros de eficiencia energética o consumo del equipo",
+          "fuente": "cliente"
+        },
+        {
+          "nombre": "Datos de consumo procedentes de facturas de suministro, contadores o sistemas de medición internos",
+          "fuente": "cliente"
+        }
+      ],
+      "prompt": "Redacta el apartado IV.A de la memoria descriptiva, titulado \"Inversiones que impliquen una reducción sustancial del consumo de energía, agua o materias primas\". El baremo asigna un máximo de 4 puntos a este apartado, repartidos en dos subcriterios de 2 puntos cada uno.\n\nEl Perfil Estratégico de Empresa está adjunto como fuente principal: extrae de él la descripción del proceso productivo, los recursos energéticos o materiales que consume la empresa y cualquier referencia a consumos existentes. No repitas información de empresa que no sea relevante para este apartado.\n\nLos documentos específicos de este proyecto que se adjuntan como fuente son los que el consultor ha aportado: datos de consumo actuales, estimaciones de consumo tras la inversión, descripciones técnicas de los activos relacionados con la mejora, e informes o certificados externos si los hay.\n\nEstructura el texto en dos bloques claramente diferenciados, que se corresponden con los dos subcriterios del baremo:\n\nBloque 1 — Justificación cualitativa y cuantitativa de la reducción (hasta 2 puntos):\nDescribe con precisión cómo la inversión reduce el consumo de energía, agua o materias primas. Para cada activo relevante, explica el mecanismo técnico concreto por el que se produce la reducción y en qué punto del proceso productivo actúa. Incluye los datos de consumo actuales y los esperados tras la inversión, expresados siempre en unidades absolutas (kWh/año, m³/año, toneladas/año, consumo por unidad producida u equivalente) y no solo en porcentajes. Indica el método de cálculo o la fuente de cada cifra. Si la reducción afecta a más de un recurso, trátalos por separado. La extensión de este bloque debe ser suficiente para que el evaluador entienda la causalidad entre el activo y la mejora, sin afirmaciones genéricas: cada afirmación de mejora debe estar anclada a un dato o a una característica técnica concreta del activo.\n\nBloque 2 — Cifras comparativas e información acreditativa (hasta 2 puntos):\nPresenta las cifras comparativas antes/después de forma clara: tabla o listado con el indicador, el valor actual, el valor previsto y la variación absoluta. A continuación, describe los informes externos, certificados o documentación de terceros aportados que respaldan esos valores. Identifica el emisor del documento, la fecha y qué dato concreto acredita cada uno. Si no se dispone de ningún documento externo de acreditación, señala con [DATO PENDIENTE: informe o certificado externo que acredite los consumos actuales y las reducciones previstas] en el lugar donde iría esa información.\n\nNormas de redacción para todo el apartado:\n- No uses afirmaciones valorativas sin dato que las sustente (\"mejorará significativamente la eficiencia\"). Cada afirmación de mejora va seguida del dato que la soporta.\n- La convocatoria advierte que mencionar únicamente porcentajes no es suficiente para obtener los 2 puntos del segundo subcriterio: asegúrate de que los datos aparecen también en valores absolutos.\n- Extensión orientativa: entre 400 y 700 palabras en total para los dos bloques, según la complejidad y el número de activos implicados.\n- Si algún dato necesario para completar el apartado no está disponible en las fuentes adjuntas, indícalo con [DATO PENDIENTE: descripción del dato que falta] en el lugar exacto donde debería aparecer, sin inventar cifras ni estimaciones propias."
+    },
+    {
+      "codigo": "IV.B",
+      "nombre": "Inversiones que impliquen una reducción sustancial de residuos o contaminantes, o la implantación de economía circular",
+      "puntos_max": 4,
+      "contexto_evaluador": "El baremo asigna un máximo de 4 puntos, repartidos en dos bloques iguales:\n\n- Hasta 2 puntos por la justificación cualitativa y cuantitativa de cómo la inversión produce una reducción sustancial de emisiones, efluentes, residuos o contaminaciones ambientales generadas en el proceso productivo, en comparación con la situación anterior a la inversión.\n- Hasta 2 puntos por la aportación de cifras comparativas, informes externos o certificados acreditativos de las mejoras medioambientales. La convocatoria advierte expresamente que no es suficiente mencionar únicamente porcentajes: los datos deben estar respaldados por documentación externa o fuentes verificables.",
+      "requiere_calculo_rentabilidad": false,
+      "usa_tabla_inversiones": false,
+      "inputs": [
+        {
+          "id": "procesos-productivos-generacion-residuos",
+          "label": "Descripción del proceso productivo actual y los puntos del proceso donde se generan residuos, emisiones o efluentes",
+          "tipo": "dato_empresa",
+          "nivel": "minimo",
+          "ref_campo_empresa": "procesos-residuos-emisiones-efluentes"
+        },
+        {
+          "id": "cuantificacion-actual-residuos-emisiones",
+          "label": "Cuantificación actual de los residuos, emisiones o efluentes afectados, expresada en unidades absolutas y referida a un período concreto",
+          "tipo": "texto_libre",
+          "nivel": "minimo",
+          "ayuda": "Debe expresarse en kg, m³, toneladas u otras unidades absolutas, no solo porcentajes. Incluir el período de referencia (por ejemplo, anuales, mensuales)."
+        },
+        {
+          "id": "estimacion-niveles-postinversion",
+          "label": "Estimación de los niveles esperados tras la inversión, con indicación del método de cálculo o la fuente de la estimación",
+          "tipo": "texto_libre",
+          "nivel": "minimo",
+          "ayuda": "Debe usar las mismas unidades que la cuantificación actual y detallar la metodología de cálculo o la fuente de datos."
+        },
+        {
+          "id": "mecanismo-tecnico-reduccion-residuos",
+          "label": "Descripción del mecanismo técnico concreto por el que cada activo adquirido provoca la reducción",
+          "tipo": "texto_libre",
+          "nivel": "minimo",
+          "ayuda": "Explicar qué variable del proceso cambia, por qué razón física o química, y en qué fase del ciclo productivo se localiza la mejora."
+        },
+        {
+          "id": "identificacion-tipo-residuo-economia-circular",
+          "label": "Identificación del tipo de residuo, emisión, efluente o contaminante que se reduce y vinculación con principios de economía circular",
+          "tipo": "texto_libre",
+          "nivel": "minimo",
+          "ayuda": "Indicar si existe reutilización de materiales, recuperación de subproductos o sustitución de materias vírgenes."
+        },
+        {
+          "id": "informe-tecnico-externo-residuos",
+          "label": "Informe técnico externo, auditoría medioambiental o certificado emitido por un tercero que avale los datos actuales y las reducciones previstas",
+          "tipo": "documento",
+          "nivel": "completo"
+        },
+        {
+          "id": "certificados-fabricante-emisiones-residuos",
+          "label": "Certificados o declaraciones del fabricante de los activos sobre parámetros de emisión, generación de residuos o eficiencia medioambiental",
+          "tipo": "documento",
+          "nivel": "completo"
+        },
+        {
+          "id": "datos-gestores-autorizados-registros",
+          "label": "Datos de generación de residuos o emisiones procedentes de gestores autorizados, registros oficiales, albaranes de recogida u otros documentos de control ambiental",
+          "tipo": "documento",
+          "nivel": "completo",
+          "ayuda": "Documentos que permitan comparar la situación antes y después de la inversión."
+        },
+        {
+          "id": "economia-circular-cuantificada",
+          "label": "Descripción cuantificada de elementos de economía circular: porcentaje de material recuperado o reutilizado, reducción de residuos a vertedero, sustitución de materias primas vírgenes",
+          "tipo": "texto_libre",
+          "nivel": "completo"
+        }
+      ],
+      "documentos_requeridos": [
+        {
+          "nombre": "Informe técnico externo, auditoría medioambiental o certificado emitido por un tercero que avale los datos actuales y las reducciones previstas",
+          "fuente": "cliente"
+        },
+        {
+          "nombre": "Certificados o declaraciones del fabricante de los activos sobre parámetros de emisión, generación de residuos o eficiencia medioambiental",
+          "fuente": "cliente"
+        },
+        {
+          "nombre": "Datos de generación de residuos o emisiones procedentes de gestores autorizados, registros oficiales, albaranes de recogida u otros documentos de control ambiental",
+          "fuente": "cliente"
+        }
+      ],
+      "prompt": "Redacta el apartado IV.B de la memoria descriptiva, titulado \"Inversiones que impliquen una reducción sustancial de residuos o contaminantes, o la implantación de economía circular\". El baremo asigna hasta 4 puntos a este apartado: 2 puntos por la justificación cualitativa y cuantitativa de la reducción, y 2 puntos adicionales por la aportación de cifras comparativas e informes o certificados externos que acrediten las mejoras. El evaluador advierte expresamente que mencionar únicamente porcentajes no es suficiente para obtener los 2 puntos de acreditación documental.\n\nTienes adjunto el Perfil Estratégico de Empresa (Ruta i40) como fuente principal de información sobre la empresa: proceso productivo, actividad industrial, datos económicos y estructura general. Úsalo directamente; no pidas que te repitan esos datos.\n\nLos datos específicos de este apartado que debes incorporar son los siguientes:\n- Cuantificación actual de los residuos, emisiones o efluentes afectados, en unidades absolutas y referidas a un período concreto.\n- Estimación de esos mismos indicadores tras la inversión y método de cálculo o fuente de la estimación.\n- Descripción del mecanismo técnico por el que cada activo produce la reducción.\n- Identificación del tipo de residuo, emisión, efluente o contaminante afectado y, si procede, elementos de economía circular incorporados al proyecto.\n- Documentación acreditativa disponible: informes externos, certificados de fabricante, registros de gestores autorizados u otros documentos de control ambiental.\n\nPara redactar este apartado sigue esta estructura y estas instrucciones:\n\n1. Situación actual del proceso productivo en cuanto a generación de residuos, emisiones o efluentes. Describe qué se genera, en qué fase del proceso, en qué cantidad y con qué frecuencia o referencia temporal. Usa cifras absolutas, no solo porcentajes. Si hay varios contaminantes o flujos de residuo, trátalos por separado. Extensión orientativa: 150-200 palabras.\n\n2. Vínculo causal entre cada activo adquirido y la reducción esperada. Explica el mecanismo técnico concreto: qué variable del proceso cambia, por qué razón y en qué fase se localiza la mejora. Si varios activos contribuyen a la reducción, abórdalos individualmente. Extensión orientativa: 150-250 palabras.\n\n3. Cuantificación comparativa antes y después de la inversión. Presenta los datos en formato comparable (misma unidad, mismo período de referencia) y, si procede, expresa también el porcentaje de reducción como complemento, nunca como único dato. Si el proyecto incorpora elementos de economía circular (recuperación de materiales, reutilización de subproductos, sustitución de materias primas vírgenes), descríbelos aquí con la misma precisión cuantitativa. Extensión orientativa: 100-150 palabras.\n\n4. Acreditación documental de las mejoras. Indica qué documentos externos se aportan para respaldar los datos declarados: informes técnicos, auditorías medioambientales, certificados de fabricante, registros de gestores autorizados u otros. Para cada documento, indica brevemente qué magnitud avala y quién lo emite. Si no hay ningún documento externo disponible, señálalo con [DATO PENDIENTE: informe o certificado externo que acredite los datos de reducción declarados]. Extensión orientativa: 80-120 palabras.\n\nNormas de redacción:\n- Escribe en tercera persona, con un tono técnico y directo.\n- Cada afirmación de mejora debe ir acompañada del dato cuantitativo que la sustenta o del marcador [DATO PENDIENTE: descripción del dato que falta] si no está disponible.\n- No inventes valores, estimaciones ni referencias documentales. Si un dato no está en las fuentes que tienes, usa el marcador [DATO PENDIENTE: descripción] exactamente donde correspondería ese dato en el texto.\n- Si el Knowledge Pack normativo no cubre algún aspecto que el apartado necesitaría, indícalo también con [DATO PENDIENTE: descripción] en lugar de rellenarlo con suposiciones."
+    },
+    {
+      "codigo": "IV.C",
+      "nombre": "Inversiones que impliquen reducir la huella de carbono",
+      "puntos_max": 4,
+      "contexto_evaluador": "El baremo valora exclusivamente el origen geográfico de los proveedores de los activos adquiridos. La puntuación se asigna según el porcentaje económico del total del proyecto cuya provisión procede de empresas de la Comunitat Valenciana:\n\n- 4 puntos: el 100% del coste del proyecto se provee de empresas de la Comunitat Valenciana.\n- 3 puntos: más del 75%.\n- 2 puntos: más del 50%.\n- 1 punto: más del 30%.\n- 0 puntos: si no se identifican todas las ubicaciones provinciales de los proveedores o no se calcula el porcentaje de la Comunitat Valenciana.\n\nLa no identificación de alguna ubicación o la ausencia del porcentaje conlleva automáticamente 0 puntos en este apartado. (Puntuación máxima pendiente de validación humana en el Knowledge Pack.)",
+      "requiere_calculo_rentabilidad": false,
+      "usa_tabla_inversiones": true,
+      "inputs": [
+        {
+          "id": "inversion",
+          "label": "Desglose de la inversión por partidas",
+          "tipo": "inversion",
+          "nivel": "minimo"
+        },
+        {
+          "id": "ubicacion-provincial-proveedores",
+          "label": "Ubicación provincial (municipio y provincia) de cada proveedor incluido en la tabla de inversiones",
+          "tipo": "texto_libre",
+          "nivel": "minimo",
+          "ayuda": "Indicar si está radicado en la Comunitat Valenciana, en otra comunidad autónoma o en el extranjero"
+        },
+        {
+          "id": "importe-sin-iva-proveedor",
+          "label": "Importe sin IVA atribuido a cada proveedor",
+          "tipo": "texto_libre",
+          "nivel": "minimo",
+          "ayuda": "Necesario para calcular el porcentaje económico correspondiente a la Comunitat Valenciana sobre el total del proyecto"
+        },
+        {
+          "id": "documentacion-domicilio-proveedores-comunitat-valenciana",
+          "label": "Documentación que acredite el domicilio social o centro de actividad en la Comunitat Valenciana de los proveedores",
+          "tipo": "documento",
+          "nivel": "completo",
+          "ayuda": "Extracto del Registro Mercantil, ficha de empresa o equivalente"
+        }
+      ],
+      "documentos_requeridos": [
+        {
+          "nombre": "Documentación que acredite el domicilio social o centro de actividad en la Comunitat Valenciana de los proveedores",
+          "fuente": "cliente"
+        }
+      ],
+      "prompt": "Redacta el apartado IV.C de la memoria descriptiva, titulado \"Inversiones que impliquen reducir la huella de carbono\". El baremo asigna hasta 4 puntos a este apartado (dato pendiente de validación humana), y la puntuación depende exclusivamente del porcentaje económico del proyecto cuya provisión procede de empresas radicadas en la Comunitat Valenciana.\n\nTienes adjunto el Perfil Estratégico de Empresa (Ruta i40) como fuente principal de los datos generales de la empresa.\n\nEl desglose de partidas de la inversión ha sido calculado por la aplicación y se incluye como dato dado en el bloque de datos adjunto. No lo recalcules ni lo modifiques.\n\nCon esos datos, redacta el apartado siguiendo este esquema:\n\n1. Tabla de proveedores con origen geográfico. Para cada proveedor que figure en la tabla de inversiones, indica: nombre o razón social, ubicación provincial (municipio y provincia), comunidad autónoma, y el importe sin IVA que le corresponde. Si algún proveedor no tiene ubicación identificada, escribe [DATO PENDIENTE: ubicación provincial del proveedor X] en su fila.\n\n2. Cálculo del porcentaje de la Comunitat Valenciana. A partir de los importes anteriores, calcula qué porcentaje económico del total del proyecto proviene de proveedores radicados en la Comunitat Valenciana, de otras partes de España y del extranjero. Muestra el desglose numérico con claridad. Si algún importe está pendiente, señálalo con [DATO PENDIENTE: descripción] e indica que el porcentaje no puede calcularse hasta resolverlo.\n\n3. Párrafo de cierre breve (máximo tres líneas) que recoja el porcentaje resultante y la puntuación a la que da derecho según el baremo: 4 puntos si el 100% procede de la Comunitat Valenciana, 3 puntos si supera el 75%, 2 puntos si supera el 50%, 1 punto si supera el 30%, y 0 puntos si no se supera ese umbral o si alguna ubicación queda sin identificar.\n\nEl tono debe ser directo y descriptivo, sin afirmaciones valorativas genéricas. La extensión total del apartado no debe superar una página. Si cualquier dato de ubicación o importe falta en las fuentes que tienes disponibles, señálalo con [DATO PENDIENTE: descripción] en el lugar exacto donde correspondería, sin inventar el dato ni inferirlo."
+    },
+    {
+      "codigo": "V.A",
+      "nombre": "Creación de empleo",
+      "puntos_max": 2,
+      "contexto_evaluador": "El baremo asigna 1 punto por contrato formalizado o previsto, con un máximo de 2 puntos. Se valoran todo tipo de contratos vinculados al proyecto: indefinidos, fijos discontinuos, tiempo parcial u otras modalidades de contratación laboral. No se establece ningún umbral mínimo ni distinción de puntuación según la modalidad contractual.",
+      "requiere_calculo_rentabilidad": false,
+      "usa_tabla_inversiones": false,
+      "inputs": [
+        {
+          "id": "serie-historica-empleos-5anios",
+          "label": "Serie histórica de empleos de los últimos 5 años",
+          "tipo": "dato_empresa",
+          "nivel": "minimo",
+          "ref_campo_empresa": "serie-historica-empleos"
+        },
+        {
+          "id": "numero-contratos-proyecto",
+          "label": "Número de contratos formalizados o previstos en relación con el proyecto",
+          "tipo": "texto_libre",
+          "nivel": "minimo",
+          "ayuda": "Indicar si están ya firmados o son una estimación"
+        },
+        {
+          "id": "modalidad-contratos-detalles",
+          "label": "Modalidad de cada contrato y jornada prevista (indefinido, fijo discontinuo, tiempo parcial, etc.)",
+          "tipo": "texto_libre",
+          "nivel": "minimo",
+          "ayuda": "Para contratos a tiempo parcial, indicar el porcentaje de jornada"
+        },
+        {
+          "id": "descripcion-puestos-funciones",
+          "label": "Descripción del puesto o función que cubrirá cada contratación",
+          "tipo": "texto_libre",
+          "nivel": "minimo",
+          "ayuda": "Incluir la vinculación directa con la inversión"
+        },
+        {
+          "id": "fechas-formalizacion-incorporacion",
+          "label": "Fecha de formalización de cada contrato ya firmado o fecha estimada de incorporación",
+          "tipo": "texto_libre",
+          "nivel": "minimo"
+        },
+        {
+          "id": "documentacion-acreditativa-contratos",
+          "label": "Contratos de trabajo ya formalizados o documentación acreditativa",
+          "tipo": "documento",
+          "nivel": "completo",
+          "ayuda": "Número de afiliación, alta en Seguridad Social, comunicación de contrato al SEPE"
+        }
+      ],
+      "documentos_requeridos": [
+        {
+          "nombre": "Contratos de trabajo ya formalizados o documentación acreditativa",
+          "fuente": "cliente"
+        }
+      ],
+      "prompt": "Redacta el apartado V.A \"Creación de empleo\" de la memoria descriptiva de solicitud de ayuda.\n\nEl baremo asigna 1 punto por contrato formalizado o previsto vinculado al proyecto, con un máximo de 2 puntos. Se admiten contratos indefinidos, fijos discontinuos, tiempo parcial y cualquier otra modalidad de contratación laboral. No hay distinción de puntuación entre modalidades.\n\nTienes adjunto el Perfil Estratégico de Empresa (Ruta i40), que contiene los datos generales de la empresa: plantilla actual, actividad, histórico de empleo y demás datos corporativos. Úsalo como fuente principal para contextualizar la situación de partida en materia de empleo.\n\nLos datos específicos del proyecto que debes incorporar son los que se facilitan en el bloque de datos adjunto a esta instrucción:\n- Número total de contratos formalizados o previstos en relación con el proyecto.\n- Modalidad de cada contrato y jornada si es parcial.\n- Puesto o función que cubrirá cada contratación y su vínculo causal con la inversión.\n- Fecha de formalización o fecha estimada de incorporación.\n- Documentación acreditativa disponible, si la hay.\n\nPara maximizar la puntuación, el texto debe:\n1. Indicar con precisión el número de contratos, su modalidad y el puesto que cubre cada uno, estableciendo de forma explícita la relación causal entre la nueva capacidad productiva que aporta la inversión y la necesidad de incorporar cada perfil.\n2. Distinguir con claridad si los contratos ya están firmados o son una estimación justificada, y en este segundo caso explicar la lógica productiva que sustenta la previsión.\n3. Si la jornada es a tiempo parcial, indicar el porcentaje de jornada y, si es posible, la equivalencia en jornadas completas.\n4. Mencionar cualquier documentación acreditativa disponible (contratos firmados, alta en Seguridad Social, comunicación al SEPE) para reforzar la credibilidad de lo declarado.\n\nLa extensión orientativa es de dos a cuatro párrafos, sin tablas imprescindibles, aunque puedes incluir una tabla resumen si el número de contratos lo justifica.\n\nSi algún dato necesario no está disponible en las fuentes adjuntas, señálalo con [DATO PENDIENTE: descripción] en el lugar del texto donde correspondería ese dato. No lo inventes ni lo sustituyas por una estimación genérica."
+    },
+    {
+      "codigo": "V.B",
+      "nombre": "Lucha contra despoblación",
+      "puntos_max": 10,
+      "contexto_evaluador": "El baremo asigna 10 puntos, de forma automática y binaria, si la ubicación de las inversiones corresponde a uno de los municipios listados en el anexo IV de la convocatoria como municipios prioritarios para la reindustrialización por estar afectados por la despoblación o en riesgo de incurrir en ella. No hay puntuación parcial: o se obtienen los 10 puntos o no se obtiene ninguno. La falta de acreditación documental de la circunstancia descrita conlleva puntuación cero, sin requerimiento previo del órgano instructor.",
+      "requiere_calculo_rentabilidad": false,
+      "usa_tabla_inversiones": false,
+      "inputs": [
+        {
+          "id": "municipio-ubicacion-activos",
+          "label": "Municipio exacto donde se ubican o se van a ubicar físicamente los activos de la inversión",
+          "tipo": "texto_libre",
+          "nivel": "minimo"
+        },
+        {
+          "id": "municipio-en-anexo-iv",
+          "label": "Confirmación de si el municipio figura en el anexo IV de la convocatoria como municipio prioritario por despoblación o riesgo de despoblación",
+          "tipo": "texto_libre",
+          "nivel": "minimo"
+        },
+        {
+          "id": "documento-acreditativo-ubicacion-inversion",
+          "label": "Documento que acredite la ubicación de la inversión: escritura de propiedad, contrato de arrendamiento o documento oficial equivalente",
+          "tipo": "documento",
+          "nivel": "minimo"
+        },
+        {
+          "id": "documentacion-adicional-vinculacion-municipal",
+          "label": "Documentación adicional que refuerce la vinculación física de la inversión con el municipio: licencia de actividad, alta en el IAE, certificado del ayuntamiento",
+          "tipo": "documento",
+          "nivel": "completo"
+        }
+      ],
+      "documentos_requeridos": [
+        {
+          "nombre": "Documento que acredite la ubicación de la inversión: escritura de propiedad, contrato de arrendamiento o documento oficial equivalente",
+          "fuente": "cliente"
+        },
+        {
+          "nombre": "Documentación adicional que refuerce la vinculación física de la inversión con el municipio: licencia de actividad, alta en el IAE, certificado del ayuntamiento",
+          "fuente": "cliente"
+        }
+      ],
+      "prompt": "Redacta el apartado V.B de la memoria descriptiva, titulado \"Lucha contra despoblación\". El baremo asigna 10 puntos de forma binaria si la ubicación de las inversiones corresponde a un municipio incluido en el listado de municipios prioritarios para la reindustrialización por despoblación o riesgo de despoblación recogido en el anexo IV de la convocatoria.\n\nTienes adjunto el Perfil Estratégico de Empresa (Ruta i40), que contiene los datos generales de la empresa.\n\nPara este apartado, los datos que determinan si se obtienen los puntos son exclusivamente la ubicación física de los activos de inversión y su coincidencia con el listado del anexo IV. El bloque de datos adjunto a este prompt incluye:\n- El municipio donde se ubican los activos de la inversión.\n- La confirmación de si ese municipio figura o no en el anexo IV.\n- Los documentos acreditativos de esa ubicación.\n\nRedacta un texto breve (entre 100 y 200 palabras) que cumpla los siguientes requisitos:\n\n1. Identifica con precisión el municipio y la dirección concreta donde se ejecutará la inversión y quedarán instalados los activos subvencionables.\n2. Declara expresamente que dicho municipio figura en el anexo IV de la convocatoria como municipio prioritario para la reindustrialización por estar afectado por la despoblación o en riesgo de incurrir en ella.\n3. Relaciona los documentos acreditativos de la ubicación que se adjuntan a la solicitud, indicando de qué tipo de documento se trata.\n4. No añadas argumentación sobre el impacto social de la inversión ni sobre el arraigo de la empresa en el territorio: la puntuación es binaria y el evaluador únicamente comprueba la coincidencia con el listado del anexo IV. Una explicación adicional no suma puntos y puede diluir la claridad del texto.\n\nSi cualquier dato necesario para redactar el apartado no figura en el bloque de datos, señálalo con [DATO PENDIENTE: descripción] exactamente en el lugar del texto donde correspondería incluirlo. No inventes ningún dato, ni el municipio, ni la dirección, ni el tipo de documento acreditativo."
+    },
+    {
+      "codigo": "V.C",
+      "nombre": "Apoyo a proyectos sociales",
+      "puntos_max": 1,
+      "contexto_evaluador": "El baremo asigna 1 punto (pendiente de validación humana según el Knowledge Pack) a la acreditación de aportaciones económicas realizadas por la solicitante a proyectos o entidades sin ánimo de lucro destinadas a la atención de personas vulnerables, durante los ejercicios 2025 y 2026, hasta la fecha de presentación de la solicitud. Para obtener el punto, las aportaciones deben superar los 1.000 euros en total y acreditarse mediante certificados emitidos por las propias entidades beneficiarias, que deben justificar adecuadamente que se dedican a la atención de personas en situación de vulnerabilidad (mujeres víctimas de violencia de género, menores tutelados, mayores, inmigrantes, personas sin hogar, personas con diversidad funcional o discapacidad, minorías étnicas, exreclusos u otras categorías equivalentes). La ausencia o insuficiencia documental determina directamente 0 puntos, sin posibilidad de subsanación posterior.",
+      "requiere_calculo_rentabilidad": false,
+      "usa_tabla_inversiones": false,
+      "inputs": [
+        {
+          "id": "certificados-entidades-sin-animo-lucro",
+          "label": "Certificados emitidos por cada entidad sin ánimo de lucro receptora de la aportación",
+          "tipo": "documento",
+          "nivel": "minimo",
+          "ayuda": "Deben constar el importe recibido, la fecha, la identidad de la empresa donante y la naturaleza de la actividad de atención a personas vulnerables."
+        },
+        {
+          "id": "importe-total-aportaciones-desglose",
+          "label": "Importe total de las aportaciones realizadas en 2025 y 2026, desglosado por entidad y por fecha",
+          "tipo": "texto_libre",
+          "nivel": "minimo"
+        },
+        {
+          "id": "colectivo-vulnerable-identificacion",
+          "label": "Identificación del colectivo vulnerable al que se dirige cada entidad receptora",
+          "tipo": "texto_libre",
+          "nivel": "minimo"
+        },
+        {
+          "id": "documentacion-complementaria-naturaleza-social",
+          "label": "Documentación complementaria que refuerce la acreditación de la naturaleza social de la entidad",
+          "tipo": "documento",
+          "nivel": "completo",
+          "ayuda": "Estatutos, memoria de actividades o certificado de inscripción en el registro de entidades de la Comunitat Valenciana u otro registro oficial, si el certificado de la entidad no resulta suficientemente explícito."
+        }
+      ],
+      "documentos_requeridos": [
+        {
+          "nombre": "Certificados emitidos por cada entidad sin ánimo de lucro receptora de la aportación",
+          "fuente": "cliente"
+        },
+        {
+          "nombre": "Documentación complementaria que refuerce la acreditación de la naturaleza social de la entidad",
+          "fuente": "cliente"
+        }
+      ],
+      "prompt": "Redacta el apartado V.C de la memoria descriptiva, denominado \"Apoyo a proyectos sociales\". El baremo asigna 1 punto a este apartado, condicionado a la acreditación documental de aportaciones superiores a 1.000 euros realizadas a entidades sin ánimo de lucro dedicadas a la atención de personas vulnerables, durante los ejercicios 2025 y 2026 hasta la fecha de presentación de la solicitud.\n\nEl Perfil Estratégico de Empresa (documento Ruta i40) está adjunto como fuente principal de datos de la empresa.\n\nLos documentos específicos de este apartado que se adjuntan como fuente son los certificados emitidos por las entidades sin ánimo de lucro receptoras de las aportaciones, con el detalle de importes, fechas y actividad desarrollada.\n\nRedacta un texto de entre 150 y 300 palabras que cumpla los siguientes criterios:\n\n1. Identifica cada entidad sin ánimo de lucro que ha recibido una aportación, indicando su nombre, el importe recibido y la fecha o periodo de la aportación.\n2. Describe el colectivo vulnerable al que se dirige cada entidad, utilizando la terminología de los propios certificados aportados.\n3. Suma el importe total de las aportaciones y verifica explícitamente que supera los 1.000 euros, ya que ese es el umbral que da acceso al punto.\n4. Indica que los certificados acreditativos de cada aportación se adjuntan a la solicitud.\n5. No añadas valoraciones genéricas sobre la política de responsabilidad social de la empresa: ciñete a los hechos acreditados por los certificados.\n\nSi algún dato necesario no está disponible en las fuentes adjuntas, indícalo con el marcador [DATO PENDIENTE: descripción] en el lugar exacto del texto donde correspondería ese dato, sin inventarlo ni sustituirlo por una estimación."
+    }
+  ],
+  "tres_ofertas": {
+    "umbral": null,
+    "exencion_gasto_antes_resolucion": false,
+    "condiciones_exencion": ""
+  },
+  "parametros_convocatoria": [
+    {
+      "id": "inpyme26-limite-ingenieria-porcentaje",
+      "label": "Límite máximo de ingeniería industrial sobre el presupuesto subvencionable",
+      "valor": 15,
+      "unidad": "%",
+      "nota": "Con tope adicional absoluto, ver inpyme26-limite-ingenieria-euros."
+    },
+    {
+      "id": "inpyme26-limite-ingenieria-euros",
+      "label": "Límite máximo absoluto de ingeniería industrial",
+      "valor": 20000,
+      "unidad": "EUR"
+    }
+  ],
+  "documentos_convocatoria": [
+    {
+      "nombre": "Certificado de estar al corriente de obligaciones tributarias y con la Seguridad Social",
+      "fuente": "cliente",
+      "obligatorio": true
+    }
+  ],
+  "datos_aplicativo": []
+}

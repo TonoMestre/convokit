@@ -26,6 +26,7 @@ import resend
 import database as db
 import exporters
 import extractors
+import knowledge_pack as kp
 import output3_template
 import output6_template
 import pricing
@@ -1194,6 +1195,265 @@ def _generate_output_4(
 
 
 # ---------------------------------------------------------------------------
+# Modo i40 Knowledge Pack — genera el mismo objeto v2.5 que _generate_output_4,
+# pero con la normativa procedente de un i40_knowledge_pack en vez de los
+# documentos originales de la convocatoria (bases, convocatoria del ejercicio,
+# guía). Estos tres últimos NUNCA se cargan ni se pasan a este flujo.
+#
+# Reutiliza sin modificar: _drop_parent_sections, _dedupe_apartado_codigos,
+# _consolidate_campos_empresa, _consolidate_campos_proyecto, _instr_block,
+# _slice_context_for_section, _PASTE_PLACEHOLDER_RE. El objeto que produce se
+# pasa, sin ningún cambio, por exporters.export_output_4 (ver test_knowledge_pack_e2e.py).
+# ---------------------------------------------------------------------------
+
+_KP_EVIDENCE_HEADER_RE = re.compile(
+    r"\*\*QUÉ BUSCA EL EVALUADOR\*\*\s*\n(.*?)(?=\n\*\*QUÉ DEBES APORTAR|\n\*\*INSTRUCCIÓN|\Z)",
+    re.S,
+)
+
+
+def _generate_output_4_kp(
+    client: anthropic.Anthropic,
+    conv_name: str,
+    deliverable_documents_json: list,
+    knowledge_pack_raw: dict,
+    instrucciones: str = "",
+    model: str | None = None,
+    _track: Callable | None = None,
+    _progress_cb: Callable | None = None,
+) -> tuple[str, dict, dict]:
+    """
+    Genera la salida 4 en modo i40 Knowledge Pack. Devuelve (markdown, root_v25,
+    audit) donde `audit` es la auditoría interna de procedencia por apartado
+    (knowledge_pack.SectionProvenance.to_dict() por código) más la lista global
+    de knowledge_gaps — nunca se envía a MemorAI, solo sirve para "por qué
+    ConvoKit escribió esta instrucción" sin releer nada.
+
+    `deliverable_documents_json` debe contener EXCLUSIVAMENTE los documentos a
+    cumplimentar (plantilla_memoria, anexo con Excel de costes u otros
+    formularios operativos) — nunca bases_reguladoras, convocatoria ni
+    guia_convocante: en este modo esos tres no aportan normativa (la aporta el
+    Knowledge Pack) y no deben leerse.
+    """
+    model = model or pricing.MODEL_PER_OUTPUT[4]
+    pack = kp.parse_knowledge_pack(knowledge_pack_raw)
+
+    prohibited = {d.get("etiqueta") for d in deliverable_documents_json} & {
+        "bases_reguladoras", "convocatoria", "resolucion_anterior", "guia_convocante",
+    }
+    if prohibited:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "Modo Knowledge Pack: no se pueden cargar documentos normativos "
+                f"({', '.join(sorted(prohibited))}). La normativa procede solo del "
+                "Knowledge Pack; sube únicamente la plantilla de memoria y los "
+                "entregables operativos (Excel de costes, anexos a cumplimentar)."
+            ),
+        )
+
+    # Paso 1: estructura SOLO de los entregables (nunca puntuación ni criterios).
+    deliverable_context_full = extractors.build_context(deliverable_documents_json)
+    raw_sections = _claude(
+        client,
+        system=p.SECTION_STRUCTURE_EXTRACTOR_PROMPT_KP,
+        user=f"Documentos a cumplimentar para '{conv_name}':\n\n{deliverable_context_full}",
+        max_tokens=1500,
+        model=model,
+        _track=_track,
+    )
+    try:
+        secciones = _parse_json(raw_sections).get("secciones", [])
+    except Exception:
+        raise HTTPException(
+            status_code=502,
+            detail="No se pudo identificar la estructura de la memoria a partir de los entregables.",
+        )
+    if not secciones:
+        raise HTTPException(status_code=422, detail="No se encontraron apartados en los entregables.")
+
+    secciones = _drop_parent_sections(secciones)
+
+    header = (
+        f"# Set de prompts para la memoria — {conv_name} (modo i40 Knowledge Pack)\n\n"
+        "> **Nota de uso:** el conocimiento normativo de este set procede del i40 Knowledge Pack, "
+        "no de las bases/convocatoria/guía (no cargadas en este modo). El **Perfil Estratégico de "
+        "Empresa** (Ruta i40) sigue siendo la fuente principal de datos de empresa.\n\n---"
+    )
+    markdown_parts = [header]
+    apartados: list[dict] = []
+    datos_pedidos: list[dict] = []
+    audit: dict = {"knowledge_gaps": [], "sections": {}}
+
+    def _registro_block() -> str:
+        if not datos_pedidos:
+            return ""
+        return "\n\nDATOS YA PEDIDOS EN APARTADOS ANTERIORES DE ESTA MEMORIA:\n" + json.dumps(
+            datos_pedidos, ensure_ascii=False
+        )
+
+    for i, seccion in enumerate(secciones):
+        if i > 0:
+            time.sleep(5)
+
+        match = kp.match_section_to_knowledge(seccion["codigo"], seccion["nombre"], pack)
+        gaps = kp.compute_knowledge_gaps(match, expects_scoring=True)
+        provenance = kp.build_section_provenance(match, gaps)
+        audit["sections"][seccion["codigo"]] = provenance.to_dict()
+        audit["knowledge_gaps"].extend(g.__dict__ for g in gaps)
+
+        normative_context = kp.format_normative_context(match) or (
+            "(sin conocimiento normativo disponible en el Knowledge Pack para este apartado)"
+        )
+        deliverable_context = _slice_context_for_section(deliverable_documents_json)
+
+        user_msg = (
+            f"Convocatoria: {conv_name}\n"
+            f"Apartado: {seccion['codigo']} — {seccion['nombre']}\n\n"
+            f"NORMATIVE_CONTEXT (i40 Knowledge Pack):\n{normative_context}\n\n"
+            f"DELIVERABLE_CONTEXT (solo estructura, plantilla/Excel):\n{deliverable_context}"
+        )
+        user_msg += _registro_block()
+        user_msg += _instr_block(instrucciones)
+
+        raw_section = None
+        for attempt in range(3):
+            try:
+                raw_section = _claude(
+                    client, system=p.SECTION_PROMPT_SYSTEM_KP, user=user_msg,
+                    max_tokens=8192, model=model, _track=_track,
+                )
+                break
+            except Exception as exc:
+                if attempt < 2:
+                    time.sleep(15 * (attempt + 1))
+                else:
+                    raw_section = f"<!-- Error generando sección {seccion['codigo']}: {exc} -->"
+
+        if _PASTE_PLACEHOLDER_RE.search(raw_section):
+            raise HTTPException(
+                status_code=502,
+                detail=f"El apartado {seccion['codigo']} contiene un placeholder de copiar-pegar prohibido.",
+            )
+
+        markdown_parts.append(raw_section or "")
+
+        parsed_sec = None
+        json_error = "sin detalle"
+        for attempt in range(3):
+            try:
+                raw_json_sec = _claude(
+                    client, system=p.OUTPUT_4_JSON_EXTRACTOR, user=raw_section + _registro_block(),
+                    max_tokens=4096, model=pricing.MODELS["haiku"], _track=_track,
+                )
+                candidate = _parse_json(raw_json_sec)
+                if isinstance(candidate, dict):
+                    parsed_sec = candidate
+                    break
+                json_error = "la respuesta no era un objeto JSON"
+            except Exception as exc:
+                json_error = str(exc)
+            if attempt < 2:
+                time.sleep(5 * (attempt + 1))
+
+        if parsed_sec is None:
+            raise HTTPException(
+                status_code=502,
+                detail=f"No se pudo extraer el JSON del apartado {seccion['codigo']} tras 3 intentos ({json_error}).",
+            )
+
+        parsed_sec["codigo"] = seccion["codigo"]
+
+        if not (parsed_sec.get("contexto_evaluador") or "").strip():
+            ev_match = _KP_EVIDENCE_HEADER_RE.search(raw_section or "")
+            if ev_match and ev_match.group(1).strip():
+                parsed_sec["contexto_evaluador"] = ev_match.group(1).strip()
+
+        # IDs estables (punto 11): si un input del apartado corresponde a una
+        # entidad del Knowledge Pack (por solapamiento de tokens con su label),
+        # su id se fija al entity_id de esa entidad, no al slug del label — así
+        # dos redacciones distintas del mismo dato (label distinto, misma
+        # entidad normativa) resuelven al mismo id. Reutiliza el mecanismo del
+        # contrato v2.5 (inputs[].id); no crea uno paralelo.
+        usable = kp.usable_entities(match)
+        for inp in parsed_sec.get("inputs") or []:
+            best, best_score = None, 0.0
+            for entity in usable:
+                score = kp.label_similarity(inp.get("label", ""), entity.label)
+                if score > best_score:
+                    best, best_score = entity, score
+            if best is not None and best_score >= 0.34:
+                inp["id"] = kp.stable_input_id(best, inp.get("label", ""))
+
+        for inp in parsed_sec.get("inputs") or []:
+            if not isinstance(inp, dict):
+                continue
+            inp_id = inp.get("ref_campo_empresa") or inp.get("id") or ""
+            label = inp.get("label") or ""
+            if not inp_id or not label or any(r["id"] == inp_id for r in datos_pedidos):
+                continue
+            datos_pedidos.append({
+                "id": inp_id, "label": label, "tipo": inp.get("tipo") or "texto_libre",
+                "apartado": seccion["codigo"],
+            })
+
+        apartados.append(parsed_sec)
+        if _progress_cb:
+            _progress_cb(i + 1, len(secciones))
+
+    markdown = "\n\n---\n\n".join(markdown_parts)
+
+    _dedupe_apartado_codigos(apartados)
+    campos_empresa = _consolidate_campos_empresa(client, apartados, _track=_track)
+
+    # Ficha de la convocatoria: determinista, solo del Knowledge Pack. Nunca se
+    # vuelve a llamar a Claude para "descubrir" parámetros leyendo documentos.
+    # Va ANTES de consolidar campos_proyecto (igual que en _generate_output_4)
+    # para que el consolidador pueda fundir un dato pedido en un apartado con
+    # el mismo dato pedido en datos_aplicativo, no solo entre apartados.
+    parametros_convocatoria, tres_ofertas, documentos_convocatoria, datos_aplicativo, ficha_gaps = (
+        kp.build_ficha_from_pack(pack)
+    )
+    audit["knowledge_gaps"].extend(g.__dict__ for g in ficha_gaps)
+
+    campos_proyecto = _consolidate_campos_proyecto(client, apartados, datos_aplicativo, _track=_track)
+
+    meta = pack.convocatoria_metadata
+    for campo in ("anio", "organismo", "tipo_ayuda"):
+        if not meta.get(campo):
+            audit["knowledge_gaps"].append({
+                "codigo": "(convocatoria)", "kind": "missing_entity_type", "entity_type": "requirement",
+                "detail": f"El Knowledge Pack no trae convocatoria_metadata.{campo}; queda con el valor de escape del contrato.",
+            })
+
+    if not (conv_name or "").strip() or not apartados:
+        raise HTTPException(
+            status_code=502,
+            detail="Contenido mínimo incumplido (nombre de convocatoria o apartados vacíos).",
+        )
+
+    root = {
+        "version_esquema": "2.5",
+        "convocatoria": {
+            "nombre": conv_name,
+            "anio": meta.get("anio"),
+            "organismo": meta.get("organismo") or "",
+            "tipo_ayuda": meta.get("tipo_ayuda") or "otro",
+            "fecha_generacion": date.today().isoformat(),
+        },
+        "campos_empresa": campos_empresa,
+        "campos_proyecto": campos_proyecto,
+        "apartados": apartados,
+        "tres_ofertas": tres_ofertas,
+        "parametros_convocatoria": parametros_convocatoria,
+        "documentos_convocatoria": documentos_convocatoria,
+        "datos_aplicativo": datos_aplicativo,
+    }
+
+    return markdown, root, audit
+
+
+# ---------------------------------------------------------------------------
 # Generación de JSON de salida 5
 # ---------------------------------------------------------------------------
 
@@ -2085,6 +2345,133 @@ def get_output_json(convocatoria_id: int, output_num: int):
         return exporters.export_output_4(entregables[key])
     else:
         return exporters.export_output_5(entregables[key])
+
+
+# ---------------------------------------------------------------------------
+# Modo i40 Knowledge Pack — endpoints
+# ---------------------------------------------------------------------------
+# Ruta paralela a la generación documental de la salida 4, pensada para
+# convocatorias cuya normativa procede de un i40 Knowledge Pack en vez de
+# bases/convocatoria/guía. No toca los endpoints ni las claves de la salida 4
+# tradicional ("4", "4_json"): persiste bajo "4_kp", "4_kp_json", "4_kp_audit".
+# El objeto final pasa por el MISMO exporters.export_output_4 sin modificar.
+
+_KP_ENTREGABLE_KEY = "_i40_knowledge_pack"
+
+
+@app.post("/convocatorias/{convocatoria_id}/knowledge-pack")
+async def upload_knowledge_pack(
+    convocatoria_id: int,
+    file: Annotated[UploadFile, File(description="i40 Knowledge Pack (JSON)")],
+):
+    """Sube y valida un i40 Knowledge Pack. Se guarda aparte de documentos_json:
+    nunca se trata como texto documental ni entra en build_context/_slice_context_for_section."""
+    if db.get_convocatoria(convocatoria_id) is None:
+        raise HTTPException(status_code=404, detail="Convocatoria no encontrada.")
+
+    content = await file.read()
+    try:
+        raw = json.loads(content)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=400, detail=f"El Knowledge Pack no es JSON válido: {exc}")
+
+    try:
+        pack = kp.parse_knowledge_pack(raw)
+    except kp.KnowledgePackError as exc:
+        raise HTTPException(status_code=422, detail=f"Knowledge Pack inválido: {exc}")
+
+    db.update_entregables(convocatoria_id, {_KP_ENTREGABLE_KEY: json.dumps(raw, ensure_ascii=False)})
+
+    return {
+        "convocatoria_id": convocatoria_id,
+        "pack_id": pack.pack_id,
+        "convocatoria_ref": pack.convocatoria_ref,
+        "entities_count": len(pack.entities),
+        "entities_by_type": {
+            t: len(pack.by_type(t)) for t in sorted(kp.ENTITY_TYPES) if pack.by_type(t)
+        },
+        "entities_by_review_state": {
+            state: sum(1 for e in pack.entities if e.review_state == state)
+            for state in sorted(kp.REVIEW_STATES)
+        },
+    }
+
+
+class GenerateKPRequest(BaseModel):
+    instrucciones_adicionales: str = ""
+
+
+@app.post("/convocatorias/{convocatoria_id}/generate/kp")
+def generate_output_4_kp_endpoint(convocatoria_id: int, body: GenerateKPRequest):
+    """Genera la salida 4 en modo Knowledge Pack (síncrono: pensado para el
+    caso de prueba instrumentado, no para el volumen del modo tradicional)."""
+    conv = db.get_convocatoria(convocatoria_id)
+    if conv is None:
+        raise HTTPException(status_code=404, detail="Convocatoria no encontrada.")
+
+    raw_pack = conv["entregables_json"].get(_KP_ENTREGABLE_KEY)
+    if not raw_pack:
+        raise HTTPException(
+            status_code=422,
+            detail="Esta convocatoria no tiene un i40 Knowledge Pack subido. "
+                   "Usa POST /convocatorias/{id}/knowledge-pack primero.",
+        )
+
+    deliverable_docs = [
+        d for d in conv["documentos_json"]
+        if d.get("etiqueta") in ("plantilla_memoria", "anexo")
+    ]
+    if not deliverable_docs:
+        raise HTTPException(
+            status_code=422,
+            detail="Sube al menos la plantilla de memoria ('plantilla_memoria') "
+                   "o un entregable ('anexo') antes de generar en modo Knowledge Pack.",
+        )
+
+    client = _get_anthropic_client()
+    track = _make_tracker(convocatoria_id, "4_kp")
+
+    markdown, root, audit = _generate_output_4_kp(
+        client, conv["nombre"], deliverable_docs, json.loads(raw_pack),
+        instrucciones=body.instrucciones_adicionales, _track=track,
+    )
+
+    db.update_entregables(convocatoria_id, {
+        "4_kp": markdown,
+        "4_kp_json": json.dumps(root, ensure_ascii=False),
+        "4_kp_audit": json.dumps(audit, ensure_ascii=False),
+    })
+
+    return {
+        "convocatoria_id": convocatoria_id,
+        "apartados_generados": len(root["apartados"]),
+        "knowledge_gaps_count": len(audit["knowledge_gaps"]),
+    }
+
+
+@app.get("/convocatorias/{convocatoria_id}/json/4-kp")
+def get_output_4_kp_json(convocatoria_id: int):
+    conv = db.get_convocatoria(convocatoria_id)
+    if conv is None:
+        raise HTTPException(status_code=404, detail="Convocatoria no encontrada.")
+    entregables = conv["entregables_json"]
+    if "4_kp_json" not in entregables:
+        raise HTTPException(status_code=404, detail="La salida 4 en modo Knowledge Pack aún no ha sido generada.")
+    return exporters.export_output_4(entregables["4_kp_json"])
+
+
+@app.get("/convocatorias/{convocatoria_id}/audit/4-kp")
+def get_output_4_kp_audit(convocatoria_id: int):
+    """Auditoría interna de procedencia por apartado (knowledge_refs, evidence_refs,
+    knowledge_gaps, conflicts_used, unvalidated_knowledge_used). Nunca se envía a
+    MemorAI; existe para responder 'por qué ConvoKit escribió esta instrucción'."""
+    conv = db.get_convocatoria(convocatoria_id)
+    if conv is None:
+        raise HTTPException(status_code=404, detail="Convocatoria no encontrada.")
+    entregables = conv["entregables_json"]
+    if "4_kp_audit" not in entregables:
+        raise HTTPException(status_code=404, detail="No hay auditoría disponible: genera primero en modo Knowledge Pack.")
+    return json.loads(entregables["4_kp_audit"])
 
 
 # ---------------------------------------------------------------------------

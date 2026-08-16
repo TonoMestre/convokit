@@ -689,6 +689,67 @@ bases incrustadas, descarta placeholders de la lista negra ("no aplica", "ya inc
 `ref_campo_proyecto` → una sola entrada, v2.5), normaliza `documentos_convocatoria` y
 garantiza `tres_ofertas` bien tipado (umbral numérico o null).
 
+## Modo i40 Knowledge Pack (experimental, rama `feature/i40-knowledge-pack-mode`)
+
+Ruta alternativa de generación de la salida 4 en la que la normativa (puntos, subcriterios,
+umbrales, exclusiones, límites, reglas de coste, documentación exigida, reglas
+procedimentales) no procede de los documentos originales de la convocatoria (bases,
+convocatoria del ejercicio, guía), sino de un **i40 Knowledge Pack** ya extraído y
+clasificado por i40 Analiza. ConvoKit sigue leyendo directamente la plantilla oficial de
+memoria y los entregables a cumplimentar (Excel de costes, anexos operativos) para obtener
+ESTRUCTURA (códigos, nombres, orden, tablas), nunca normativa. MemorAI no cambia: sigue
+recibiendo exactamente el mismo objeto v2.5, por el mismo `exporters.export_output_4` sin
+modificar. Detalle completo, decisiones y limitaciones en
+`analysis/i40-knowledge-pack-mode/00_DELIVERY_REPORT.md`.
+
+- `backend/knowledge_pack.py` — modelo interno: parseo estricto del Knowledge Pack
+  (`parse_knowledge_pack`), matching determinista apartado↔conocimiento por solapamiento
+  de tokens (`match_section_to_knowledge`, sin llamada a Claude, auditable), detección de
+  huecos ANTES de generar (`compute_knowledge_gaps`, nunca los decide el modelo), ficha de
+  convocatoria determinista a partir del pack (`build_ficha_from_pack`, sin volver a leer
+  documentos con IA), ids estables de input reutilizando el mecanismo ya existente del
+  contrato v2.5 (`inputs[].id`, distinto de `label`) y auditoría de procedencia por
+  apartado (`SectionProvenance`, interna, nunca se envía a MemorAI).
+- Dos ejes de estado por hecho normativo, independientes: `evidence_status` (vocabulario
+  real de i40 Analiza: `pending | accredited | inferred | not_provided | not_located |
+  not_published | not_evaluated | not_evaluable | not_applicable | conflict | operational |
+  provider_output_failed`) y `review_state` (`human_validated | unvalidated`, propio de
+  este modo). `human_validated` es verdad normativa canónica; `accredited` sin validar se
+  puede usar pero queda marcado con una nota de cautela en el prompt; `conflict` nunca se
+  eleva a hecho categórico (se registra el gap, se preservan las versiones); `not_located`
+  es "desconocido", nunca "no existe" — no genera un `false`/`0`/"no aplica" silencioso.
+- `backend/prompts.py`: `SECTION_STRUCTURE_EXTRACTOR_PROMPT_KP` (extrae codigo/nombre/orden
+  de la plantilla y el Excel, con prohibición explícita de extraer o mencionar puntuaciones
+  aunque el texto las contenga) y `SECTION_PROMPT_SYSTEM_KP` (redacta el apartado recibiendo
+  `NORMATIVE_CONTEXT`, exclusivamente del Knowledge Pack, y `DELIVERABLE_CONTEXT`, solo
+  estructura de la plantilla/Excel, con instrucción reforzada de que un número de
+  puntuación visible en `DELIVERABLE_CONTEXT` que no esté en `NORMATIVE_CONTEXT` "no existe"
+  para esa llamada).
+- `backend/main.py::_generate_output_4_kp` orquesta el pipeline completo reutilizando sin
+  modificar `_drop_parent_sections`, `_dedupe_apartado_codigos`, `_consolidate_campos_empresa`,
+  `_consolidate_campos_proyecto`, `_slice_context_for_section`, `_instr_block`,
+  `_PASTE_PLACEHOLDER_RE` y `OUTPUT_4_JSON_EXTRACTOR`. Rechaza con HTTP 422, antes de llamar
+  a Claude ni una vez, si se cargan documentos `bases_reguladoras` / `convocatoria` /
+  `resolucion_anterior` / `guia_convocante` (esos tres nunca deben cargarse en este modo).
+- Endpoints nuevos, sin tocar los existentes: `POST /convocatorias/{id}/knowledge-pack`
+  (sube y valida el pack; nunca entra en `documentos_json` ni en `build_context`/
+  `_slice_context_for_section`, se guarda aparte en `entregables_json["_i40_knowledge_pack"]`),
+  `POST /convocatorias/{id}/generate/kp`, `GET /convocatorias/{id}/json/4-kp` (mismo
+  `exporters.export_output_4`, sin cambios) y `GET /convocatorias/{id}/audit/4-kp` (la
+  auditoría interna de procedencia, nunca se envía a MemorAI).
+- Tests: `backend/tests/test_knowledge_pack.py` (20, unidad pura del modelo interno) y
+  `backend/tests/test_knowledge_pack_e2e.py` (4, pipeline completo con `main._claude`
+  monkeypatcheado, sin red — incluye una validación de solo lectura contra
+  `MemorAI/backend/app/services/convokit_validator.py`, que se salta si ese repo no está
+  presente en la máquina).
+- Limitación conocida: `expects_scoring` en `compute_knowledge_gaps` se pasa siempre en
+  `True` en `_generate_output_4_kp` — saber si un apartado puntúa es en sí mismo
+  conocimiento normativo, así que no puede derivarse de la estructura del entregable sin
+  el Knowledge Pack; para apartados genuinamente sin baremo esto puede sobre-señalar un
+  gap de tipo `missing_entity_type` que en realidad no aplica. No se ha resuelto para no
+  inferirlo de la plantilla, que sería exactamente la reinterpretación normativa prohibida
+  por el punto 4 del encargo.
+
 ## Las dos apps (importante)
 
 ConvoKit es la primera de dos aplicaciones. La segunda (App de Memorias) redacta memorias

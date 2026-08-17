@@ -332,44 +332,73 @@ class SectionMatch:
 # puede tener varios subcriterios y que uno de ellos sea 'not_applicable' no
 # dice nada sobre si el apartado en su conjunto puntúa — el peso se
 # redistribuye entre los demás, la puntuación del bloque sigue existiendo.
+# Esta lectura queda descartada definitivamente: 'not_scored' NUNCA se deriva
+# de 'not_applicable', de la ausencia de 'criterion', de la plantilla ni de
+# DELIVERABLE_CONTEXT — solo de la señal explícita del ajuste 4 (abajo).
 #
-# 'not_scored' solo debería producirse cuando el Knowledge Pack contiene una
-# afirmación EXPLÍCITA y UTILIZABLE equivalente a "este apartado no puntúa"
-# (no puntuable / informativo / criterio habilitante sin puntos, o un
-# atributo estructurado que lo declare). El modelo interno actual (entities
-# con entity_type/evidence_status/review_state, sin ningún campo de scoring
-# a nivel de apartado) no tiene ninguna forma de representar eso sin
-# ambigüedad. Añadir un campo nuevo solo para esto ampliaría el modelo del
-# Knowledge Pack más allá de lo que este ajuste pide resolver.
-#
-# Por eso, en esta iteración: 'scored' se mantiene igual (criterion usable
-# con valor); todo lo demás es 'unknown', incluida una entidad 'criterion'
-# 'not_applicable' en solitario. 'not_scored' queda RESERVADO en el tipo y en
-# la lógica de compute_knowledge_gaps (que ya lo trata correctamente si algún
-# día se le pasa), pero compute_scoring_expectation NUNCA lo produce todavía
-# — es preferible no inferir nada a inferir algo semánticamente incorrecto.
+# Ajuste 4 (desarrollo local del baremo completo de INPYME 2026 en i40): el
+# adaptador real de i40, `to_convokit_pack` (services/worker/src/i40_worker/
+# application_knowledge/export.py), SÍ declara "este apartado no puntúa" de
+# forma explícita, trazable y ya presente en el modelo interno actual — no
+# hace falta ampliar el contrato. Cuando la entidad de origen trae
+# `scoring_status="not_scored"` (con independencia de `is_exclusionary`, que
+# es una señal ortogonal: un apartado puede ser excluyente sin dejar de
+# puntuar, o no puntuar sin ser excluyente — ver `_maybe_exclusion_entity` en
+# el adaptador), i40 emite una entidad plana con:
+#   entity_type = "exclusion"   (ya forma parte de ENTITY_TYPES, sin cambios)
+#   value = {"scoring_status": "not_scored", "is_exclusionary": bool,
+#             "requirement_text": "..."}
+# Caso real confirmado, apartado 0 de INPYME 2026 ("Justificación de la
+# vinculación de la PYME industrial con el sector... no puntuable pero sí
+# excluyente en caso de insuficiencia"): `to_convokit_pack` emite exactamente
+# esa forma, con `evidence_status="accredited"`. `_usable_exclusion_scoring_statuses`
+# (abajo) lee ese campo — nunca `is_exclusionary` por sí solo, que NO implica
+# "no puntúa": una entidad 'exclusion' que sea excluyente pero no traiga
+# `scoring_status="not_scored"` (o cuyo valor no sea un dict con ese campo)
+# no produce ninguna señal aquí y el apartado sigue evaluándose como antes.
 
 ScoringExpectation = Literal["scored", "not_scored", "unknown"]
 
 
+def _usable_exclusion_scoring_statuses(section_match: SectionMatch) -> set[str]:
+    """Valores de `value['scoring_status']` de las entidades 'exclusion'
+    emparejadas que son UTILIZABLES (canónicas o accredited-sin-validar).
+    Una entidad 'exclusion' en conflicto o missing (is_conflict()/is_missing())
+    ya queda excluida por no ser ni canónica ni accredited-sin-validar — su
+    señal nunca se convierte en hecho firme, igual que para 'criterion'."""
+    statuses: set[str] = set()
+    for entity in section_match.by_type("exclusion"):
+        if not (entity.is_canonical() or entity.is_usable_but_unvalidated()):
+            continue
+        if isinstance(entity.value, dict):
+            status = entity.value.get("scoring_status")
+            if status:
+                statuses.add(status)
+    return statuses
+
+
 def compute_scoring_expectation(section_match: SectionMatch) -> ScoringExpectation:
     """
-    Deriva si el apartado puntúa exclusivamente de las entidades 'criterion'
-    emparejadas del Knowledge Pack. Nunca lee la plantilla, el Excel ni ningún
-    otro entregable.
+    Deriva si el apartado puntúa exclusivamente de las entidades del Knowledge
+    Pack ya emparejadas. Nunca lee la plantilla, el Excel ni ningún otro
+    entregable.
 
     - 'scored': hay al menos una entidad 'criterion' usable (canónica o
-      accreditada-sin-validar) con un valor real.
-    - 'unknown' en cualquier otro caso: sin entidad 'criterion' emparejada,
-      solo entidades en conflicto, solo entidades missing (not_located/
-      not_provided), o solo entidades 'not_applicable' (que NO equivale a
-      "no puntúa": ver nota de ajuste 2 arriba). Un 'criterion' en conflicto
-      NUNCA convierte el apartado en 'scored' de forma firme, aunque una de
-      sus versiones contradictorias tenga puntos.
-    - 'not_scored': reservado. Esta función nunca lo devuelve hoy — no existe
-      todavía en el modelo interno una señal explícita e inequívoca de "este
-      apartado no puntúa" que no sea inventarla. Queda preparado para cuando
-      un Knowledge Pack real la declare de forma estructurada.
+      accreditada-sin-validar) con un valor real. Se comprueba primero: un
+      'criterion' puntuable manda sobre cualquier señal 'exclusion' que
+      pudiera coincidir en el mismo apartado.
+    - 'not_scored': sin 'criterion' usable, pero TODAS las entidades
+      'exclusion' usables que declaran `scoring_status` coinciden en
+      "not_scored" (ver ajuste 4 arriba). Si hay más de un valor distinto
+      entre ellas (una entidad usable dice 'not_scored' y otra usable dice
+      otra cosa), la señal está en desacuerdo y NUNCA se eleva a hecho firme
+      — se trata como 'unknown', igual que un 'criterion' en conflicto nunca
+      se convierte en 'scored' firme aunque una de sus versiones tenga puntos.
+    - 'unknown' en cualquier otro caso: sin entidad 'criterion' ni señal
+      'exclusion' usable, solo entidades en conflicto, solo entidades missing
+      (not_located/not_provided), señales 'exclusion' en desacuerdo, o solo
+      entidades 'not_applicable' (que NO equivale a "no puntúa": ver ajuste 2
+      arriba).
     """
     criteria = section_match.by_type("criterion")
 
@@ -379,6 +408,10 @@ def compute_scoring_expectation(section_match: SectionMatch) -> ScoringExpectati
     ]
     if scored_entities:
         return "scored"
+
+    exclusion_statuses = _usable_exclusion_scoring_statuses(section_match)
+    if exclusion_statuses == {"not_scored"}:
+        return "not_scored"
 
     return "unknown"
 
@@ -455,13 +488,11 @@ def compute_knowledge_gaps(
       - 'scored': se exige una entidad 'criterion' utilizable; si falta, gap
         'missing_entity_type' (comportamiento idéntico al `expects_scoring=True`
         anterior).
-      - 'not_scored': no se exige ningún 'criterion' (el pack ya afirma que
-        este apartado no puntúa); no se genera 'missing_entity_type' por su
-        ausencia. Reservado: `compute_scoring_expectation` no produce este
-        valor todavía (ver ajuste 2 — 'not_applicable' NO equivale a "no
-        puntúa"), pero si algún día se le pasa explícitamente (un futuro
-        Knowledge Pack real con una señal estructurada), esta función ya lo
-        trata correctamente.
+      - 'not_scored': no se exige ningún 'criterion' (el pack ya afirma
+        explícitamente, vía una entidad 'exclusion' usable con
+        `value.scoring_status == "not_scored"` — ver ajuste 4 en
+        `compute_scoring_expectation` —, que este apartado no puntúa); no se
+        genera 'missing_entity_type' por su ausencia.
       - 'unknown': tampoco se exige 'criterion' — asumirlo sería la misma
         inferencia no respaldada que este endurecimiento evita — y en su
         lugar se registra un gap explícito 'scoring_status_unknown'. Este es
@@ -511,13 +542,15 @@ def compute_knowledge_gaps(
             codigo=section_match.codigo, kind="scoring_status_unknown",
             detail=(
                 f"El Knowledge Pack no permite determinar si {section_match.codigo} puntúa: no hay "
-                "ninguna entidad 'criterion' utilizable ni ninguna marcada 'not_applicable'. No se "
-                "asume ni 'scored' ni 'not_scored', y no se infiere de la plantilla ni del Excel."
+                "ninguna entidad 'criterion' utilizable, ni ninguna entidad 'exclusion' usable que "
+                "declare `scoring_status` de forma unánime. No se asume ni 'scored' ni 'not_scored', "
+                "y no se infiere de la plantilla ni del Excel."
             ),
         ))
-    # scoring_expectation == "not_scored": el pack ya afirma que este apartado
-    # no puntúa (entidad 'criterion' con evidence_status 'not_applicable');
-    # no se exige ni se echa en falta ninguna puntuación.
+    # scoring_expectation == "not_scored": el pack ya afirma explícitamente,
+    # vía una entidad 'exclusion' usable con value.scoring_status="not_scored"
+    # (ajuste 4), que este apartado no puntúa; no se exige ni se echa en
+    # falta ninguna puntuación.
 
     for entity in section_match.entities():
         if entity.is_conflict():

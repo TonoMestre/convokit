@@ -757,23 +757,24 @@ class TestScoringExpectation(unittest.TestCase):
         self.assertNotIn("missing_entity_type", kinds)
         self.assertIn("scoring_status_unknown", kinds)
 
-    def test_14_not_scored_reservado_pero_nunca_inferido_hoy(self):
-        """No existe hoy en el modelo interno (entity_type/evidence_status/
-        review_state) ninguna señal explícita e inequívoca de 'este apartado
-        no puntúa' que no sea inventarla — ni siquiera con el criterion
-        'not_applicable' más fuerte posible (human_validated). Por eso
-        compute_scoring_expectation NUNCA devuelve 'not_scored' en esta
-        iteración: queda reservado en el tipo y compute_knowledge_gaps ya lo
-        trata correctamente (sin exigir 'criterion', sin scoring_status_unknown)
-        para cuando un Knowledge Pack real lo declare de forma estructurada."""
+    def test_14_criterion_not_applicable_en_solitario_sigue_siendo_unknown(self):
+        """No existe ninguna señal explícita e inequívoca de 'este apartado no
+        puntúa' en un criterion 'not_applicable', ni siquiera con el más
+        fuerte posible (human_validated) — 'not_applicable' es un hecho sobre
+        ESE criterio concreto, no sobre el apartado (ver ajuste 2). Esta
+        lectura queda descartada DEFINITIVAMENTE, incluso tras el ajuste 4
+        (ver TestNotScoredSignal): 'not_scored' solo se deriva de una entidad
+        'exclusion' usable con `value.scoring_status == "not_scored"`, nunca
+        de un criterion 'not_applicable'."""
         pack = kp.parse_knowledge_pack(_pack([
             _entity(evidence_status="not_applicable", review_state="human_validated", value=None),
         ]))
         match = kp.match_section_to_knowledge("II.B", "Viabilidad económica de la inversión", pack)
         self.assertEqual(kp.compute_scoring_expectation(match), "unknown")
-        # uso futuro reservado: si se pasara "not_scored" a mano, la lógica de
-        # gaps ya está preparada, aunque compute_scoring_expectation no lo
-        # produzca todavía por sí sola.
+        # compute_knowledge_gaps ya trataba 'not_scored' correctamente incluso
+        # antes de que compute_scoring_expectation pudiera producirlo (sin
+        # exigir 'criterion', sin scoring_status_unknown) — se verifica aquí
+        # pasándolo explícitamente, independiente de este fixture concreto.
         gaps = kp.compute_knowledge_gaps(match, "not_scored")
         kinds = {g.kind for g in gaps}
         self.assertNotIn("missing_entity_type", kinds)
@@ -803,6 +804,244 @@ class TestScoringExpectation(unittest.TestCase):
         import inspect
         params = inspect.signature(kp.compute_scoring_expectation).parameters
         self.assertEqual(list(params), ["section_match"])
+
+
+def _exclusion_entity(**overrides) -> dict:
+    """Entidad 'exclusion' con la forma exacta que emite el adaptador real de
+    i40, `to_convokit_pack` (services/worker/src/i40_worker/application_knowledge
+    /export.py, vía `_maybe_exclusion_entity`): `value` es un dict con
+    `scoring_status`/`is_exclusionary`/`requirement_text`. Caso base = apartado
+    0 de INPYME 2026, confirmado contra el test real de i40
+    (`test_scoring_status_not_scored_and_exclusionary_for_apartado_0`)."""
+    base = {
+        "entity_id": "apartado-0.exclusion",
+        "entity_type": "exclusion",
+        "section_ref": "0 Justificación de la vinculación de la PYME industrial con el sector",
+        "label": "Justificación de la vinculación con el sector (excluyente, no puntuable)",
+        "value": {
+            "scoring_status": "not_scored",
+            "is_exclusionary": True,
+            "requirement_text": (
+                "La insuficiente justificación en la memoria de la vinculación directa, o la no "
+                "presentación o no constancia expresa de CNAE, conllevará la inmediata inadmisión "
+                "de la solicitud y la exclusión de su baremación."
+            ),
+        },
+        "evidence_status": "accredited",
+        "review_state": "human_validated",
+        "evidence_refs": [{"document_id": "F88114", "quote": "no puntuable pero sí excluyente", "section": "0"}],
+    }
+    base.update(overrides)
+    return base
+
+
+class TestNotScoredSignal(unittest.TestCase):
+    """Ajuste 4 (desarrollo local del baremo completo de INPYME 2026 en i40):
+    `compute_scoring_expectation` ahora produce 'not_scored' cuando el
+    Knowledge Pack trae una entidad 'exclusion' usable con
+    `value.scoring_status == "not_scored"` — la forma exacta que ya emite el
+    adaptador real de i40 `to_convokit_pack` (`_maybe_exclusion_entity`).
+    'not_applicable' / ausencia de criterion / plantilla / DELIVERABLE_CONTEXT
+    siguen sin ser fuentes válidas de 'not_scored' (eso quedó descartado en el
+    ajuste 2, ver TestScoringExpectation.test_14)."""
+
+    # --- casos numerados 1-9 del encargo ----------------------------------
+
+    def test_1_senal_explicita_usable_not_scored_produce_not_scored(self):
+        pack = kp.parse_knowledge_pack(_pack([_exclusion_entity()]))
+        match = kp.match_section_to_knowledge(
+            "0", "Justificación de la vinculación de la PYME industrial con el sector", pack
+        )
+        self.assertEqual(kp.compute_scoring_expectation(match), "not_scored")
+
+    def test_2_not_scored_no_genera_missing_criterion(self):
+        pack = kp.parse_knowledge_pack(_pack([_exclusion_entity()]))
+        match = kp.match_section_to_knowledge(
+            "0", "Justificación de la vinculación de la PYME industrial con el sector", pack
+        )
+        gaps = kp.compute_knowledge_gaps(match, kp.compute_scoring_expectation(match))
+        self.assertNotIn("missing_entity_type", {g.kind for g in gaps})
+
+    def test_3_not_scored_no_genera_scoring_status_unknown(self):
+        pack = kp.parse_knowledge_pack(_pack([_exclusion_entity()]))
+        match = kp.match_section_to_knowledge(
+            "0", "Justificación de la vinculación de la PYME industrial con el sector", pack
+        )
+        gaps = kp.compute_knowledge_gaps(match, kp.compute_scoring_expectation(match))
+        self.assertNotIn("scoring_status_unknown", {g.kind for g in gaps})
+
+    def test_4_not_scored_nunca_inventa_score_max_cero(self):
+        """Ni compute_scoring_expectation ni compute_knowledge_gaps producen
+        ningún valor numérico: 'no puntuable' no se traduce nunca en
+        puntos_max=0. Se comprueba en dos niveles: (a) el resultado es un
+        string, no un número ni un dict con score; (b) no se fabrica ninguna
+        entidad 'criterion' — by_type('criterion') sigue vacío — así que
+        aguas abajo no hay ningún 'puntos_max' de origen sintético que
+        pudiera colarse como 0."""
+        pack = kp.parse_knowledge_pack(_pack([_exclusion_entity()]))
+        match = kp.match_section_to_knowledge(
+            "0", "Justificación de la vinculación de la PYME industrial con el sector", pack
+        )
+        scoring_expectation = kp.compute_scoring_expectation(match)
+        self.assertEqual(scoring_expectation, "not_scored")
+        self.assertIsInstance(scoring_expectation, str)
+        self.assertEqual(match.by_type("criterion"), [])
+        gaps = kp.compute_knowledge_gaps(match, scoring_expectation)
+        for gap in gaps:
+            self.assertNotIn("puntos_max", gap.detail)
+            self.assertNotIn("score_max", gap.detail)
+
+    def test_5_exclusionary_y_not_scored_pueden_coexistir(self):
+        """Son señales ortogonales (is_exclusionary no implica ni excluye
+        scoring_status): el caso real de INPYME confirma que coexisten, y
+        format_normative_context sigue exponiendo ambas — se conserva la
+        naturaleza excluyente del conocimiento, no solo el 'no puntúa'."""
+        pack = kp.parse_knowledge_pack(_pack([_exclusion_entity()]))
+        match = kp.match_section_to_knowledge(
+            "0", "Justificación de la vinculación de la PYME industrial con el sector", pack
+        )
+        entity = pack.entities[0]
+        self.assertTrue(entity.value["is_exclusionary"])
+        self.assertEqual(entity.value["scoring_status"], "not_scored")
+        self.assertEqual(kp.compute_scoring_expectation(match), "not_scored")
+        ctx = kp.format_normative_context(match)
+        self.assertIn("is_exclusionary", ctx)
+        self.assertIn("not_scored", ctx)
+
+    def test_6_evidence_status_not_applicable_por_si_solo_sigue_dando_unknown(self):
+        """Descartado en el ajuste 2, reconfirmado tras el ajuste 4: un
+        criterion 'not_applicable' (sin ninguna entidad 'exclusion' con
+        scoring_status) nunca produce 'not_scored'."""
+        pack = kp.parse_knowledge_pack(_pack([
+            _entity(evidence_status="not_applicable", review_state="human_validated", value=None),
+        ]))
+        match = kp.match_section_to_knowledge("II.B", "Viabilidad económica de la inversión", pack)
+        self.assertEqual(kp.compute_scoring_expectation(match), "unknown")
+
+    def test_7_ausencia_de_criterion_y_de_senal_explicita_sigue_dando_unknown(self):
+        pack = kp.parse_knowledge_pack(_pack([
+            _entity(entity_type="documentation", label="Certificado exigido", value="x"),
+        ]))
+        match = kp.match_section_to_knowledge("II.B", "Viabilidad económica de la inversión", pack)
+        self.assertEqual(kp.compute_scoring_expectation(match), "unknown")
+
+    def test_8_conflict_sobre_la_senal_de_scoring_da_unknown(self):
+        """Una entidad 'exclusion' en conflicto (evidence_status='conflict')
+        nunca es ni canónica ni accredited-sin-validar — is_conflict() la
+        excluye de 'usable' exactamente igual que para 'criterion' — así que
+        su señal de scoring_status nunca se eleva a 'not_scored' firme."""
+        pack = kp.parse_knowledge_pack(_pack([
+            _exclusion_entity(
+                value=None,
+                evidence_status="conflict",
+                review_state="unvalidated",
+                conflicting_values=[
+                    {"scoring_status": "not_scored", "is_exclusionary": True},
+                    {"scoring_status": "scored", "is_exclusionary": True},
+                ],
+            ),
+        ]))
+        match = kp.match_section_to_knowledge(
+            "0", "Justificación de la vinculación de la PYME industrial con el sector", pack
+        )
+        self.assertEqual(kp.compute_scoring_expectation(match), "unknown")
+
+    def test_9_criterion_puntuable_normal_sigue_dando_scored(self):
+        pack = kp.parse_knowledge_pack(_pack([_entity(value={"puntos_max": 4})]))
+        match = kp.match_section_to_knowledge("II.B", "Viabilidad económica de la inversión", pack)
+        self.assertEqual(kp.compute_scoring_expectation(match), "scored")
+
+    # --- caso 10-11: fixture completo real de INPYME 2026 (18 apartados) --
+
+    # code, nombre real (F88114.docx — backend/tests/fixtures/f88114_deliverable_context.txt)
+    _INPYME_SECTIONS = [
+        ("0", "Justificación de la vinculación de la PYME industrial con el sector"),
+        ("I.A", "Antecedentes y evolución"),
+        ("I.B", "Actividades actuales de la empresa"),
+        ("I.C", "Experiencia en la actividad proyectada"),
+        ("II.A", "Estrategia empresarial y motivos de la inversión"),
+        ("II.B", "Viabilidad económica de la inversión"),
+        ("II.C", "Descripción técnica del proyecto"),
+        ("II.D", "Adecuación de los recursos"),
+        ("II.E", "Plan de trabajo"),
+        ("III.A", "Impacto en la competitividad o la productividad"),
+        ("III.B", "Innovación de los procesos o en los productos"),
+        ("III.C", "Diversificación de productos o apertura de nuevos mercados o clientes"),
+        ("IV.A", "Inversiones que impliquen una reducción sustancial del consumo de energía, agua o materias primas"),
+        ("IV.B", "Inversiones que impliquen una reducción sustancial de residuos o contaminantes, o la implantación de economía circular"),
+        ("IV.C", "Inversiones que impliquen reducir la huella de carbono"),
+        ("V.A", "Creación de empleo"),
+        ("V.B", "Lucha contra despoblación"),
+        ("V.C", "Apoyo a proyectos sociales"),
+    ]
+    # puntos_max reales del baremo (F88114.docx, "Máximo N puntos" de cada apartado)
+    _INPYME_POINTS = {
+        "I.A": 4, "I.B": 1, "I.C": 3,
+        "II.A": 6, "II.B": 4, "II.C": 40, "II.D": 3, "II.E": 2,
+        "III.A": 4, "III.B": 4, "III.C": 4,
+        "IV.A": 4, "IV.B": 4, "IV.C": 4,
+        "V.A": 2, "V.B": 10, "V.C": 1,
+    }
+
+    @classmethod
+    def _build_inpyme_full_pack(cls) -> "kp.KnowledgePack":
+        entities = []
+        for codigo, nombre in cls._INPYME_SECTIONS:
+            section_ref = f"{codigo} {nombre}"
+            if codigo == "0":
+                entities.append(_exclusion_entity(section_ref=section_ref))
+                continue
+            slug = codigo.lower().replace(".", "")
+            entities.append(_entity(
+                entity_id=f"{slug}-criterion", section_ref=section_ref,
+                label=f"Puntuación de {codigo}", value={"puntos_max": cls._INPYME_POINTS[codigo]},
+                evidence_refs=[{"document_id": "F88114", "quote": f"{cls._INPYME_POINTS[codigo]} puntos", "section": codigo}],
+            ))
+        return kp.parse_knowledge_pack(_pack(entities))
+
+    def test_10_apartado_0_real_inpyme_strong_not_scored_cero_gaps(self):
+        pack = self._build_inpyme_full_pack()
+        match = kp.match_section_to_knowledge(
+            "0", "Justificación de la vinculación de la PYME industrial con el sector", pack
+        )
+        self.assertEqual(match.match_state, "strong")
+        scoring_expectation = kp.compute_scoring_expectation(match)
+        self.assertEqual(scoring_expectation, "not_scored")
+        self.assertEqual(kp.compute_knowledge_gaps(match, scoring_expectation), [])
+        # se conserva la naturaleza excluyente, no se pierde al resolver not_scored
+        self.assertTrue(match.by_type("exclusion")[0].value["is_exclusionary"])
+
+    def test_11_otros_17_apartados_strong_scored_cero_gaps(self):
+        pack = self._build_inpyme_full_pack()
+        for codigo, nombre in self._INPYME_SECTIONS:
+            if codigo == "0":
+                continue
+            match = kp.match_section_to_knowledge(codigo, nombre, pack)
+            with self.subTest(codigo=codigo):
+                self.assertEqual(match.match_state, "strong")
+                scoring_expectation = kp.compute_scoring_expectation(match)
+                self.assertEqual(scoring_expectation, "scored")
+                self.assertEqual(kp.compute_knowledge_gaps(match, scoring_expectation), [])
+
+    def test_tabla_18_apartados_inpyme(self):
+        """Tabla completa code/match_state/scoring_expectation/knowledge_gaps
+        de los 18 apartados, en una sola pasada — la misma tabla que se
+        entrega en el informe."""
+        pack = self._build_inpyme_full_pack()
+        rows = []
+        for codigo, nombre in self._INPYME_SECTIONS:
+            match = kp.match_section_to_knowledge(codigo, nombre, pack)
+            scoring_expectation = kp.compute_scoring_expectation(match)
+            gaps = kp.compute_knowledge_gaps(match, scoring_expectation)
+            rows.append((codigo, match.match_state, scoring_expectation, [g.kind for g in gaps]))
+
+        self.assertEqual(len(rows), 18)
+        for codigo, match_state, scoring_expectation, gap_kinds in rows:
+            with self.subTest(codigo=codigo):
+                self.assertEqual(match_state, "strong")
+                self.assertEqual(gap_kinds, [])
+                expected = "not_scored" if codigo == "0" else "scored"
+                self.assertEqual(scoring_expectation, expected)
 
 
 if __name__ == "__main__":

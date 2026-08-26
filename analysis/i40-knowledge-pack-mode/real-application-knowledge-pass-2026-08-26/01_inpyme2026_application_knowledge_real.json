@@ -1,0 +1,2135 @@
+{
+  "schema": "i40-application-knowledge-pack/0.1",
+  "analysis": {
+    "id": "c5bb1aa0-20c3-4f65-8a95-62607622140a",
+    "title": "INPYME 2026",
+    "public_body": "Conselleria Industria",
+    "call_year": 2026,
+    "corpus_status": "sufficient_with_reservations",
+    "status": "evaluation_review"
+  },
+  "documents": [
+    {
+      "id": "5bbbc366-db96-4b17-a67a-e72154f4e8d6",
+      "logical_title": "2026_24611_es resolución.pdf",
+      "document_type": "award_resolution",
+      "binding_level": "binding",
+      "hierarchy_rank": 2
+    },
+    {
+      "id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+      "logical_title": "2026_4406_es.pdf",
+      "document_type": "call",
+      "binding_level": "binding",
+      "hierarchy_rank": 2
+    },
+    {
+      "id": "fec1f3b9-4ff8-423f-bd80-c03ebe7da09e",
+      "logical_title": "2026_23868_es_redistribucion presupuestaria.pdf",
+      "document_type": "award_resolution",
+      "binding_level": "binding",
+      "hierarchy_rank": 20
+    },
+    {
+      "id": "657e1c9f-e4f2-4007-9708-d1ebe607f83d",
+      "logical_title": "Sede electronica GVA - Tramite INPYME 2026",
+      "document_type": "official_portal",
+      "binding_level": "official_non_binding",
+      "hierarchy_rank": 20
+    },
+    {
+      "id": "d60e5fa1-fbe7-475f-bd63-07d8aae3d00f",
+      "logical_title": "137020-13.3_GUIA_SOLICITUD_INPYME_2026_cas.pdf",
+      "document_type": "guide",
+      "binding_level": "official_non_binding",
+      "hierarchy_rank": 40
+    },
+    {
+      "id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+      "logical_title": "F88114.docx",
+      "document_type": "form",
+      "binding_level": "operational",
+      "hierarchy_rank": 40
+    },
+    {
+      "id": "add92810-743a-433e-8e3b-0a0434bc5760",
+      "logical_title": "F96434.xlsx",
+      "document_type": "form",
+      "binding_level": "operational",
+      "hierarchy_rank": 60
+    }
+  ],
+  "application_knowledge": {
+    "evaluation_blocks": [
+      {
+        "entity_id": "inpyme2026.block.0_vinculacion_sector",
+        "entity_type": "evaluation_block",
+        "parent_entity_id": null,
+        "official_code": "0",
+        "label": "Justificación de la vinculación de la pyme industrial con el sector",
+        "requirement_text": "Debe justificarse de manera detallada la vinculación de la empresa con el sector al que se presenta, identificando su CNAE, que debe coincidir con alguno de los recogidos en el anexo I de la convocatoria. Apartado no puntuable pero excluyente: la insuficiente justificación de la vinculación directa, o la no presentación o no constancia expresa de CNAE, conlleva la inmediata inadmisión de la solicitud y su exclusión de la baremación, sin requerimiento previo de subsanación.",
+        "score_max": null,
+        "threshold_min": null,
+        "scoring_status": "not_scored",
+        "is_exclusionary": true,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.97,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "e78190be-1e55-40ff-9753-b527246f9636",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 24,
+            "page_end": 24,
+            "section": null,
+            "quote": "3832 Valorización de materiales ya clasificados. ANEXO II Criterios y reglas de evaluación de proyectos La evaluación de las solicitudes se realizará aplicando los criterios y reglas descritos a continuación para cada uno de los siguientes apartados obligatorios de la memoria descriptiva: 0. JUSTIFICACIÓN DE LA VINCULACIÓN DE LA pyme INDUSTRIAL CON EL SECTOR (NO PUNTUABLE PERO SÍ EXCLUYENTE EN CASO DE INSUFICIENCIA) Deberá justificarse de manera detallada la vinculación de la empresa con el sector al que se presenta, identificando su CNAE de vinculación directa. I- DESCRIPCIÓN DE LA EMPRESA (MÁXIMO 8 PUNTOS. UMBRAL MÍNIMO 3 PUNTOS) Se valora hasta con un máximo de 8 puntos la aportación de información sobre los siguientes aspectos: Campo de información Contenido ANTECEDENTES Y EVOLUCIÓN (MÁXIMO 4 PUNTOS) Explicar cómo (máx. 0,5 puntos) y cuándo se constituyó la empresa (máx. 0,5 puntos), evolución de la empresa y de su propiedad (máx. 0,5 puntos), su estructura accionarial actual y su posible pertenencia a grupos empresariales (máx. 0,5 puntos), y aportación de datos económicos actuales, así como su variación en los últimos 5 años para cada variable económica: empleos (máx.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "7c58e342-09bd-4020-8722-1ef4c7240c7e",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 3,
+            "page_end": 3,
+            "section": null,
+            "quote": "La insuficiente justificación en la memoria de la vinculación directa, o la no presentación o no constancia expresa de CNAE, conllevará la inmediata inadmisión de la solicitud y la exclusión de su baremación, sin necesidad de que el órgano instructor requiera previamente a la empresa solicitante para la subsanación de tal defecto. ¿VAMOS A PEDIR QUE (EN EL CASO DE QUE EL SECTOR NO COINCIDA CON EL INDICADO EN LA DECLARACIÓN RESPONSABLE DE LA SOLICITUD, DEBERÁ JUSTIFICARSE) I. | DESCRIPCIÓN DE LA EMPRESA (Máximo 8 puntos) No se supera el umbral mínimo si la suma de las puntuaciones no alcanza los 3 puntos. | DESCRIPCIÓN DE LA EMPRESA (Máximo 8 puntos) No se supera el umbral mínimo si la suma de las puntuaciones no alcanza los 3 puntos. A. | Antecedentes y evolución (Máximo 4 puntos). | Antecedentes y evolución (Máximo 4 puntos). Cómo se creó la empresa (máx. 0,5 puntos) | Cómo se creó la empresa (máx. 0,5 puntos) | Cómo se creó la empresa (máx. 0,5 puntos) Cuando se constituyó la empresa (máx. 0,5 puntos) | Cuando se constituyó la empresa (máx. 0,5 puntos) | Cuando se constituyó la empresa (máx. 0,5 puntos) Evolución de la empresa y su propiedad (máx.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "30f52fad-14ec-4be1-ade3-4ec21f5051db",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 3,
+            "page_end": 3,
+            "section": null,
+            "quote": "0. | JUSTIFICACIÓN DE LA VINCULACIÓN DE LA PYME INDUSTRIAL CON EL SECTOR (no puntuable pero sí excluyente en caso de insuficiencia). Deberá justificarse de manera detallada la vinculación de la empresa con el sector al que se presenta, identificando su CNAE, que debe coincidir con alguno de los recogidos en el anexo I de la convocatoria. La insuficiente justificación en la memoria de la vinculación directa, o la no presentación o no constancia expresa de CNAE, conllevará la inmediata inadmisión de la solicitud y la exclusión de su baremación, sin necesidad de que el órgano instructor requiera previamente a la empresa solicitante para la subsanación de tal defecto. ¿VAMOS A PEDIR QUE (EN EL CASO DE QUE EL SECTOR NO COINCIDA CON EL INDICADO EN LA DECLARACIÓN RESPONSABLE DE LA SOLICITUD, DEBERÁ JUSTIFICARSE) | JUSTIFICACIÓN DE LA VINCULACIÓN DE LA PYME INDUSTRIAL CON EL SECTOR (no puntuable pero sí excluyente en caso de insuficiencia). Deberá justificarse de manera detallada la vinculación de la empresa con el sector al que se presenta, identificando su CNAE, que debe coincidir con alguno de los recogidos en el anexo I de la convocatoria.",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.block.i_descripcion_empresa",
+        "entity_type": "evaluation_block",
+        "parent_entity_id": null,
+        "official_code": "I",
+        "label": "Descripción de la empresa",
+        "requirement_text": "Se valora hasta un máximo de 8 puntos la aportación de información sobre antecedentes y evolución, actividades actuales y experiencia en la actividad proyectada; no se supera el umbral mínimo si la suma de puntuaciones no alcanza los 3 puntos.",
+        "score_max": 8.0,
+        "threshold_min": 3.0,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.95,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "e78190be-1e55-40ff-9753-b527246f9636",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 24,
+            "page_end": 24,
+            "section": null,
+            "quote": "3832 Valorización de materiales ya clasificados. ANEXO II Criterios y reglas de evaluación de proyectos La evaluación de las solicitudes se realizará aplicando los criterios y reglas descritos a continuación para cada uno de los siguientes apartados obligatorios de la memoria descriptiva: 0. JUSTIFICACIÓN DE LA VINCULACIÓN DE LA pyme INDUSTRIAL CON EL SECTOR (NO PUNTUABLE PERO SÍ EXCLUYENTE EN CASO DE INSUFICIENCIA) Deberá justificarse de manera detallada la vinculación de la empresa con el sector al que se presenta, identificando su CNAE de vinculación directa. I- DESCRIPCIÓN DE LA EMPRESA (MÁXIMO 8 PUNTOS. UMBRAL MÍNIMO 3 PUNTOS) Se valora hasta con un máximo de 8 puntos la aportación de información sobre los siguientes aspectos: Campo de información Contenido ANTECEDENTES Y EVOLUCIÓN (MÁXIMO 4 PUNTOS) Explicar cómo (máx. 0,5 puntos) y cuándo se constituyó la empresa (máx. 0,5 puntos), evolución de la empresa y de su propiedad (máx. 0,5 puntos), su estructura accionarial actual y su posible pertenencia a grupos empresariales (máx. 0,5 puntos), y aportación de datos económicos actuales, así como su variación en los últimos 5 años para cada variable económica: empleos (máx.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "7c58e342-09bd-4020-8722-1ef4c7240c7e",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 3,
+            "page_end": 3,
+            "section": null,
+            "quote": "La insuficiente justificación en la memoria de la vinculación directa, o la no presentación o no constancia expresa de CNAE, conllevará la inmediata inadmisión de la solicitud y la exclusión de su baremación, sin necesidad de que el órgano instructor requiera previamente a la empresa solicitante para la subsanación de tal defecto. ¿VAMOS A PEDIR QUE (EN EL CASO DE QUE EL SECTOR NO COINCIDA CON EL INDICADO EN LA DECLARACIÓN RESPONSABLE DE LA SOLICITUD, DEBERÁ JUSTIFICARSE) I. | DESCRIPCIÓN DE LA EMPRESA (Máximo 8 puntos) No se supera el umbral mínimo si la suma de las puntuaciones no alcanza los 3 puntos. | DESCRIPCIÓN DE LA EMPRESA (Máximo 8 puntos) No se supera el umbral mínimo si la suma de las puntuaciones no alcanza los 3 puntos. A. | Antecedentes y evolución (Máximo 4 puntos). | Antecedentes y evolución (Máximo 4 puntos). Cómo se creó la empresa (máx. 0,5 puntos) | Cómo se creó la empresa (máx. 0,5 puntos) | Cómo se creó la empresa (máx. 0,5 puntos) Cuando se constituyó la empresa (máx. 0,5 puntos) | Cuando se constituyó la empresa (máx. 0,5 puntos) | Cuando se constituyó la empresa (máx. 0,5 puntos) Evolución de la empresa y su propiedad (máx.",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.block.ii_motivacion_viabilidad",
+        "entity_type": "evaluation_block",
+        "parent_entity_id": null,
+        "official_code": "II",
+        "label": "Motivación, viabilidad y descripción técnica del proyecto",
+        "requirement_text": "Bloque valorado hasta un máximo de 55 puntos; no se supera el umbral mínimo si la suma de las puntuaciones del bloque no alcanza los 15 puntos.",
+        "score_max": 55.0,
+        "threshold_min": 15.0,
+        "scoring_status": null,
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": null,
+        "confidence": null,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "924e6646-c5f3-4250-90cc-8271b9379552",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 5,
+            "page_end": 5,
+            "section": null,
+            "quote": "En caso de fusiones, absorciones, escisiones o adquisiciones, a través de escritura notarial u otro documento externo acreditativo en el que conste el traspaso de las actividades industriales a la empresa solicitante: 0 puntos si la experiencia es menos de 5 años; 1 punto si es entre 5 y 7 años; 2 puntos si es entre 7 y 10 años; 3 puntos si es más de 10 años. II. | MOTIVACIÓN, VIABILIDAD Y DESCRIPCIÓN TÉCNICA DEL PROYECTO (Máximo 55 puntos / Umbral mínimo 15 puntos) No se supera el umbral mínimo si la suma de las puntuaciones no alcanza los 15 puntos | MOTIVACIÓN, VIABILIDAD Y DESCRIPCIÓN TÉCNICA DEL PROYECTO (Máximo 55 puntos / Umbral mínimo 15 puntos) No se supera el umbral mínimo si la suma de las puntuaciones no alcanza los 15 puntos A. | Estrategia empresarial y motivos de la inversión (Máximo 6 puntos) | Estrategia empresarial y motivos de la inversión (Máximo 6 puntos) Describir detalladamente los motivos estratégicos que han llevado a la concreta toma de la decisión sobre la inversión que se solicita subvencionar (máx.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "438ba346-df21-4d6f-a1cf-212a65efcc38",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 24,
+            "page_end": 24,
+            "section": null,
+            "quote": "0,5 puntos), ventas (máx. 0,5 puntos), beneficios (máx. 0,5 puntos) y exportaciones (máx. 0,5 puntos). ACTIVIDADES ACTUALES DE LA EMPRESA (MÁXIMO 1 PUNTO) Una descripción de las actividades económicas y/o industriales que realiza la empresa en la actualidad. EXPERIENCIA EN LA ACTIVIDAD PROYECTADA (MÁXIMO 3 PUNTOS) Explicar la experiencia de la empresa solicitante realizando la actividad industrial relacionada con la inversión, cuya acreditación se realizará mediante la fecha de inicio de operaciones que conste en la nota informativa del Registro Mercantil o equivalente, salvo que la empresa indique uno inferior. En caso de fusiones, absorciones, escisiones o adquisiciones, a través de escritura notarial u otro documento externo acreditativo en el que conste el traspaso de las actividades industriales a la empresa solicitante: 0 puntos si la experiencia es menos de 5 años; 1 punto si es entre 5 y 7 años; 2 puntos si es entre 7 y 10 años; 3 puntos si es más de 10 años. No se supera el umbral mínimo si la suma de las puntuaciones no alcanza los 3 puntos. II. MOTIVACIÓN, VIABILIDAD Y DESCRIPCIÓN TÉCNICA DEL PROYECTO (MÁXIMO 55 PUNTOS / UMBRAL MÍNIMO 15 PUNTOS)",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "9e16239a-4604-43db-a019-91e3d6a94a8d",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 25,
+            "page_end": 25,
+            "section": null,
+            "quote": "Núm. 10301 / 12.02.2026 25 / 31 CVE: DOGV-C-2026-4406 https://dogv.gva.es/ Se valorará, hasta con un máximo de 55 puntos, la aportación de la siguiente información: Campo de información Contenido ESTRATEGIA EMPRESARIAL Y MOTIVOS DE LA INVERSIÓN (MÁXIMO 6 PUNTOS) Describir detalladamente los motivos estratégicos que han llevado a la concreta decisión sobre la inversión que se solicita subvencionar (máx. 3 puntos) y a seleccionar todos los concretos activos del proyecto (máx. 3 puntos). VIABILIDAD ECONÓMICA DE LA INVERSIÓN (MÁXIMO 4 PUNTOS) Se valorará la adecuada justificación de la rentabilidad del proyecto mediante la aportación de, al menos, una ratio de rentabilidad y el método para su obtención (máx.2 puntos), fuentes de financiación (máx.1 punto) y periodo en que se espera recuperar la inversión, mediante el pay-back o periodo de recuperación de la inversión y el método para su obtención (máx.1 pto). DESCRIPCIÓN TÉCNICA DEL PROYECTO (MÁXIMO 40 PUNTOS) Describir técnicamente el proyecto, debiendo detallar de forma pormenorizada e individualizada cada uno de los activos, costes e ingeniería desglosados en la tabla de costes estimados (máx. 25 puntos);",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.block.iii_mejora_competitividad",
+        "entity_type": "evaluation_block",
+        "parent_entity_id": null,
+        "official_code": "III",
+        "label": "Contribución a la mejora de la competitividad",
+        "requirement_text": "Bloque que valora, hasta un máximo de 12 puntos, la contribución del proyecto a la mejora de la competitividad de la empresa.",
+        "score_max": 12.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.95,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "81433748-c6e6-48ce-94ef-0085a9383eb7",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 8,
+            "page_end": 8,
+            "section": null,
+            "quote": "E. | Plan de trabajo (Máximo 2 puntos): Identificar las etapas del plan de trabajo, indicando el detalle y fechas de inicio y finalización para la ejecución de cada una de ellas, dentro del plazo comprendido entre 1 de enero de 2026 y el plazo máximo de justificación. | Plan de trabajo (Máximo 2 puntos): Identificar las etapas del plan de trabajo, indicando el detalle y fechas de inicio y finalización para la ejecución de cada una de ellas, dentro del plazo comprendido entre 1 de enero de 2026 y el plazo máximo de justificación. III. | CONTRIBUCIÓN A LA MEJORA DE LA COMPETITIVIDAD (Máximo 12 puntos) | CONTRIBUCIÓN A LA MEJORA DE LA COMPETITIVIDAD (Máximo 12 puntos) A. | Impacto en la competitividad o la productividad (Máximo 4 puntos): Se valorará la adecuada justificación y la aportación de datos concretos que acrediten como los nuevos activos van a mejorar la competitividad o productividad de la empresa. (Max. 4 puntos).",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "6e6a75ae-2d6e-493b-923d-e01d21f271ca",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 25,
+            "page_end": 25,
+            "section": null,
+            "quote": "III.CONTRIBUCIÓN A LA MEJORA DE LA COMPETITIVIDAD (MÁXIMO 12 PUNTOS) Se valorará, hasta con un máximo de 12 puntos, la aportación de la siguiente información: Campo de información Contenido IMPACTO EN LA COMPETITIVIDAD O LA PRODUCTIVIDAD (MÁXIMO 4 PUNTOS) Se valorará la adecuada justificación y la aportación de datos concretos que acrediten como los nuevos activos van a mejorar la competitividad o productividad de la empresa. (Max. 4 puntos). Se considerará en todo caso que las inversiones van a mejorar la competitividad o productividad de la empresa si las mismas se realizan en un enclave tecnológico o en un área industrial clasificada como avanzada conforme a la Ley 14/2018 (se otorgará en este caso la puntuación máxima de 4 puntos). INNOVACIÓN DE LOS PROCESOS O EN LOS PRODUCTOS (MÁXIMO 4 PUNTOS) Se valorará la adecuada justificación y la aportación de datos concretos cualitativos y cuantitativos que acrediten la repercusión de la adquisición de los activos en una innovación del proceso de producción o en el producto final (máx. 4 puntos). Se dará la puntuación máxima en caso de inversión en patentes, royalties, diseños industriales o modelos de utilidad.",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.block.iv_mejora_sostenibilidad",
+        "entity_type": "evaluation_block",
+        "parent_entity_id": null,
+        "official_code": "IV",
+        "label": "La contribución a la mejora de la sostenibilidad",
+        "requirement_text": "El bloque IV valora hasta un máximo de 12 puntos la contribución a la mejora de la sostenibilidad.",
+        "score_max": 12.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.95,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "b3313e92-e475-4129-abac-a92957b0baed",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 9,
+            "page_end": 9,
+            "section": null,
+            "quote": "1 punto) | ¿Permitirá acceder a nuevos clientes? (máx. 1 punto) IV. | LA CONTRIBUCIÓN A LA MEJORA DE LA SOSTENIBILIDAD: (Máximo 12 puntos) | LA CONTRIBUCIÓN A LA MEJORA DE LA SOSTENIBILIDAD: (Máximo 12 puntos)",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "efaf3430-78f2-493c-9d48-a7b509772d00",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 18,
+            "page_end": 18,
+            "section": null,
+            "quote": "7420 Actividades de fotografía, siempre y cuando en la memoria se justifique adecuadamente que las inversiones están destinadas principalmente a la producción audiovisual. 7430 Actividades de traducción e interpretación, siempre y cuando en la memoria se justifique adecuadamente que las inversiones están destinadas principalmente a la producción audiovisual. 8230 Organización de convenciones y ferias de muestras, siempre y cuando en la memoria se justifique adecuadamente que las inversiones están destinadas principalmente a la producción audiovisual. 9002 Actividades auxiliares a las artes escénicas, siempre y cuando en la memoria se justifique adecuadamente que las inversiones están destinadas principalmente a la producción audiovisual. 9319 Otras actividades deportivas, siempre y cuando en la memoria se justifique adecuadamente que las inversiones están destinadas principalmente a la producción audiovisual. 9329 Otras actividades recreativas y de entretenimiento, siempre y cuando en la memoria se justifique adecuadamente que las inversiones están destinadas principalmente a la producción audiovisual.",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.block.v_solucion_problemas_sociales",
+        "entity_type": "evaluation_block",
+        "parent_entity_id": null,
+        "official_code": "V",
+        "label": "La contribución a la solución de problemas sociales",
+        "requirement_text": "Se considerará que un proyecto contribuye a la solución de problemas sociales cuando se justifique adecuadamente que supone creación de empleo, lucha contra la despoblación y/o apoyo a proyectos sociales.",
+        "score_max": 13.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.95,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "176b4f8e-94ec-42f3-88c6-b650997f3957",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 12,
+            "page_end": 12,
+            "section": null,
+            "quote": "La no identificación de todas las ubicaciones o del porcentaje de la Comunitat Valenciana conllevará que la puntuación de este apartado sea 0. V. | LA CONTRIBUCIÓN A LA SOLUCIÓN DE PROBLEMAS SOCIALES: (Máximo 13 puntos) | LA CONTRIBUCIÓN A LA SOLUCIÓN DE PROBLEMAS SOCIALES: (Máximo 13 puntos) A. | Creación de empleo (1 punto por contrato, con un máximo de 2 puntos): Se valorará el número de contrataciones de personas trabajadoras que se han formalizado o se estima va a formalizar la empresa en relación con el proyecto a subvencionar. Se valorarán todo tipo de contratos, indefinidos, fijos discontinuos, tiempo parcial u otro tipo de contratación laboral. | Creación de empleo (1 punto por contrato, con un máximo de 2 puntos): Se valorará el número de contrataciones de personas trabajadoras que se han formalizado o se estima va a formalizar la empresa en relación con el proyecto a subvencionar. Se valorarán todo tipo de contratos, indefinidos, fijos discontinuos, tiempo parcial u otro tipo de contratación laboral.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "41d0d42d-8d24-49ce-94ab-7165fc86dd5b",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 26,
+            "page_end": 26,
+            "section": null,
+            "quote": "2 ptos si se supera el 50%. 1 punto si se supera el 30%. La no identificación de todas las ubicaciones o del porcentaje de la Comunitat Valenciana conllevará que la puntuación de este apartado sea 0. V. LA CONTRIBUCIÓN A LA SOLUCIÓN DE PROBLEMAS SOCIALES: (MÁXIMO 13 PUNTOS) Se considerará que un proyecto contribuye a la solución de problemas sociales cuando se justifique adecuadamente que supone: Campo de información Contenido CREACIÓN DE EMPLEO (1 PUNTO POR CONTRATO, CON UN MÁXIMO DE 2 PUNTOS) Se valorará el número de contrataciones de personas trabajadoras que se han formalizado o se estima va a formalizar la empresa en relación con el proyecto a subvencionar. Se valorarán todo tipo de contratos, indefinidos, fijos discontinuos, tiempo parcial u otro tipo de contratación laboral. LUCHA CONTRA LA DESPOBLACIÓN (10 PUNTOS) Se otorgarán 10 puntos si la ubicación íntegra de las inversiones es en municipios prioritarios para la reindustrialización por estar afectados por la despoblación o que pudieran incurrir en ese riesgo, listados en el anexo IV.",
+            "extraction_method": "native"
+          }
+        ]
+      }
+    ],
+    "evaluation_criteria": [
+      {
+        "entity_id": "inpyme2026.criterion.i_a_antecedentes_evolucion",
+        "entity_type": "evaluation_criterion",
+        "parent_entity_id": "inpyme2026.block.i_descripcion_empresa",
+        "official_code": "I.A",
+        "label": "Antecedentes y evolución",
+        "requirement_text": "Explicar cómo y cuándo se constituyó la empresa, la evolución de la empresa y su propiedad, su estructura accionarial actual y posible pertenencia a grupos empresariales, y aportación de datos económicos actuales y su variación en los últimos 5 años.",
+        "score_max": 4.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.95,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "e78190be-1e55-40ff-9753-b527246f9636",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 24,
+            "page_end": 24,
+            "section": null,
+            "quote": "3832 Valorización de materiales ya clasificados. ANEXO II Criterios y reglas de evaluación de proyectos La evaluación de las solicitudes se realizará aplicando los criterios y reglas descritos a continuación para cada uno de los siguientes apartados obligatorios de la memoria descriptiva: 0. JUSTIFICACIÓN DE LA VINCULACIÓN DE LA pyme INDUSTRIAL CON EL SECTOR (NO PUNTUABLE PERO SÍ EXCLUYENTE EN CASO DE INSUFICIENCIA) Deberá justificarse de manera detallada la vinculación de la empresa con el sector al que se presenta, identificando su CNAE de vinculación directa. I- DESCRIPCIÓN DE LA EMPRESA (MÁXIMO 8 PUNTOS. UMBRAL MÍNIMO 3 PUNTOS) Se valora hasta con un máximo de 8 puntos la aportación de información sobre los siguientes aspectos: Campo de información Contenido ANTECEDENTES Y EVOLUCIÓN (MÁXIMO 4 PUNTOS) Explicar cómo (máx. 0,5 puntos) y cuándo se constituyó la empresa (máx. 0,5 puntos), evolución de la empresa y de su propiedad (máx. 0,5 puntos), su estructura accionarial actual y su posible pertenencia a grupos empresariales (máx. 0,5 puntos), y aportación de datos económicos actuales, así como su variación en los últimos 5 años para cada variable económica: empleos (máx.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "7c58e342-09bd-4020-8722-1ef4c7240c7e",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 3,
+            "page_end": 3,
+            "section": null,
+            "quote": "La insuficiente justificación en la memoria de la vinculación directa, o la no presentación o no constancia expresa de CNAE, conllevará la inmediata inadmisión de la solicitud y la exclusión de su baremación, sin necesidad de que el órgano instructor requiera previamente a la empresa solicitante para la subsanación de tal defecto. ¿VAMOS A PEDIR QUE (EN EL CASO DE QUE EL SECTOR NO COINCIDA CON EL INDICADO EN LA DECLARACIÓN RESPONSABLE DE LA SOLICITUD, DEBERÁ JUSTIFICARSE) I. | DESCRIPCIÓN DE LA EMPRESA (Máximo 8 puntos) No se supera el umbral mínimo si la suma de las puntuaciones no alcanza los 3 puntos. | DESCRIPCIÓN DE LA EMPRESA (Máximo 8 puntos) No se supera el umbral mínimo si la suma de las puntuaciones no alcanza los 3 puntos. A. | Antecedentes y evolución (Máximo 4 puntos). | Antecedentes y evolución (Máximo 4 puntos). Cómo se creó la empresa (máx. 0,5 puntos) | Cómo se creó la empresa (máx. 0,5 puntos) | Cómo se creó la empresa (máx. 0,5 puntos) Cuando se constituyó la empresa (máx. 0,5 puntos) | Cuando se constituyó la empresa (máx. 0,5 puntos) | Cuando se constituyó la empresa (máx. 0,5 puntos) Evolución de la empresa y su propiedad (máx.",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.criterion.i_b_actividades_actuales",
+        "entity_type": "evaluation_criterion",
+        "parent_entity_id": "inpyme2026.block.i_descripcion_empresa",
+        "official_code": "I.B",
+        "label": "Actividades actuales de la empresa",
+        "requirement_text": "Descripción breve de las actividades económicas y/o industriales que realiza la empresa en la actualidad.",
+        "score_max": 1.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.95,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "9e5426a1-c34f-4cec-9472-2fd04b1d4d04",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 4,
+            "page_end": 4,
+            "section": null,
+            "quote": "Exportaciones (máx. 0,5 puntos) B. | Actividades actuales de la empresa (Máximo 1 punto). Descripción breve de las actividades económicas y/o industriales que realiza en la actualidad. | Actividades actuales de la empresa (Máximo 1 punto). Descripción breve de las actividades económicas y/o industriales que realiza en la actualidad.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "438ba346-df21-4d6f-a1cf-212a65efcc38",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 24,
+            "page_end": 24,
+            "section": null,
+            "quote": "0,5 puntos), ventas (máx. 0,5 puntos), beneficios (máx. 0,5 puntos) y exportaciones (máx. 0,5 puntos). ACTIVIDADES ACTUALES DE LA EMPRESA (MÁXIMO 1 PUNTO) Una descripción de las actividades económicas y/o industriales que realiza la empresa en la actualidad. EXPERIENCIA EN LA ACTIVIDAD PROYECTADA (MÁXIMO 3 PUNTOS) Explicar la experiencia de la empresa solicitante realizando la actividad industrial relacionada con la inversión, cuya acreditación se realizará mediante la fecha de inicio de operaciones que conste en la nota informativa del Registro Mercantil o equivalente, salvo que la empresa indique uno inferior. En caso de fusiones, absorciones, escisiones o adquisiciones, a través de escritura notarial u otro documento externo acreditativo en el que conste el traspaso de las actividades industriales a la empresa solicitante: 0 puntos si la experiencia es menos de 5 años; 1 punto si es entre 5 y 7 años; 2 puntos si es entre 7 y 10 años; 3 puntos si es más de 10 años. No se supera el umbral mínimo si la suma de las puntuaciones no alcanza los 3 puntos. II. MOTIVACIÓN, VIABILIDAD Y DESCRIPCIÓN TÉCNICA DEL PROYECTO (MÁXIMO 55 PUNTOS / UMBRAL MÍNIMO 15 PUNTOS)",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.criterion.i_c_experiencia_actividad_proyectada",
+        "entity_type": "evaluation_criterion",
+        "parent_entity_id": "inpyme2026.block.i_descripcion_empresa",
+        "official_code": "I.C",
+        "label": "Experiencia en la actividad proyectada",
+        "requirement_text": "Explicar la experiencia de la empresa solicitante realizando la actividad industrial relacionada con la inversión, acreditada mediante la fecha de inicio de operaciones que conste en la nota informativa del Registro Mercantil o equivalente (salvo que la empresa indique una inferior), o en caso de fusiones, absorciones, escisiones o adquisiciones, mediante escritura notarial u otro documento externo acreditativo del traspaso de las actividades industriales. Puntuación por tramos de años de experiencia: 0 puntos si menos de 5 años; 1 punto entre 5 y 7 años; 2 puntos entre 7 y 10 años; 3 puntos si más de 10 años.",
+        "score_max": 3.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": {
+          "unit": "years",
+          "bands": [
+            {
+              "label": "menos de 5 años",
+              "score": 0.0,
+              "min_count": null,
+              "max_exclusive": 5.0,
+              "min_inclusive": null
+            },
+            {
+              "label": "entre 5 y 7 años",
+              "score": 1.0,
+              "min_count": null,
+              "max_exclusive": 7.0,
+              "min_inclusive": 5.0
+            },
+            {
+              "label": "entre 7 y 10 años",
+              "score": 2.0,
+              "min_count": null,
+              "max_exclusive": 10.0,
+              "min_inclusive": 7.0
+            },
+            {
+              "label": "más de 10 años",
+              "score": 3.0,
+              "min_count": null,
+              "max_exclusive": null,
+              "min_inclusive": 10.0
+            }
+          ],
+          "metric": "years_experience",
+          "rule_type": "score_by_bands",
+          "fallback_score": null,
+          "fallback_condition": null
+        },
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.92,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "be4eccad-51ae-4808-a1f5-2c9eef0d60ee",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 5,
+            "page_end": 5,
+            "section": null,
+            "quote": "C. | Experiencia en la actividad proyectada (Máximo 3 puntos). Explicar la experiencia de la empresa solicitante realizando la actividad industrial relacionada con la inversión, cuya acreditación se realizará mediante la fecha de inicio de operaciones que conste en la nota informativa del Registro Mercantil o equivalente, salvo que la empresa indique uno inferior. En caso de fusiones, absorciones, escisiones o adquisiciones, a través de escritura notarial u otro documento externo acreditativo en el que conste el traspaso de las actividades industriales a la empresa solicitante: 0 puntos si la experiencia es menos de 5 años; 1 punto si es entre 5 y 7 años; 2 puntos si es entre 7 y 10 años; 3 puntos si es más de 10 años. | Experiencia en la actividad proyectada (Máximo 3 puntos). Explicar la experiencia de la empresa solicitante realizando la actividad industrial relacionada con la inversión, cuya acreditación se realizará mediante la fecha de inicio de operaciones que conste en la nota informativa del Registro Mercantil o equivalente, salvo que la empresa indique uno inferior.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "438ba346-df21-4d6f-a1cf-212a65efcc38",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 24,
+            "page_end": 24,
+            "section": null,
+            "quote": "0,5 puntos), ventas (máx. 0,5 puntos), beneficios (máx. 0,5 puntos) y exportaciones (máx. 0,5 puntos). ACTIVIDADES ACTUALES DE LA EMPRESA (MÁXIMO 1 PUNTO) Una descripción de las actividades económicas y/o industriales que realiza la empresa en la actualidad. EXPERIENCIA EN LA ACTIVIDAD PROYECTADA (MÁXIMO 3 PUNTOS) Explicar la experiencia de la empresa solicitante realizando la actividad industrial relacionada con la inversión, cuya acreditación se realizará mediante la fecha de inicio de operaciones que conste en la nota informativa del Registro Mercantil o equivalente, salvo que la empresa indique uno inferior. En caso de fusiones, absorciones, escisiones o adquisiciones, a través de escritura notarial u otro documento externo acreditativo en el que conste el traspaso de las actividades industriales a la empresa solicitante: 0 puntos si la experiencia es menos de 5 años; 1 punto si es entre 5 y 7 años; 2 puntos si es entre 7 y 10 años; 3 puntos si es más de 10 años. No se supera el umbral mínimo si la suma de las puntuaciones no alcanza los 3 puntos. II. MOTIVACIÓN, VIABILIDAD Y DESCRIPCIÓN TÉCNICA DEL PROYECTO (MÁXIMO 55 PUNTOS / UMBRAL MÍNIMO 15 PUNTOS)",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "924e6646-c5f3-4250-90cc-8271b9379552",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 5,
+            "page_end": 5,
+            "section": null,
+            "quote": "En caso de fusiones, absorciones, escisiones o adquisiciones, a través de escritura notarial u otro documento externo acreditativo en el que conste el traspaso de las actividades industriales a la empresa solicitante: 0 puntos si la experiencia es menos de 5 años; 1 punto si es entre 5 y 7 años; 2 puntos si es entre 7 y 10 años; 3 puntos si es más de 10 años. II. | MOTIVACIÓN, VIABILIDAD Y DESCRIPCIÓN TÉCNICA DEL PROYECTO (Máximo 55 puntos / Umbral mínimo 15 puntos) No se supera el umbral mínimo si la suma de las puntuaciones no alcanza los 15 puntos | MOTIVACIÓN, VIABILIDAD Y DESCRIPCIÓN TÉCNICA DEL PROYECTO (Máximo 55 puntos / Umbral mínimo 15 puntos) No se supera el umbral mínimo si la suma de las puntuaciones no alcanza los 15 puntos A. | Estrategia empresarial y motivos de la inversión (Máximo 6 puntos) | Estrategia empresarial y motivos de la inversión (Máximo 6 puntos) Describir detalladamente los motivos estratégicos que han llevado a la concreta toma de la decisión sobre la inversión que se solicita subvencionar (máx.",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.criterion.ii_a_estrategia_empresarial_motivos",
+        "entity_type": "evaluation_criterion",
+        "parent_entity_id": "inpyme2026.block.ii_motivacion_viabilidad",
+        "official_code": "II.A",
+        "label": "Estrategia empresarial y motivos de la inversión",
+        "requirement_text": "Describir detalladamente los motivos estratégicos que han llevado a la decisión sobre la inversión y a la selección de los activos del proyecto (máximo 6 puntos).",
+        "score_max": 6.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.95,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "924e6646-c5f3-4250-90cc-8271b9379552",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 5,
+            "page_end": 5,
+            "section": null,
+            "quote": "En caso de fusiones, absorciones, escisiones o adquisiciones, a través de escritura notarial u otro documento externo acreditativo en el que conste el traspaso de las actividades industriales a la empresa solicitante: 0 puntos si la experiencia es menos de 5 años; 1 punto si es entre 5 y 7 años; 2 puntos si es entre 7 y 10 años; 3 puntos si es más de 10 años. II. | MOTIVACIÓN, VIABILIDAD Y DESCRIPCIÓN TÉCNICA DEL PROYECTO (Máximo 55 puntos / Umbral mínimo 15 puntos) No se supera el umbral mínimo si la suma de las puntuaciones no alcanza los 15 puntos | MOTIVACIÓN, VIABILIDAD Y DESCRIPCIÓN TÉCNICA DEL PROYECTO (Máximo 55 puntos / Umbral mínimo 15 puntos) No se supera el umbral mínimo si la suma de las puntuaciones no alcanza los 15 puntos A. | Estrategia empresarial y motivos de la inversión (Máximo 6 puntos) | Estrategia empresarial y motivos de la inversión (Máximo 6 puntos) Describir detalladamente los motivos estratégicos que han llevado a la concreta toma de la decisión sobre la inversión que se solicita subvencionar (máx.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "9e16239a-4604-43db-a019-91e3d6a94a8d",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 25,
+            "page_end": 25,
+            "section": null,
+            "quote": "Núm. 10301 / 12.02.2026 25 / 31 CVE: DOGV-C-2026-4406 https://dogv.gva.es/ Se valorará, hasta con un máximo de 55 puntos, la aportación de la siguiente información: Campo de información Contenido ESTRATEGIA EMPRESARIAL Y MOTIVOS DE LA INVERSIÓN (MÁXIMO 6 PUNTOS) Describir detalladamente los motivos estratégicos que han llevado a la concreta decisión sobre la inversión que se solicita subvencionar (máx. 3 puntos) y a seleccionar todos los concretos activos del proyecto (máx. 3 puntos). VIABILIDAD ECONÓMICA DE LA INVERSIÓN (MÁXIMO 4 PUNTOS) Se valorará la adecuada justificación de la rentabilidad del proyecto mediante la aportación de, al menos, una ratio de rentabilidad y el método para su obtención (máx.2 puntos), fuentes de financiación (máx.1 punto) y periodo en que se espera recuperar la inversión, mediante el pay-back o periodo de recuperación de la inversión y el método para su obtención (máx.1 pto). DESCRIPCIÓN TÉCNICA DEL PROYECTO (MÁXIMO 40 PUNTOS) Describir técnicamente el proyecto, debiendo detallar de forma pormenorizada e individualizada cada uno de los activos, costes e ingeniería desglosados en la tabla de costes estimados (máx. 25 puntos);",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.criterion.ii_b_viabilidad_economica_inversion",
+        "entity_type": "evaluation_criterion",
+        "parent_entity_id": "inpyme2026.block.ii_motivacion_viabilidad",
+        "official_code": "II.B",
+        "label": "Viabilidad económica de la inversión",
+        "requirement_text": "Criterio valorado hasta un máximo de 4 puntos, mediante la justificación de la rentabilidad del proyecto, fuentes de financiación y periodo de recuperación de la inversión (pay-back).",
+        "score_max": 4.0,
+        "threshold_min": null,
+        "scoring_status": null,
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": null,
+        "confidence": null,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "0d165843-e7a9-4430-9e3e-080c9fecd4ed",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 6,
+            "page_end": 6,
+            "section": null,
+            "quote": "Describir detalladamente los motivos estratégicos que han llevado a seleccionar los concretos activos (máx. 3 puntos) | Describir detalladamente los motivos estratégicos que han llevado a seleccionar los concretos activos (máx. 3 puntos) | Describir detalladamente los motivos estratégicos que han llevado a seleccionar los concretos activos (máx. 3 puntos) B. | Viabilidad económica de la inversión (Máximo 4 puntos) | Viabilidad económica de la inversión (Máximo 4 puntos) Se valorará la adecuada justificación de la rentabilidad del proyecto mediante la aportación de, al menos, una ratio de rentabilidad y el método para su obtención máx. 2 puntos) | Se valorará la adecuada justificación de la rentabilidad del proyecto mediante la aportación de, al menos, una ratio de rentabilidad y el método para su obtención máx. 2 puntos) | Se valorará la adecuada justificación de la rentabilidad del proyecto mediante la aportación de, al menos, una ratio de rentabilidad y el método para su obtención máx. 2 puntos) Fuentes de financiación (máx. 1 puntos) | Fuentes de financiación (máx. 1 puntos) | Fuentes de financiación (máx.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "9e16239a-4604-43db-a019-91e3d6a94a8d",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 25,
+            "page_end": 25,
+            "section": null,
+            "quote": "Núm. 10301 / 12.02.2026 25 / 31 CVE: DOGV-C-2026-4406 https://dogv.gva.es/ Se valorará, hasta con un máximo de 55 puntos, la aportación de la siguiente información: Campo de información Contenido ESTRATEGIA EMPRESARIAL Y MOTIVOS DE LA INVERSIÓN (MÁXIMO 6 PUNTOS) Describir detalladamente los motivos estratégicos que han llevado a la concreta decisión sobre la inversión que se solicita subvencionar (máx. 3 puntos) y a seleccionar todos los concretos activos del proyecto (máx. 3 puntos). VIABILIDAD ECONÓMICA DE LA INVERSIÓN (MÁXIMO 4 PUNTOS) Se valorará la adecuada justificación de la rentabilidad del proyecto mediante la aportación de, al menos, una ratio de rentabilidad y el método para su obtención (máx.2 puntos), fuentes de financiación (máx.1 punto) y periodo en que se espera recuperar la inversión, mediante el pay-back o periodo de recuperación de la inversión y el método para su obtención (máx.1 pto). DESCRIPCIÓN TÉCNICA DEL PROYECTO (MÁXIMO 40 PUNTOS) Describir técnicamente el proyecto, debiendo detallar de forma pormenorizada e individualizada cada uno de los activos, costes e ingeniería desglosados en la tabla de costes estimados (máx. 25 puntos);",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.criterion.ii_c_descripcion_tecnica_proyecto",
+        "entity_type": "evaluation_criterion",
+        "parent_entity_id": "inpyme2026.block.ii_motivacion_viabilidad",
+        "official_code": "II.C",
+        "label": "Descripción técnica del proyecto",
+        "requirement_text": "Descripción técnica del proyecto (máximo 40 puntos), incluyendo detalle de activos, costes e ingeniería, documentos técnicos, diagrama de flujo y plano de distribución.",
+        "score_max": 40.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.95,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "b956b789-0a43-413b-bbc3-b0e041deb36b",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 6,
+            "page_end": 6,
+            "section": null,
+            "quote": "1 puntos) Periodo en que se espera recuperar la inversión, mediante el pay-back o periodo de recuperación de la inversión y el método para su obtención (máx. 1 puntos) | Periodo en que se espera recuperar la inversión, mediante el pay-back o periodo de recuperación de la inversión y el método para su obtención (máx. 1 puntos) | Periodo en que se espera recuperar la inversión, mediante el pay-back o periodo de recuperación de la inversión y el método para su obtención (máx. 1 puntos) C. | Descripción técnica del proyecto (Máximo 40 puntos). | Descripción técnica del proyecto (Máximo 40 puntos). Describir técnicamente el proyecto, debiendo detallar de forma pormenorizada e individualizada cada uno de los activos, costes e ingeniería desglosados en la tabla de costes estimados (máx. 25 puntos) | Describir técnicamente el proyecto, debiendo detallar de forma pormenorizada e individualizada cada uno de los activos, costes e ingeniería desglosados en la tabla de costes estimados (máx. 25 puntos) | Describir técnicamente el proyecto, debiendo detallar de forma pormenorizada e individualizada cada uno de los activos, costes e ingeniería desglosados en la tabla de costes estimados (máx.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "9e16239a-4604-43db-a019-91e3d6a94a8d",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 25,
+            "page_end": 25,
+            "section": null,
+            "quote": "Núm. 10301 / 12.02.2026 25 / 31 CVE: DOGV-C-2026-4406 https://dogv.gva.es/ Se valorará, hasta con un máximo de 55 puntos, la aportación de la siguiente información: Campo de información Contenido ESTRATEGIA EMPRESARIAL Y MOTIVOS DE LA INVERSIÓN (MÁXIMO 6 PUNTOS) Describir detalladamente los motivos estratégicos que han llevado a la concreta decisión sobre la inversión que se solicita subvencionar (máx. 3 puntos) y a seleccionar todos los concretos activos del proyecto (máx. 3 puntos). VIABILIDAD ECONÓMICA DE LA INVERSIÓN (MÁXIMO 4 PUNTOS) Se valorará la adecuada justificación de la rentabilidad del proyecto mediante la aportación de, al menos, una ratio de rentabilidad y el método para su obtención (máx.2 puntos), fuentes de financiación (máx.1 punto) y periodo en que se espera recuperar la inversión, mediante el pay-back o periodo de recuperación de la inversión y el método para su obtención (máx.1 pto). DESCRIPCIÓN TÉCNICA DEL PROYECTO (MÁXIMO 40 PUNTOS) Describir técnicamente el proyecto, debiendo detallar de forma pormenorizada e individualizada cada uno de los activos, costes e ingeniería desglosados en la tabla de costes estimados (máx. 25 puntos);",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.criterion.ii_d_adecuacion_recursos",
+        "entity_type": "evaluation_criterion",
+        "parent_entity_id": "inpyme2026.block.ii_motivacion_viabilidad",
+        "official_code": "II.D",
+        "label": "Adecuación de los recursos",
+        "requirement_text": "Adecuación de los recursos (máximo 3 puntos): capacidades y experiencia de los proveedores y medios técnicos y humanos del proyecto.",
+        "score_max": 3.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.95,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "c490b5e2-d807-4885-a991-d3035d25ea79",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 7,
+            "page_end": 7,
+            "section": null,
+            "quote": "3 puntos) | Describir la ubicación y conexión de cada activo dentro del proceso productivo mediante la aportación gráfico o diagrama de bloques o de flujo de trabajo (máx. 3 puntos) Plano comprensible de la distribución de los activos o equipamientos subvencionables (máx. 2 puntos) | Plano comprensible de la distribución de los activos o equipamientos subvencionables (máx. 2 puntos) | Plano comprensible de la distribución de los activos o equipamientos subvencionables (máx. 2 puntos) D. | Adecuación de los recursos (Máximo 3 puntos). | Adecuación de los recursos (Máximo 3 puntos). Especificar las capacidades y experiencia de los proveedores (máx. 1,5 puntos) | Especificar las capacidades y experiencia de los proveedores (máx. 1,5 puntos) | Especificar las capacidades y experiencia de los proveedores (máx. 1,5 puntos) Especificar los medios técnicos y humanos que se van a utilizar para llevar a cabo el proyecto (máx. 1,5 puntos) | Especificar los medios técnicos y humanos que se van a utilizar para llevar a cabo el proyecto (máx. 1,5 puntos) | Especificar los medios técnicos y humanos que se van a utilizar para llevar a cabo el proyecto (máx. 1,5 puntos)",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "1c3a0c6e-fed5-43d9-ba00-f27e909ce7fe",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 25,
+            "page_end": 25,
+            "section": null,
+            "quote": "En caso de aportar documentos técnicos de los activos (de 2,5 puntos a 5 puntos según la calidad y detalle); En caso de aportar una factura, presupuesto, documento de encargo u otro documento equivalente (2,5 puntos); si se aporta varios de los documentos anteriores (5 puntos). También se deberá describir la ubicación y conexión de cada activo dentro del proceso productivo mediante la aportación gráfico o diagrama de bloques o de flujo de trabajo (3 ptos), aportando un plano comprensible de la distribución de los activos o equipamientos subvencionables. (2 ptos). ADECUACIÓN DE LOS RECURSOS (MÁXIMO 3 PUNTOS) Especificar las capacidades y experiencia de los proveedores (máx. 1,5 puntos), así como de los medios técnicos y humanos que se van a utilizar para llevar a cabo el proyecto (máx. 1,5 puntos). PLAN DE TRABAJO (MÁXIMO 2 PUNTOS) Identificar las etapas del plan de trabajo, indicando el detalle y fechas de inicio y finalización para la ejecución de cada una de ellas, dentro del plazo comprendido entre 1 de enero de 2026 y el plazo máximo de justificación. No se supera el umbral mínimo si la suma de las puntuaciones no alcanza los 15 puntos.",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.criterion.ii_e_plan_trabajo",
+        "entity_type": "evaluation_criterion",
+        "parent_entity_id": "inpyme2026.block.ii_motivacion_viabilidad",
+        "official_code": "II.E",
+        "label": "Plan de trabajo",
+        "requirement_text": "Identificar las etapas del plan de trabajo, indicando el detalle y fechas de inicio y finalización para la ejecución de cada una de ellas, dentro del plazo comprendido entre el 1 de enero de 2026 y el plazo máximo de justificación (máximo 2 puntos).",
+        "score_max": 2.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.95,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "81433748-c6e6-48ce-94ef-0085a9383eb7",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 8,
+            "page_end": 8,
+            "section": null,
+            "quote": "E. | Plan de trabajo (Máximo 2 puntos): Identificar las etapas del plan de trabajo, indicando el detalle y fechas de inicio y finalización para la ejecución de cada una de ellas, dentro del plazo comprendido entre 1 de enero de 2026 y el plazo máximo de justificación. | Plan de trabajo (Máximo 2 puntos): Identificar las etapas del plan de trabajo, indicando el detalle y fechas de inicio y finalización para la ejecución de cada una de ellas, dentro del plazo comprendido entre 1 de enero de 2026 y el plazo máximo de justificación. III. | CONTRIBUCIÓN A LA MEJORA DE LA COMPETITIVIDAD (Máximo 12 puntos) | CONTRIBUCIÓN A LA MEJORA DE LA COMPETITIVIDAD (Máximo 12 puntos) A. | Impacto en la competitividad o la productividad (Máximo 4 puntos): Se valorará la adecuada justificación y la aportación de datos concretos que acrediten como los nuevos activos van a mejorar la competitividad o productividad de la empresa. (Max. 4 puntos).",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "1c3a0c6e-fed5-43d9-ba00-f27e909ce7fe",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 25,
+            "page_end": 25,
+            "section": null,
+            "quote": "En caso de aportar documentos técnicos de los activos (de 2,5 puntos a 5 puntos según la calidad y detalle); En caso de aportar una factura, presupuesto, documento de encargo u otro documento equivalente (2,5 puntos); si se aporta varios de los documentos anteriores (5 puntos). También se deberá describir la ubicación y conexión de cada activo dentro del proceso productivo mediante la aportación gráfico o diagrama de bloques o de flujo de trabajo (3 ptos), aportando un plano comprensible de la distribución de los activos o equipamientos subvencionables. (2 ptos). ADECUACIÓN DE LOS RECURSOS (MÁXIMO 3 PUNTOS) Especificar las capacidades y experiencia de los proveedores (máx. 1,5 puntos), así como de los medios técnicos y humanos que se van a utilizar para llevar a cabo el proyecto (máx. 1,5 puntos). PLAN DE TRABAJO (MÁXIMO 2 PUNTOS) Identificar las etapas del plan de trabajo, indicando el detalle y fechas de inicio y finalización para la ejecución de cada una de ellas, dentro del plazo comprendido entre 1 de enero de 2026 y el plazo máximo de justificación. No se supera el umbral mínimo si la suma de las puntuaciones no alcanza los 15 puntos.",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.criterion.iii_a_impacto_competitividad_productividad",
+        "entity_type": "evaluation_criterion",
+        "parent_entity_id": "inpyme2026.block.iii_mejora_competitividad",
+        "official_code": "III.A",
+        "label": "Impacto en la competitividad o la productividad",
+        "requirement_text": "Se valorará la adecuada justificación y aportación de datos concretos que acrediten cómo los nuevos activos van a mejorar la competitividad o productividad de la empresa; se otorgará la puntuación máxima de 4 puntos si las inversiones se realizan en un enclave tecnológico o en un área industrial clasificada como avanzada conforme a la Ley 14/2018.",
+        "score_max": 4.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": {
+          "condition": "Las inversiones se realizan en un enclave tecnológico o en un área industrial clasificada como avanzada conforme a la Ley 14/2018",
+          "rule_type": "fixed_score_condition",
+          "score_if_true": 4.0,
+          "score_if_false": 0.0
+        },
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.92,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "81433748-c6e6-48ce-94ef-0085a9383eb7",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 8,
+            "page_end": 8,
+            "section": null,
+            "quote": "E. | Plan de trabajo (Máximo 2 puntos): Identificar las etapas del plan de trabajo, indicando el detalle y fechas de inicio y finalización para la ejecución de cada una de ellas, dentro del plazo comprendido entre 1 de enero de 2026 y el plazo máximo de justificación. | Plan de trabajo (Máximo 2 puntos): Identificar las etapas del plan de trabajo, indicando el detalle y fechas de inicio y finalización para la ejecución de cada una de ellas, dentro del plazo comprendido entre 1 de enero de 2026 y el plazo máximo de justificación. III. | CONTRIBUCIÓN A LA MEJORA DE LA COMPETITIVIDAD (Máximo 12 puntos) | CONTRIBUCIÓN A LA MEJORA DE LA COMPETITIVIDAD (Máximo 12 puntos) A. | Impacto en la competitividad o la productividad (Máximo 4 puntos): Se valorará la adecuada justificación y la aportación de datos concretos que acrediten como los nuevos activos van a mejorar la competitividad o productividad de la empresa. (Max. 4 puntos).",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "ebeeec5b-d110-4876-b89d-0b3f6dbe679f",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 8,
+            "page_end": 8,
+            "section": null,
+            "quote": "Se considerará en todo caso que las inversiones van a mejorar la competitividad o productividad de la empresa si las mismas se realizan en un enclave tecnológico o en un área industrial clasificada como avanzada conforme a la Ley 14/2018 (se otorgará en este caso la puntuación máxima de 4 puntos). | Impacto en la competitividad o la productividad (Máximo 4 puntos): Se valorará la adecuada justificación y la aportación de datos concretos que acrediten como los nuevos activos van a mejorar la competitividad o productividad de la empresa. (Max. 4 puntos). Se considerará en todo caso que las inversiones van a mejorar la competitividad o productividad de la empresa si las mismas se realizan en un enclave tecnológico o en un área industrial clasificada como avanzada conforme a la Ley 14/2018 (se otorgará en este caso la puntuación máxima de 4 puntos).",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "6e6a75ae-2d6e-493b-923d-e01d21f271ca",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 25,
+            "page_end": 25,
+            "section": null,
+            "quote": "III.CONTRIBUCIÓN A LA MEJORA DE LA COMPETITIVIDAD (MÁXIMO 12 PUNTOS) Se valorará, hasta con un máximo de 12 puntos, la aportación de la siguiente información: Campo de información Contenido IMPACTO EN LA COMPETITIVIDAD O LA PRODUCTIVIDAD (MÁXIMO 4 PUNTOS) Se valorará la adecuada justificación y la aportación de datos concretos que acrediten como los nuevos activos van a mejorar la competitividad o productividad de la empresa. (Max. 4 puntos). Se considerará en todo caso que las inversiones van a mejorar la competitividad o productividad de la empresa si las mismas se realizan en un enclave tecnológico o en un área industrial clasificada como avanzada conforme a la Ley 14/2018 (se otorgará en este caso la puntuación máxima de 4 puntos). INNOVACIÓN DE LOS PROCESOS O EN LOS PRODUCTOS (MÁXIMO 4 PUNTOS) Se valorará la adecuada justificación y la aportación de datos concretos cualitativos y cuantitativos que acrediten la repercusión de la adquisición de los activos en una innovación del proceso de producción o en el producto final (máx. 4 puntos). Se dará la puntuación máxima en caso de inversión en patentes, royalties, diseños industriales o modelos de utilidad.",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.criterion.iii_b_innovacion_procesos_productos",
+        "entity_type": "evaluation_criterion",
+        "parent_entity_id": "inpyme2026.block.iii_mejora_competitividad",
+        "official_code": "III.B",
+        "label": "Innovación de los procesos o en los productos",
+        "requirement_text": "Se valorará la adecuada justificación y aportación de datos concretos cualitativos y cuantitativos que acrediten la repercusión de la adquisición de los activos en una innovación del proceso de producción o en el producto final; se dará la puntuación máxima en caso de inversión en patentes, royalties, diseños industriales o modelos de utilidad.",
+        "score_max": 4.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": {
+          "condition": "La inversión se realiza en patentes, royalties, diseños industriales o modelos de utilidad",
+          "rule_type": "fixed_score_condition",
+          "score_if_true": 4.0,
+          "score_if_false": 0.0
+        },
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.92,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "2374fb58-b1bc-4265-bf15-bc3c373a8eb4",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 9,
+            "page_end": 9,
+            "section": null,
+            "quote": "B. | Innovación de los procesos o en los productos (Máximo 4 puntos): Se valorará la adecuada justificación y la aportación de datos concretos cualitativos y cuantitativos que acrediten la repercusión de la adquisición de los activos en una innovación del proceso de producción o en el producto final (máx. 4 puntos). Se dará la puntuación máxima en caso de inversión en patentes, royalties, diseños industriales o modelos de utilidad. | Innovación de los procesos o en los productos (Máximo 4 puntos): Se valorará la adecuada justificación y la aportación de datos concretos cualitativos y cuantitativos que acrediten la repercusión de la adquisición de los activos en una innovación del proceso de producción o en el producto final (máx. 4 puntos). Se dará la puntuación máxima en caso de inversión en patentes, royalties, diseños industriales o modelos de utilidad. C.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "6e6a75ae-2d6e-493b-923d-e01d21f271ca",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 25,
+            "page_end": 25,
+            "section": null,
+            "quote": "III.CONTRIBUCIÓN A LA MEJORA DE LA COMPETITIVIDAD (MÁXIMO 12 PUNTOS) Se valorará, hasta con un máximo de 12 puntos, la aportación de la siguiente información: Campo de información Contenido IMPACTO EN LA COMPETITIVIDAD O LA PRODUCTIVIDAD (MÁXIMO 4 PUNTOS) Se valorará la adecuada justificación y la aportación de datos concretos que acrediten como los nuevos activos van a mejorar la competitividad o productividad de la empresa. (Max. 4 puntos). Se considerará en todo caso que las inversiones van a mejorar la competitividad o productividad de la empresa si las mismas se realizan en un enclave tecnológico o en un área industrial clasificada como avanzada conforme a la Ley 14/2018 (se otorgará en este caso la puntuación máxima de 4 puntos). INNOVACIÓN DE LOS PROCESOS O EN LOS PRODUCTOS (MÁXIMO 4 PUNTOS) Se valorará la adecuada justificación y la aportación de datos concretos cualitativos y cuantitativos que acrediten la repercusión de la adquisición de los activos en una innovación del proceso de producción o en el producto final (máx. 4 puntos). Se dará la puntuación máxima en caso de inversión en patentes, royalties, diseños industriales o modelos de utilidad.",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.criterion.iii_c_diversificacion_mercados_clientes",
+        "entity_type": "evaluation_criterion",
+        "parent_entity_id": "inpyme2026.block.iii_mejora_competitividad",
+        "official_code": "III.C",
+        "label": "Diversificación de productos o apertura de nuevos mercados o clientes",
+        "requirement_text": "Se valorará la adecuada justificación y aportación de datos concretos cualitativos y cuantitativos que acrediten que el proyecto permitirá diversificar la producción iniciando fabricación de nuevos productos, abrir nuevos mercados nacionales o internacionales, o acceder a nuevos clientes.",
+        "score_max": 4.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.92,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "da519af1-5549-4d15-83be-d2a6ffcaa95a",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 9,
+            "page_end": 9,
+            "section": null,
+            "quote": "| Diversificación de productos o apertura de nuevos mercados o clientes (Máximo 4 puntos) | Diversificación de productos o apertura de nuevos mercados o clientes (Máximo 4 puntos) Justificación y aportación de datos concretos cualitativos y cuantitativos que acrediten que el proyecto va a permitir a la empresa diversificar su producción iniciando la fabricación de nuevos productos (máx. 2 puntos) | Justificación y aportación de datos concretos cualitativos y cuantitativos que acrediten que el proyecto va a permitir a la empresa diversificar su producción iniciando la fabricación de nuevos productos (máx. 2 puntos) | Justificación y aportación de datos concretos cualitativos y cuantitativos que acrediten que el proyecto va a permitir a la empresa diversificar su producción iniciando la fabricación de nuevos productos (máx. 2 puntos) ¿Permitirá abrir nuevos mercados nacionales o internacionales? (máx. 1 punto) | ¿Permitirá abrir nuevos mercados nacionales o internacionales? (máx. 1 punto) | ¿Permitirá abrir nuevos mercados nacionales o internacionales? (máx. 1 punto) ¿Permitirá acceder a nuevos clientes? (máx. 1 punto) | ¿Permitirá acceder a nuevos clientes? (máx.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "9565d28e-880f-42c6-a48a-ec73381fc288",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 25,
+            "page_end": 25,
+            "section": null,
+            "quote": "DIVERSIFICACIÓN DE PRODUCTOS O APERTURA DE NUEVOS MERCADOS O CLIENTES (MÁXIMO 4 PUNTOS) Se valorará la adecuada justificación y la aportación de datos concretos cualitativos y cuantitativos que acrediten que el proyecto va a permitir a la empresa diversificar su producción iniciando la fabricación de nuevos productos (máx.2 puntos) o le permitirá abrir nuevos mercados nacionales o internacionales (máx. 1 punto), o acceder a nuevos clientes (máx. 1 punto). IV.CONTRIBUCIÓN A LA MEJORA DE LA SOSTENIBILIDAD (MÁXIMO 12 PUNTOS) Se valorará, hasta con un máximo de 12 puntos, la aportación de la siguiente información:",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.criterion.iv_a_reduccion_consumo_energia_agua_materias",
+        "entity_type": "evaluation_criterion",
+        "parent_entity_id": "inpyme2026.block.iv_mejora_sostenibilidad",
+        "official_code": "IV.A",
+        "label": "Inversiones que impliquen una reducción sustancial del consumo de energía, agua o materias primas",
+        "requirement_text": "Inversiones que impliquen una reducción sustancial del consumo de energía, agua o materias primas, puntuable hasta un máximo de 4 puntos.",
+        "score_max": 4.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.95,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "ffea1f68-2154-494b-a246-0694c9706df1",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 10,
+            "page_end": 10,
+            "section": null,
+            "quote": "A. | Inversiones que impliquen una reducción sustancial del consumo de energía, agua o materias primas (Máximo 4 puntos): | Inversiones que impliquen una reducción sustancial del consumo de energía, agua o materias primas (Máximo 4 puntos): Se valorará la adecuada justificación y la aportación de datos concretos cualitativos y cuantitativos que acrediten cómo la inversión supone claramente la reducción sustancial del consumo de energía, agua u otras materias primas o recursos naturales que son inputs en el proceso productivo antes de la inversión, o la mejora de la eficiencia energética de la producción (máx. 2 puntos) | Se valorará la adecuada justificación y la aportación de datos concretos cualitativos y cuantitativos que acrediten cómo la inversión supone claramente la reducción sustancial del consumo de energía, agua u otras materias primas o recursos naturales que son inputs en el proceso productivo antes de la inversión, o la mejora de la eficiencia energética de la producción (máx.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "d0c8430c-3a4a-4087-8a95-21a3115ef479",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 26,
+            "page_end": 26,
+            "section": null,
+            "quote": "Núm. 10301 / 12.02.2026 26 / 31 CVE: DOGV-C-2026-4406 https://dogv.gva.es/ Campo de información Contenido INVERSIONES QUE IMPLIQUEN UNA REDUCCIÓN SUSTANCIAL DEL CONSUMO DE ENERGÍA, AGUA O MATERIAS PRIMAS. (MÁXIMO 4 PUNTOS) Se valorará la adecuada justificación y la aportación de datos concretos cualitativos y cuantitativos que acrediten cómo la inversión supone claramente la reducción sustancial del consumo de energía, agua u otras materias primas o recursos naturales que son inputs en el proceso productivo antes de la inversión, o la mejora de la eficiencia energética de la producción (máx. 2 puntos), que se respalden mediante cifras comparativas, informes externos o certificados acreditativos de las mejoras medioambientales, no siendo suficiente mencionar únicamente porcentajes (máx. 2 puntos).",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.criterion.iv_b_reduccion_residuos_economia_circular",
+        "entity_type": "evaluation_criterion",
+        "parent_entity_id": "inpyme2026.block.iv_mejora_sostenibilidad",
+        "official_code": "IV.B",
+        "label": "Inversiones que impliquen una reducción sustancial de residuos o contaminantes, o la implantación de economía circular",
+        "requirement_text": "Inversiones que impliquen una reducción sustancial de residuos o contaminantes, o la implantación de economía circular, puntuable hasta un máximo de 4 puntos.",
+        "score_max": 4.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.95,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "0912489e-5e4d-42b0-905c-88198093ee7f",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 10,
+            "page_end": 10,
+            "section": null,
+            "quote": "2 puntos) | Se valorará la adecuada justificación y la aportación de datos concretos cualitativos y cuantitativos que acrediten cómo la inversión supone claramente la reducción sustancial del consumo de energía, agua u otras materias primas o recursos naturales que son inputs en el proceso productivo antes de la inversión, o la mejora de la eficiencia energética de la producción (máx. 2 puntos) Cifras comparativas, informes externos o certificados acreditativos de las mejoras medioambientales, no siendo suficiente mencionar únicamente porcentajes (máx. 2 puntos) | Cifras comparativas, informes externos o certificados acreditativos de las mejoras medioambientales, no siendo suficiente mencionar únicamente porcentajes (máx. 2 puntos) | Cifras comparativas, informes externos o certificados acreditativos de las mejoras medioambientales, no siendo suficiente mencionar únicamente porcentajes (máx. 2 puntos) B. | Inversiones que impliquen una reducción sustancial de residuos o contaminantes, o la implantación de economía circular (Máximo 4 puntos) | Inversiones que impliquen una reducción sustancial de residuos o contaminantes, o la implantación de economía circular (Máximo 4 puntos)",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "90366a7a-4383-4407-95cc-d8be0096666c",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 26,
+            "page_end": 26,
+            "section": null,
+            "quote": "INVERSIONES QUE IMPLIQUEN UNA REDUCCIÓN SUSTANCIAL DE RESIDUOS O CONTAMINANTES, O LA IMPLANTACIÓN DE ECONOMÍA CIRCULAR (MÁXIMO 4 PUNTOS) Se valorará la adecuada justificación y la aportación de datos concretos cualitativos y cuantitativos que acrediten cómo la inversión va a suponer claramente una reducción sustancial de la producción de emisiones, efluentes, residuos o contaminaciones ambientales que se producen en el proceso productivo respecto de los que se producían antes de la inversión. (máx. 2 puntos), que se respalden mediante cifras comparativas, informes externos o certificados acreditativos de las mejoras medioambientales, no siendo suficiente mencionar únicamente porcentajes (máx. 2 puntos). INVERSIONES QUE IMPLIQUEN REDUCIR LA HUELLA DE CARBONO (MÁXIMO 4 PUNTOS) Detallar la ubicación provincial de las empresas proveedoras de los activos adquiridos, e indicar el porcentaje económico del total del proyecto de inversión cuya provisión procede de empresas de la Comunitat Valenciana, así como de otras partes de España o del extranjero. 4 ptos si el 100% del coste del proyecto se provee de empresas de la Comunitat Valenciana. 3 ptos si es más del 75%.",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.criterion.iv_c_reduccion_huella_carbono",
+        "entity_type": "evaluation_criterion",
+        "parent_entity_id": "inpyme2026.block.iv_mejora_sostenibilidad",
+        "official_code": "IV.C",
+        "label": "Inversiones que impliquen reducir la huella de carbono",
+        "requirement_text": "Se valora detallando la ubicación provincial de las empresas proveedoras de los activos adquiridos y el porcentaje económico del proyecto cuya provisión procede de empresas de la Comunitat Valenciana, otras partes de España o del extranjero, puntuando según el porcentaje procedente de la Comunitat Valenciana: 4 puntos si 100%, 3 puntos si más del 75%, 2 puntos si se supera el 50%, 1 punto si se supera el 30%. La no identificación de todas las ubicaciones o del porcentaje de la Comunitat Valenciana conlleva puntuación 0.",
+        "score_max": 4.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": {
+          "unit": "percent",
+          "bands": [
+            {
+              "label": "100% del coste desde empresas de la Comunitat Valenciana",
+              "score": 4.0,
+              "min_count": null,
+              "max_exclusive": null,
+              "min_inclusive": 100.0
+            },
+            {
+              "label": "más del 75%",
+              "score": 3.0,
+              "min_count": null,
+              "max_exclusive": 100.0,
+              "min_inclusive": 75.0001
+            },
+            {
+              "label": "se supera el 50%",
+              "score": 2.0,
+              "min_count": null,
+              "max_exclusive": 75.0001,
+              "min_inclusive": 50.0001
+            },
+            {
+              "label": "se supera el 30%",
+              "score": 1.0,
+              "min_count": null,
+              "max_exclusive": 50.0001,
+              "min_inclusive": 30.0001
+            }
+          ],
+          "metric": "pct_coste_proyecto_proveedores_comunitat_valenciana",
+          "rule_type": "score_by_bands",
+          "fallback_score": 0.0,
+          "fallback_condition": "La no identificación de todas las ubicaciones o del porcentaje de la Comunitat Valenciana conllevará que la puntuación de este apartado sea 0."
+        },
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.92,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "0919666b-931e-4c0b-870b-af2e8b1a8fef",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 12,
+            "page_end": 12,
+            "section": null,
+            "quote": "C. | Inversiones que impliquen reducir la huella de carbono (Máximo 4 puntos): Detallar la ubicación provincial de las empresas proveedoras de los activos adquiridos, e indicar el porcentaje económico del total del proyecto de inversión cuya provisión procede de empresas de la Comunitat Valenciana, así como de otras partes de España o del extranjero. 4 ptos si el 100% del coste del proyecto se provee de empresas de la Comunitat Valenciana. 3 ptos si es más del 75%. 2 ptos si se supera el 50%. 1 punto si se supera el 30%. La no identificación de todas las ubicaciones o del porcentaje de la Comunitat Valenciana conllevará que la puntuación de este apartado sea 0. | Inversiones que impliquen reducir la huella de carbono (Máximo 4 puntos): Detallar la ubicación provincial de las empresas proveedoras de los activos adquiridos, e indicar el porcentaje económico del total del proyecto de inversión cuya provisión procede de empresas de la Comunitat Valenciana, así como de otras partes de España o del extranjero. 4 ptos si el 100% del coste del proyecto se provee de empresas de la Comunitat Valenciana. 3 ptos si es más del 75%. 2 ptos si se supera el 50%. 1 punto si se supera el 30%.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "90366a7a-4383-4407-95cc-d8be0096666c",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 26,
+            "page_end": 26,
+            "section": null,
+            "quote": "INVERSIONES QUE IMPLIQUEN UNA REDUCCIÓN SUSTANCIAL DE RESIDUOS O CONTAMINANTES, O LA IMPLANTACIÓN DE ECONOMÍA CIRCULAR (MÁXIMO 4 PUNTOS) Se valorará la adecuada justificación y la aportación de datos concretos cualitativos y cuantitativos que acrediten cómo la inversión va a suponer claramente una reducción sustancial de la producción de emisiones, efluentes, residuos o contaminaciones ambientales que se producen en el proceso productivo respecto de los que se producían antes de la inversión. (máx. 2 puntos), que se respalden mediante cifras comparativas, informes externos o certificados acreditativos de las mejoras medioambientales, no siendo suficiente mencionar únicamente porcentajes (máx. 2 puntos). INVERSIONES QUE IMPLIQUEN REDUCIR LA HUELLA DE CARBONO (MÁXIMO 4 PUNTOS) Detallar la ubicación provincial de las empresas proveedoras de los activos adquiridos, e indicar el porcentaje económico del total del proyecto de inversión cuya provisión procede de empresas de la Comunitat Valenciana, así como de otras partes de España o del extranjero. 4 ptos si el 100% del coste del proyecto se provee de empresas de la Comunitat Valenciana. 3 ptos si es más del 75%.",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.criterion.v_a_creacion_empleo",
+        "entity_type": "evaluation_criterion",
+        "parent_entity_id": "inpyme2026.block.v_solucion_problemas_sociales",
+        "official_code": "V.A",
+        "label": "Creación de empleo",
+        "requirement_text": "Se valora el número de contrataciones formalizadas o previstas por la empresa en relación con el proyecto subvencionado, contando todo tipo de contratos (indefinidos, fijos discontinuos, tiempo parcial u otros); se otorga 1 punto por contrato, con un máximo de 2 puntos.",
+        "score_max": 2.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": {
+          "unit": "contrato",
+          "metric": "contracts_created",
+          "max_score": 2.0,
+          "rule_type": "score_per_unit",
+          "score_per_unit": 1.0,
+          "unit_qualifying_threshold": null
+        },
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.95,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "176b4f8e-94ec-42f3-88c6-b650997f3957",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 12,
+            "page_end": 12,
+            "section": null,
+            "quote": "La no identificación de todas las ubicaciones o del porcentaje de la Comunitat Valenciana conllevará que la puntuación de este apartado sea 0. V. | LA CONTRIBUCIÓN A LA SOLUCIÓN DE PROBLEMAS SOCIALES: (Máximo 13 puntos) | LA CONTRIBUCIÓN A LA SOLUCIÓN DE PROBLEMAS SOCIALES: (Máximo 13 puntos) A. | Creación de empleo (1 punto por contrato, con un máximo de 2 puntos): Se valorará el número de contrataciones de personas trabajadoras que se han formalizado o se estima va a formalizar la empresa en relación con el proyecto a subvencionar. Se valorarán todo tipo de contratos, indefinidos, fijos discontinuos, tiempo parcial u otro tipo de contratación laboral. | Creación de empleo (1 punto por contrato, con un máximo de 2 puntos): Se valorará el número de contrataciones de personas trabajadoras que se han formalizado o se estima va a formalizar la empresa en relación con el proyecto a subvencionar. Se valorarán todo tipo de contratos, indefinidos, fijos discontinuos, tiempo parcial u otro tipo de contratación laboral.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "41d0d42d-8d24-49ce-94ab-7165fc86dd5b",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 26,
+            "page_end": 26,
+            "section": null,
+            "quote": "2 ptos si se supera el 50%. 1 punto si se supera el 30%. La no identificación de todas las ubicaciones o del porcentaje de la Comunitat Valenciana conllevará que la puntuación de este apartado sea 0. V. LA CONTRIBUCIÓN A LA SOLUCIÓN DE PROBLEMAS SOCIALES: (MÁXIMO 13 PUNTOS) Se considerará que un proyecto contribuye a la solución de problemas sociales cuando se justifique adecuadamente que supone: Campo de información Contenido CREACIÓN DE EMPLEO (1 PUNTO POR CONTRATO, CON UN MÁXIMO DE 2 PUNTOS) Se valorará el número de contrataciones de personas trabajadoras que se han formalizado o se estima va a formalizar la empresa en relación con el proyecto a subvencionar. Se valorarán todo tipo de contratos, indefinidos, fijos discontinuos, tiempo parcial u otro tipo de contratación laboral. LUCHA CONTRA LA DESPOBLACIÓN (10 PUNTOS) Se otorgarán 10 puntos si la ubicación íntegra de las inversiones es en municipios prioritarios para la reindustrialización por estar afectados por la despoblación o que pudieran incurrir en ese riesgo, listados en el anexo IV.",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.criterion.v_b_lucha_despoblacion",
+        "entity_type": "evaluation_criterion",
+        "parent_entity_id": "inpyme2026.block.v_solucion_problemas_sociales",
+        "official_code": "V.B",
+        "label": "Lucha contra despoblación",
+        "requirement_text": "Se otorgan 10 puntos si la ubicación de las inversiones se encuentra íntegramente en municipios prioritarios para la reindustrialización por estar afectados por la despoblación o riesgo de incurrir en ella, listados en el anexo IV.",
+        "score_max": 10.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": {
+          "condition": "la ubicación íntegra de las inversiones está en municipios prioritarios para la reindustrialización por estar afectados por la despoblación o en riesgo de incurrir en ella, listados en el anexo IV",
+          "rule_type": "fixed_score_condition",
+          "score_if_true": 10.0,
+          "score_if_false": 0.0
+        },
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.9,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "5201efe0-b2ac-4cbf-9289-085b78564bab",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 13,
+            "page_end": 13,
+            "section": null,
+            "quote": "B. | Lucha contra despoblación (10 puntos): Se otorgarán 10 puntos si la ubicación de las inversiones es en municipios prioritarios para la reindustrialización por estar afectados por la despoblación o que pudieran incurrir en ese riesgo, listados en el anexo IV. | Lucha contra despoblación (10 puntos): Se otorgarán 10 puntos si la ubicación de las inversiones es en municipios prioritarios para la reindustrialización por estar afectados por la despoblación o que pudieran incurrir en ese riesgo, listados en el anexo IV. C. | Apoyo a proyectos sociales (Máximo 1 punto): Se valorará exclusivamente la acreditación de los apoyos económicos realizados por la solicitante a proyectos o entidades sin ánimo de lucro que se destinen a la atención de personas vulnerables, durante el ejercicio 2025 y 2026, hasta la presentación de la solicitud. 1 punto por aportaciones superiores a 1.000 €.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "41d0d42d-8d24-49ce-94ab-7165fc86dd5b",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 26,
+            "page_end": 26,
+            "section": null,
+            "quote": "2 ptos si se supera el 50%. 1 punto si se supera el 30%. La no identificación de todas las ubicaciones o del porcentaje de la Comunitat Valenciana conllevará que la puntuación de este apartado sea 0. V. LA CONTRIBUCIÓN A LA SOLUCIÓN DE PROBLEMAS SOCIALES: (MÁXIMO 13 PUNTOS) Se considerará que un proyecto contribuye a la solución de problemas sociales cuando se justifique adecuadamente que supone: Campo de información Contenido CREACIÓN DE EMPLEO (1 PUNTO POR CONTRATO, CON UN MÁXIMO DE 2 PUNTOS) Se valorará el número de contrataciones de personas trabajadoras que se han formalizado o se estima va a formalizar la empresa en relación con el proyecto a subvencionar. Se valorarán todo tipo de contratos, indefinidos, fijos discontinuos, tiempo parcial u otro tipo de contratación laboral. LUCHA CONTRA LA DESPOBLACIÓN (10 PUNTOS) Se otorgarán 10 puntos si la ubicación íntegra de las inversiones es en municipios prioritarios para la reindustrialización por estar afectados por la despoblación o que pudieran incurrir en ese riesgo, listados en el anexo IV.",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.criterion.v_c_apoyo_proyectos_sociales",
+        "entity_type": "evaluation_criterion",
+        "parent_entity_id": "inpyme2026.block.v_solucion_problemas_sociales",
+        "official_code": "V.C",
+        "label": "Apoyo a proyectos sociales",
+        "requirement_text": "Se valora exclusivamente la acreditación mediante certificado de apoyos económicos de la solicitante a proyectos o entidades sin ánimo de lucro dedicadas a la atención de personas vulnerables, realizados durante 2025 y 2026 hasta la presentación de la solicitud; se otorga 1 punto por aportaciones superiores a 1.000 €.",
+        "score_max": 1.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": {
+          "unit": "aportación",
+          "metric": "donations_to_vulnerable_persons_entities",
+          "max_score": 1.0,
+          "rule_type": "score_per_unit",
+          "score_per_unit": 1.0,
+          "unit_qualifying_threshold": 1000.0
+        },
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.9,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "5201efe0-b2ac-4cbf-9289-085b78564bab",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 13,
+            "page_end": 13,
+            "section": null,
+            "quote": "B. | Lucha contra despoblación (10 puntos): Se otorgarán 10 puntos si la ubicación de las inversiones es en municipios prioritarios para la reindustrialización por estar afectados por la despoblación o que pudieran incurrir en ese riesgo, listados en el anexo IV. | Lucha contra despoblación (10 puntos): Se otorgarán 10 puntos si la ubicación de las inversiones es en municipios prioritarios para la reindustrialización por estar afectados por la despoblación o que pudieran incurrir en ese riesgo, listados en el anexo IV. C. | Apoyo a proyectos sociales (Máximo 1 punto): Se valorará exclusivamente la acreditación de los apoyos económicos realizados por la solicitante a proyectos o entidades sin ánimo de lucro que se destinen a la atención de personas vulnerables, durante el ejercicio 2025 y 2026, hasta la presentación de la solicitud. 1 punto por aportaciones superiores a 1.000 €.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "ae1808dd-eac8-45ae-ac9b-e5335b40d7bc",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 26,
+            "page_end": 26,
+            "section": null,
+            "quote": "APOYO A PROYECTOS SOCIALES (MÁXIMO DE 1 PUNTOS) Se valorará exclusivamente la acreditación de los apoyos económicos realizados por la solicitante a proyectos o entidades sin ánimo de lucro que se destinen a la atención de personas vulnerables, durante el ejercicio 2025 y 2026, hasta la presentación de la solicitud. 1 punto por aportaciones superiores a 1.000 €. Se valorarán solo aportaciones acreditadas mediante certificados emitidos por las entidades sin ánimo de lucro que se justifique adecuadamente que se dedican exclusivamente a la atención de personas vulnerables (mujeres víctimas violencia de género, menores tutelados, mayores, inmigrantes, personas sin hogar, personas con diversidad funcional o discapacidad, minorías étnicas, exreclusos, etc.). ANEXO III Resolución de empates Se seleccionan los siguientes criterios de desempate para determinar el orden de prioridad entre solicitudes que hayan obtenido la misma puntuación, que se aplicarán de forma consecutiva: 1. Las solicitudes de las empresas que realicen las inversiones en municipios despoblados o en riesgo de despoblación del listado anexo IV.",
+            "extraction_method": "native"
+          }
+        ]
+      }
+    ],
+    "evaluation_subcriteria": [
+      {
+        "entity_id": "inpyme2026.subcriterion.iii_c_acceso_nuevos_clientes",
+        "entity_type": "evaluation_subcriterion",
+        "parent_entity_id": "inpyme2026.criterion.iii_c_diversificacion_mercados_clientes",
+        "official_code": null,
+        "label": "Acceso a nuevos clientes",
+        "requirement_text": "¿Permitirá acceder a nuevos clientes?",
+        "score_max": 1.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.9,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "b3313e92-e475-4129-abac-a92957b0baed",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 9,
+            "page_end": 9,
+            "section": null,
+            "quote": "1 punto) | ¿Permitirá acceder a nuevos clientes? (máx. 1 punto) IV. | LA CONTRIBUCIÓN A LA MEJORA DE LA SOSTENIBILIDAD: (Máximo 12 puntos) | LA CONTRIBUCIÓN A LA MEJORA DE LA SOSTENIBILIDAD: (Máximo 12 puntos)",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "9565d28e-880f-42c6-a48a-ec73381fc288",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 25,
+            "page_end": 25,
+            "section": null,
+            "quote": "DIVERSIFICACIÓN DE PRODUCTOS O APERTURA DE NUEVOS MERCADOS O CLIENTES (MÁXIMO 4 PUNTOS) Se valorará la adecuada justificación y la aportación de datos concretos cualitativos y cuantitativos que acrediten que el proyecto va a permitir a la empresa diversificar su producción iniciando la fabricación de nuevos productos (máx.2 puntos) o le permitirá abrir nuevos mercados nacionales o internacionales (máx. 1 punto), o acceder a nuevos clientes (máx. 1 punto). IV.CONTRIBUCIÓN A LA MEJORA DE LA SOSTENIBILIDAD (MÁXIMO 12 PUNTOS) Se valorará, hasta con un máximo de 12 puntos, la aportación de la siguiente información:",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.subcriterion.iii_c_apertura_nuevos_mercados",
+        "entity_type": "evaluation_subcriterion",
+        "parent_entity_id": "inpyme2026.criterion.iii_c_diversificacion_mercados_clientes",
+        "official_code": null,
+        "label": "Apertura de nuevos mercados nacionales o internacionales",
+        "requirement_text": "¿Permitirá abrir nuevos mercados nacionales o internacionales?",
+        "score_max": 1.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.9,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "da519af1-5549-4d15-83be-d2a6ffcaa95a",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 9,
+            "page_end": 9,
+            "section": null,
+            "quote": "| Diversificación de productos o apertura de nuevos mercados o clientes (Máximo 4 puntos) | Diversificación de productos o apertura de nuevos mercados o clientes (Máximo 4 puntos) Justificación y aportación de datos concretos cualitativos y cuantitativos que acrediten que el proyecto va a permitir a la empresa diversificar su producción iniciando la fabricación de nuevos productos (máx. 2 puntos) | Justificación y aportación de datos concretos cualitativos y cuantitativos que acrediten que el proyecto va a permitir a la empresa diversificar su producción iniciando la fabricación de nuevos productos (máx. 2 puntos) | Justificación y aportación de datos concretos cualitativos y cuantitativos que acrediten que el proyecto va a permitir a la empresa diversificar su producción iniciando la fabricación de nuevos productos (máx. 2 puntos) ¿Permitirá abrir nuevos mercados nacionales o internacionales? (máx. 1 punto) | ¿Permitirá abrir nuevos mercados nacionales o internacionales? (máx. 1 punto) | ¿Permitirá abrir nuevos mercados nacionales o internacionales? (máx. 1 punto) ¿Permitirá acceder a nuevos clientes? (máx. 1 punto) | ¿Permitirá acceder a nuevos clientes? (máx.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "9565d28e-880f-42c6-a48a-ec73381fc288",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 25,
+            "page_end": 25,
+            "section": null,
+            "quote": "DIVERSIFICACIÓN DE PRODUCTOS O APERTURA DE NUEVOS MERCADOS O CLIENTES (MÁXIMO 4 PUNTOS) Se valorará la adecuada justificación y la aportación de datos concretos cualitativos y cuantitativos que acrediten que el proyecto va a permitir a la empresa diversificar su producción iniciando la fabricación de nuevos productos (máx.2 puntos) o le permitirá abrir nuevos mercados nacionales o internacionales (máx. 1 punto), o acceder a nuevos clientes (máx. 1 punto). IV.CONTRIBUCIÓN A LA MEJORA DE LA SOSTENIBILIDAD (MÁXIMO 12 PUNTOS) Se valorará, hasta con un máximo de 12 puntos, la aportación de la siguiente información:",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.subcriterion.i_a_datos_economicos",
+        "entity_type": "evaluation_subcriterion",
+        "parent_entity_id": "inpyme2026.criterion.i_a_antecedentes_evolucion",
+        "official_code": null,
+        "label": "Aportación de datos económicos actuales, así como su variación en los últimos 5 años",
+        "requirement_text": "Aportar datos económicos actuales y su variación en los últimos 5 años para cada variable económica: empleos, ventas, beneficios y exportaciones, a razón de 0,5 puntos por variable.",
+        "score_max": 2.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.9,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "960856a9-ddab-4634-aaf3-2b15cce0031f",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 4,
+            "page_end": 4,
+            "section": null,
+            "quote": "Estructura accionarial actual y su posible pertenencia a grupos empresariales (máx. 0,5 puntos) | Estructura accionarial actual y su posible pertenencia a grupos empresariales (máx. 0,5 puntos) | Estructura accionarial actual y su posible pertenencia a grupos empresariales (máx. 0,5 puntos) Aportación de datos económicos actuales, así como su variación en los últimos 5 años (máx. 2 puntos, 0,5 puntos por item).",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "438ba346-df21-4d6f-a1cf-212a65efcc38",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 24,
+            "page_end": 24,
+            "section": null,
+            "quote": "0,5 puntos), ventas (máx. 0,5 puntos), beneficios (máx. 0,5 puntos) y exportaciones (máx. 0,5 puntos). ACTIVIDADES ACTUALES DE LA EMPRESA (MÁXIMO 1 PUNTO) Una descripción de las actividades económicas y/o industriales que realiza la empresa en la actualidad. EXPERIENCIA EN LA ACTIVIDAD PROYECTADA (MÁXIMO 3 PUNTOS) Explicar la experiencia de la empresa solicitante realizando la actividad industrial relacionada con la inversión, cuya acreditación se realizará mediante la fecha de inicio de operaciones que conste en la nota informativa del Registro Mercantil o equivalente, salvo que la empresa indique uno inferior. En caso de fusiones, absorciones, escisiones o adquisiciones, a través de escritura notarial u otro documento externo acreditativo en el que conste el traspaso de las actividades industriales a la empresa solicitante: 0 puntos si la experiencia es menos de 5 años; 1 punto si es entre 5 y 7 años; 2 puntos si es entre 7 y 10 años; 3 puntos si es más de 10 años. No se supera el umbral mínimo si la suma de las puntuaciones no alcanza los 3 puntos. II. MOTIVACIÓN, VIABILIDAD Y DESCRIPCIÓN TÉCNICA DEL PROYECTO (MÁXIMO 55 PUNTOS / UMBRAL MÍNIMO 15 PUNTOS)",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.subcriterion.ii_d_capacidades_proveedores",
+        "entity_type": "evaluation_subcriterion",
+        "parent_entity_id": "inpyme2026.criterion.ii_d_adecuacion_recursos",
+        "official_code": null,
+        "label": "Capacidades y experiencia de los proveedores",
+        "requirement_text": "Especificar las capacidades y experiencia de los proveedores (máx. 1,5 puntos).",
+        "score_max": 1.5,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.95,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "c490b5e2-d807-4885-a991-d3035d25ea79",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 7,
+            "page_end": 7,
+            "section": null,
+            "quote": "3 puntos) | Describir la ubicación y conexión de cada activo dentro del proceso productivo mediante la aportación gráfico o diagrama de bloques o de flujo de trabajo (máx. 3 puntos) Plano comprensible de la distribución de los activos o equipamientos subvencionables (máx. 2 puntos) | Plano comprensible de la distribución de los activos o equipamientos subvencionables (máx. 2 puntos) | Plano comprensible de la distribución de los activos o equipamientos subvencionables (máx. 2 puntos) D. | Adecuación de los recursos (Máximo 3 puntos). | Adecuación de los recursos (Máximo 3 puntos). Especificar las capacidades y experiencia de los proveedores (máx. 1,5 puntos) | Especificar las capacidades y experiencia de los proveedores (máx. 1,5 puntos) | Especificar las capacidades y experiencia de los proveedores (máx. 1,5 puntos) Especificar los medios técnicos y humanos que se van a utilizar para llevar a cabo el proyecto (máx. 1,5 puntos) | Especificar los medios técnicos y humanos que se van a utilizar para llevar a cabo el proyecto (máx. 1,5 puntos) | Especificar los medios técnicos y humanos que se van a utilizar para llevar a cabo el proyecto (máx. 1,5 puntos)",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "1c3a0c6e-fed5-43d9-ba00-f27e909ce7fe",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 25,
+            "page_end": 25,
+            "section": null,
+            "quote": "En caso de aportar documentos técnicos de los activos (de 2,5 puntos a 5 puntos según la calidad y detalle); En caso de aportar una factura, presupuesto, documento de encargo u otro documento equivalente (2,5 puntos); si se aporta varios de los documentos anteriores (5 puntos). También se deberá describir la ubicación y conexión de cada activo dentro del proceso productivo mediante la aportación gráfico o diagrama de bloques o de flujo de trabajo (3 ptos), aportando un plano comprensible de la distribución de los activos o equipamientos subvencionables. (2 ptos). ADECUACIÓN DE LOS RECURSOS (MÁXIMO 3 PUNTOS) Especificar las capacidades y experiencia de los proveedores (máx. 1,5 puntos), así como de los medios técnicos y humanos que se van a utilizar para llevar a cabo el proyecto (máx. 1,5 puntos). PLAN DE TRABAJO (MÁXIMO 2 PUNTOS) Identificar las etapas del plan de trabajo, indicando el detalle y fechas de inicio y finalización para la ejecución de cada una de ellas, dentro del plazo comprendido entre 1 de enero de 2026 y el plazo máximo de justificación. No se supera el umbral mínimo si la suma de las puntuaciones no alcanza los 15 puntos.",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.subcriterion.iv_b_evidencia_comparativa_certificados",
+        "entity_type": "evaluation_subcriterion",
+        "parent_entity_id": "inpyme2026.criterion.iv_b_reduccion_residuos_economia_circular",
+        "official_code": null,
+        "label": "Cifras comparativas, informes externos o certificados acreditativos de las mejoras medioambientales",
+        "requirement_text": "Debe respaldarse mediante cifras comparativas, informes externos o certificados acreditativos de las mejoras medioambientales, no siendo suficiente mencionar únicamente porcentajes.",
+        "score_max": 2.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.9,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "90366a7a-4383-4407-95cc-d8be0096666c",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 26,
+            "page_end": 26,
+            "section": null,
+            "quote": "INVERSIONES QUE IMPLIQUEN UNA REDUCCIÓN SUSTANCIAL DE RESIDUOS O CONTAMINANTES, O LA IMPLANTACIÓN DE ECONOMÍA CIRCULAR (MÁXIMO 4 PUNTOS) Se valorará la adecuada justificación y la aportación de datos concretos cualitativos y cuantitativos que acrediten cómo la inversión va a suponer claramente una reducción sustancial de la producción de emisiones, efluentes, residuos o contaminaciones ambientales que se producen en el proceso productivo respecto de los que se producían antes de la inversión. (máx. 2 puntos), que se respalden mediante cifras comparativas, informes externos o certificados acreditativos de las mejoras medioambientales, no siendo suficiente mencionar únicamente porcentajes (máx. 2 puntos). INVERSIONES QUE IMPLIQUEN REDUCIR LA HUELLA DE CARBONO (MÁXIMO 4 PUNTOS) Detallar la ubicación provincial de las empresas proveedoras de los activos adquiridos, e indicar el porcentaje económico del total del proyecto de inversión cuya provisión procede de empresas de la Comunitat Valenciana, así como de otras partes de España o del extranjero. 4 ptos si el 100% del coste del proyecto se provee de empresas de la Comunitat Valenciana. 3 ptos si es más del 75%.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "f60b64ae-04fd-4f88-9e68-a679faf9d44b",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 11,
+            "page_end": 11,
+            "section": null,
+            "quote": "2 puntos) Cifras comparativas, informes externos o certificados acreditativos de las mejoras medioambientales, no siendo suficiente mencionar únicamente porcentajes (máx. 2 puntos) | Cifras comparativas, informes externos o certificados acreditativos de las mejoras medioambientales, no siendo suficiente mencionar únicamente porcentajes (máx. 2 puntos) | Cifras comparativas, informes externos o certificados acreditativos de las mejoras medioambientales, no siendo suficiente mencionar únicamente porcentajes (máx. 2 puntos)",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.subcriterion.iv_a_evidencia_comparativa_certificados",
+        "entity_type": "evaluation_subcriterion",
+        "parent_entity_id": "inpyme2026.criterion.iv_a_reduccion_consumo_energia_agua_materias",
+        "official_code": null,
+        "label": "Cifras comparativas, informes externos o certificados acreditativos de las mejoras medioambientales",
+        "requirement_text": "Debe respaldarse mediante cifras comparativas, informes externos o certificados acreditativos de las mejoras medioambientales, no siendo suficiente mencionar únicamente porcentajes.",
+        "score_max": 2.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.9,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "d0c8430c-3a4a-4087-8a95-21a3115ef479",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 26,
+            "page_end": 26,
+            "section": null,
+            "quote": "Núm. 10301 / 12.02.2026 26 / 31 CVE: DOGV-C-2026-4406 https://dogv.gva.es/ Campo de información Contenido INVERSIONES QUE IMPLIQUEN UNA REDUCCIÓN SUSTANCIAL DEL CONSUMO DE ENERGÍA, AGUA O MATERIAS PRIMAS. (MÁXIMO 4 PUNTOS) Se valorará la adecuada justificación y la aportación de datos concretos cualitativos y cuantitativos que acrediten cómo la inversión supone claramente la reducción sustancial del consumo de energía, agua u otras materias primas o recursos naturales que son inputs en el proceso productivo antes de la inversión, o la mejora de la eficiencia energética de la producción (máx. 2 puntos), que se respalden mediante cifras comparativas, informes externos o certificados acreditativos de las mejoras medioambientales, no siendo suficiente mencionar únicamente porcentajes (máx. 2 puntos).",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "0912489e-5e4d-42b0-905c-88198093ee7f",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 10,
+            "page_end": 10,
+            "section": null,
+            "quote": "2 puntos) | Se valorará la adecuada justificación y la aportación de datos concretos cualitativos y cuantitativos que acrediten cómo la inversión supone claramente la reducción sustancial del consumo de energía, agua u otras materias primas o recursos naturales que son inputs en el proceso productivo antes de la inversión, o la mejora de la eficiencia energética de la producción (máx. 2 puntos) Cifras comparativas, informes externos o certificados acreditativos de las mejoras medioambientales, no siendo suficiente mencionar únicamente porcentajes (máx. 2 puntos) | Cifras comparativas, informes externos o certificados acreditativos de las mejoras medioambientales, no siendo suficiente mencionar únicamente porcentajes (máx. 2 puntos) | Cifras comparativas, informes externos o certificados acreditativos de las mejoras medioambientales, no siendo suficiente mencionar únicamente porcentajes (máx. 2 puntos) B. | Inversiones que impliquen una reducción sustancial de residuos o contaminantes, o la implantación de economía circular (Máximo 4 puntos) | Inversiones que impliquen una reducción sustancial de residuos o contaminantes, o la implantación de economía circular (Máximo 4 puntos)",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.subcriterion.i_a_como_se_creo",
+        "entity_type": "evaluation_subcriterion",
+        "parent_entity_id": "inpyme2026.criterion.i_a_antecedentes_evolucion",
+        "official_code": null,
+        "label": "Cómo se creó la empresa",
+        "requirement_text": "Explicar cómo se creó la empresa.",
+        "score_max": 0.5,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.9,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "7c58e342-09bd-4020-8722-1ef4c7240c7e",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 3,
+            "page_end": 3,
+            "section": null,
+            "quote": "La insuficiente justificación en la memoria de la vinculación directa, o la no presentación o no constancia expresa de CNAE, conllevará la inmediata inadmisión de la solicitud y la exclusión de su baremación, sin necesidad de que el órgano instructor requiera previamente a la empresa solicitante para la subsanación de tal defecto. ¿VAMOS A PEDIR QUE (EN EL CASO DE QUE EL SECTOR NO COINCIDA CON EL INDICADO EN LA DECLARACIÓN RESPONSABLE DE LA SOLICITUD, DEBERÁ JUSTIFICARSE) I. | DESCRIPCIÓN DE LA EMPRESA (Máximo 8 puntos) No se supera el umbral mínimo si la suma de las puntuaciones no alcanza los 3 puntos. | DESCRIPCIÓN DE LA EMPRESA (Máximo 8 puntos) No se supera el umbral mínimo si la suma de las puntuaciones no alcanza los 3 puntos. A. | Antecedentes y evolución (Máximo 4 puntos). | Antecedentes y evolución (Máximo 4 puntos). Cómo se creó la empresa (máx. 0,5 puntos) | Cómo se creó la empresa (máx. 0,5 puntos) | Cómo se creó la empresa (máx. 0,5 puntos) Cuando se constituyó la empresa (máx. 0,5 puntos) | Cuando se constituyó la empresa (máx. 0,5 puntos) | Cuando se constituyó la empresa (máx. 0,5 puntos) Evolución de la empresa y su propiedad (máx.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "e78190be-1e55-40ff-9753-b527246f9636",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 24,
+            "page_end": 24,
+            "section": null,
+            "quote": "3832 Valorización de materiales ya clasificados. ANEXO II Criterios y reglas de evaluación de proyectos La evaluación de las solicitudes se realizará aplicando los criterios y reglas descritos a continuación para cada uno de los siguientes apartados obligatorios de la memoria descriptiva: 0. JUSTIFICACIÓN DE LA VINCULACIÓN DE LA pyme INDUSTRIAL CON EL SECTOR (NO PUNTUABLE PERO SÍ EXCLUYENTE EN CASO DE INSUFICIENCIA) Deberá justificarse de manera detallada la vinculación de la empresa con el sector al que se presenta, identificando su CNAE de vinculación directa. I- DESCRIPCIÓN DE LA EMPRESA (MÁXIMO 8 PUNTOS. UMBRAL MÍNIMO 3 PUNTOS) Se valora hasta con un máximo de 8 puntos la aportación de información sobre los siguientes aspectos: Campo de información Contenido ANTECEDENTES Y EVOLUCIÓN (MÁXIMO 4 PUNTOS) Explicar cómo (máx. 0,5 puntos) y cuándo se constituyó la empresa (máx. 0,5 puntos), evolución de la empresa y de su propiedad (máx. 0,5 puntos), su estructura accionarial actual y su posible pertenencia a grupos empresariales (máx. 0,5 puntos), y aportación de datos económicos actuales, así como su variación en los últimos 5 años para cada variable económica: empleos (máx.",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.subcriterion.i_a_cuando_se_constituyo",
+        "entity_type": "evaluation_subcriterion",
+        "parent_entity_id": "inpyme2026.criterion.i_a_antecedentes_evolucion",
+        "official_code": null,
+        "label": "Cuándo se constituyó la empresa",
+        "requirement_text": "Explicar cuándo se constituyó la empresa.",
+        "score_max": 0.5,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.9,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "7c58e342-09bd-4020-8722-1ef4c7240c7e",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 3,
+            "page_end": 3,
+            "section": null,
+            "quote": "La insuficiente justificación en la memoria de la vinculación directa, o la no presentación o no constancia expresa de CNAE, conllevará la inmediata inadmisión de la solicitud y la exclusión de su baremación, sin necesidad de que el órgano instructor requiera previamente a la empresa solicitante para la subsanación de tal defecto. ¿VAMOS A PEDIR QUE (EN EL CASO DE QUE EL SECTOR NO COINCIDA CON EL INDICADO EN LA DECLARACIÓN RESPONSABLE DE LA SOLICITUD, DEBERÁ JUSTIFICARSE) I. | DESCRIPCIÓN DE LA EMPRESA (Máximo 8 puntos) No se supera el umbral mínimo si la suma de las puntuaciones no alcanza los 3 puntos. | DESCRIPCIÓN DE LA EMPRESA (Máximo 8 puntos) No se supera el umbral mínimo si la suma de las puntuaciones no alcanza los 3 puntos. A. | Antecedentes y evolución (Máximo 4 puntos). | Antecedentes y evolución (Máximo 4 puntos). Cómo se creó la empresa (máx. 0,5 puntos) | Cómo se creó la empresa (máx. 0,5 puntos) | Cómo se creó la empresa (máx. 0,5 puntos) Cuando se constituyó la empresa (máx. 0,5 puntos) | Cuando se constituyó la empresa (máx. 0,5 puntos) | Cuando se constituyó la empresa (máx. 0,5 puntos) Evolución de la empresa y su propiedad (máx.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "e78190be-1e55-40ff-9753-b527246f9636",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 24,
+            "page_end": 24,
+            "section": null,
+            "quote": "3832 Valorización de materiales ya clasificados. ANEXO II Criterios y reglas de evaluación de proyectos La evaluación de las solicitudes se realizará aplicando los criterios y reglas descritos a continuación para cada uno de los siguientes apartados obligatorios de la memoria descriptiva: 0. JUSTIFICACIÓN DE LA VINCULACIÓN DE LA pyme INDUSTRIAL CON EL SECTOR (NO PUNTUABLE PERO SÍ EXCLUYENTE EN CASO DE INSUFICIENCIA) Deberá justificarse de manera detallada la vinculación de la empresa con el sector al que se presenta, identificando su CNAE de vinculación directa. I- DESCRIPCIÓN DE LA EMPRESA (MÁXIMO 8 PUNTOS. UMBRAL MÍNIMO 3 PUNTOS) Se valora hasta con un máximo de 8 puntos la aportación de información sobre los siguientes aspectos: Campo de información Contenido ANTECEDENTES Y EVOLUCIÓN (MÁXIMO 4 PUNTOS) Explicar cómo (máx. 0,5 puntos) y cuándo se constituyó la empresa (máx. 0,5 puntos), evolución de la empresa y de su propiedad (máx. 0,5 puntos), su estructura accionarial actual y su posible pertenencia a grupos empresariales (máx. 0,5 puntos), y aportación de datos económicos actuales, así como su variación en los últimos 5 años para cada variable económica: empleos (máx.",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.subcriterion.ii_c_descripcion_detallada_activos",
+        "entity_type": "evaluation_subcriterion",
+        "parent_entity_id": "inpyme2026.criterion.ii_c_descripcion_tecnica_proyecto",
+        "official_code": null,
+        "label": "Descripción pormenorizada e individualizada de activos, costes e ingeniería",
+        "requirement_text": "Describir técnicamente el proyecto, detallando de forma pormenorizada e individualizada cada uno de los activos, costes e ingeniería desglosados en la tabla de costes estimados (máx. 25 puntos).",
+        "score_max": 25.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.95,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "b956b789-0a43-413b-bbc3-b0e041deb36b",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 6,
+            "page_end": 6,
+            "section": null,
+            "quote": "1 puntos) Periodo en que se espera recuperar la inversión, mediante el pay-back o periodo de recuperación de la inversión y el método para su obtención (máx. 1 puntos) | Periodo en que se espera recuperar la inversión, mediante el pay-back o periodo de recuperación de la inversión y el método para su obtención (máx. 1 puntos) | Periodo en que se espera recuperar la inversión, mediante el pay-back o periodo de recuperación de la inversión y el método para su obtención (máx. 1 puntos) C. | Descripción técnica del proyecto (Máximo 40 puntos). | Descripción técnica del proyecto (Máximo 40 puntos). Describir técnicamente el proyecto, debiendo detallar de forma pormenorizada e individualizada cada uno de los activos, costes e ingeniería desglosados en la tabla de costes estimados (máx. 25 puntos) | Describir técnicamente el proyecto, debiendo detallar de forma pormenorizada e individualizada cada uno de los activos, costes e ingeniería desglosados en la tabla de costes estimados (máx. 25 puntos) | Describir técnicamente el proyecto, debiendo detallar de forma pormenorizada e individualizada cada uno de los activos, costes e ingeniería desglosados en la tabla de costes estimados (máx.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "9e16239a-4604-43db-a019-91e3d6a94a8d",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 25,
+            "page_end": 25,
+            "section": null,
+            "quote": "Núm. 10301 / 12.02.2026 25 / 31 CVE: DOGV-C-2026-4406 https://dogv.gva.es/ Se valorará, hasta con un máximo de 55 puntos, la aportación de la siguiente información: Campo de información Contenido ESTRATEGIA EMPRESARIAL Y MOTIVOS DE LA INVERSIÓN (MÁXIMO 6 PUNTOS) Describir detalladamente los motivos estratégicos que han llevado a la concreta decisión sobre la inversión que se solicita subvencionar (máx. 3 puntos) y a seleccionar todos los concretos activos del proyecto (máx. 3 puntos). VIABILIDAD ECONÓMICA DE LA INVERSIÓN (MÁXIMO 4 PUNTOS) Se valorará la adecuada justificación de la rentabilidad del proyecto mediante la aportación de, al menos, una ratio de rentabilidad y el método para su obtención (máx.2 puntos), fuentes de financiación (máx.1 punto) y periodo en que se espera recuperar la inversión, mediante el pay-back o periodo de recuperación de la inversión y el método para su obtención (máx.1 pto). DESCRIPCIÓN TÉCNICA DEL PROYECTO (MÁXIMO 40 PUNTOS) Describir técnicamente el proyecto, debiendo detallar de forma pormenorizada e individualizada cada uno de los activos, costes e ingeniería desglosados en la tabla de costes estimados (máx. 25 puntos);",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.subcriterion.iii_c_diversificacion_produccion",
+        "entity_type": "evaluation_subcriterion",
+        "parent_entity_id": "inpyme2026.criterion.iii_c_diversificacion_mercados_clientes",
+        "official_code": null,
+        "label": "Diversificación de la producción iniciando la fabricación de nuevos productos",
+        "requirement_text": "Justificación y aportación de datos concretos cualitativos y cuantitativos que acrediten que el proyecto va a permitir a la empresa diversificar su producción iniciando la fabricación de nuevos productos.",
+        "score_max": 2.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.92,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "da519af1-5549-4d15-83be-d2a6ffcaa95a",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 9,
+            "page_end": 9,
+            "section": null,
+            "quote": "| Diversificación de productos o apertura de nuevos mercados o clientes (Máximo 4 puntos) | Diversificación de productos o apertura de nuevos mercados o clientes (Máximo 4 puntos) Justificación y aportación de datos concretos cualitativos y cuantitativos que acrediten que el proyecto va a permitir a la empresa diversificar su producción iniciando la fabricación de nuevos productos (máx. 2 puntos) | Justificación y aportación de datos concretos cualitativos y cuantitativos que acrediten que el proyecto va a permitir a la empresa diversificar su producción iniciando la fabricación de nuevos productos (máx. 2 puntos) | Justificación y aportación de datos concretos cualitativos y cuantitativos que acrediten que el proyecto va a permitir a la empresa diversificar su producción iniciando la fabricación de nuevos productos (máx. 2 puntos) ¿Permitirá abrir nuevos mercados nacionales o internacionales? (máx. 1 punto) | ¿Permitirá abrir nuevos mercados nacionales o internacionales? (máx. 1 punto) | ¿Permitirá abrir nuevos mercados nacionales o internacionales? (máx. 1 punto) ¿Permitirá acceder a nuevos clientes? (máx. 1 punto) | ¿Permitirá acceder a nuevos clientes? (máx.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "9565d28e-880f-42c6-a48a-ec73381fc288",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 25,
+            "page_end": 25,
+            "section": null,
+            "quote": "DIVERSIFICACIÓN DE PRODUCTOS O APERTURA DE NUEVOS MERCADOS O CLIENTES (MÁXIMO 4 PUNTOS) Se valorará la adecuada justificación y la aportación de datos concretos cualitativos y cuantitativos que acrediten que el proyecto va a permitir a la empresa diversificar su producción iniciando la fabricación de nuevos productos (máx.2 puntos) o le permitirá abrir nuevos mercados nacionales o internacionales (máx. 1 punto), o acceder a nuevos clientes (máx. 1 punto). IV.CONTRIBUCIÓN A LA MEJORA DE LA SOSTENIBILIDAD (MÁXIMO 12 PUNTOS) Se valorará, hasta con un máximo de 12 puntos, la aportación de la siguiente información:",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.subcriterion.ii_c_documentos_tecnicos_activos",
+        "entity_type": "evaluation_subcriterion",
+        "parent_entity_id": "inpyme2026.criterion.ii_c_descripcion_tecnica_proyecto",
+        "official_code": null,
+        "label": "Documentos técnicos de los activos",
+        "requirement_text": "En caso de aportar documentos técnicos de los activos, de 2,5 a 5 puntos: 2,5 puntos si se aporta una factura, presupuesto, documento de encargo u otro documento equivalente; 5 puntos si se aportan varios de esos documentos.",
+        "score_max": 5.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": {
+          "unit": "count",
+          "bands": [
+            {
+              "label": "una factura, presupuesto, documento de encargo u otro documento equivalente",
+              "score": 2.5,
+              "min_count": 1,
+              "max_exclusive": null,
+              "min_inclusive": null
+            },
+            {
+              "label": "varios de los documentos anteriores",
+              "score": 5.0,
+              "min_count": 2,
+              "max_exclusive": null,
+              "min_inclusive": null
+            }
+          ],
+          "metric": "documentos_tecnicos_aportados",
+          "rule_type": "score_by_bands",
+          "fallback_score": null,
+          "fallback_condition": null
+        },
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.9,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "98e51cab-6dc4-4ae7-8c03-2856a0591202",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 7,
+            "page_end": 7,
+            "section": null,
+            "quote": "En caso de aportar documentos técnicos de los activos (de 2,5 puntos a 5 puntos) | En caso de aportar documentos técnicos de los activos (de 2,5 puntos a 5 puntos) | En caso de aportar documentos técnicos de los activos (de 2,5 puntos a 5 puntos) En caso de aportar una factura, presupuesto, documento de encargo u otro documento equivalente (2,5 puntos); si se aporta varios de los documentos anteriores (5 puntos). | En caso de aportar una factura, presupuesto, documento de encargo u otro documento equivalente (2,5 puntos); si se aporta varios de los documentos anteriores (5 puntos). | En caso de aportar una factura, presupuesto, documento de encargo u otro documento equivalente (2,5 puntos); si se aporta varios de los documentos anteriores (5 puntos). Describir la ubicación y conexión de cada activo dentro del proceso productivo mediante la aportación gráfico o diagrama de bloques o de flujo de trabajo (máx. 3 puntos) | Describir la ubicación y conexión de cada activo dentro del proceso productivo mediante la aportación gráfico o diagrama de bloques o de flujo de trabajo (máx.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "1c3a0c6e-fed5-43d9-ba00-f27e909ce7fe",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 25,
+            "page_end": 25,
+            "section": null,
+            "quote": "En caso de aportar documentos técnicos de los activos (de 2,5 puntos a 5 puntos según la calidad y detalle); En caso de aportar una factura, presupuesto, documento de encargo u otro documento equivalente (2,5 puntos); si se aporta varios de los documentos anteriores (5 puntos). También se deberá describir la ubicación y conexión de cada activo dentro del proceso productivo mediante la aportación gráfico o diagrama de bloques o de flujo de trabajo (3 ptos), aportando un plano comprensible de la distribución de los activos o equipamientos subvencionables. (2 ptos). ADECUACIÓN DE LOS RECURSOS (MÁXIMO 3 PUNTOS) Especificar las capacidades y experiencia de los proveedores (máx. 1,5 puntos), así como de los medios técnicos y humanos que se van a utilizar para llevar a cabo el proyecto (máx. 1,5 puntos). PLAN DE TRABAJO (MÁXIMO 2 PUNTOS) Identificar las etapas del plan de trabajo, indicando el detalle y fechas de inicio y finalización para la ejecución de cada una de ellas, dentro del plazo comprendido entre 1 de enero de 2026 y el plazo máximo de justificación. No se supera el umbral mínimo si la suma de las puntuaciones no alcanza los 15 puntos.",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.subcriterion.i_a_estructura_accionarial",
+        "entity_type": "evaluation_subcriterion",
+        "parent_entity_id": "inpyme2026.criterion.i_a_antecedentes_evolucion",
+        "official_code": null,
+        "label": "Estructura accionarial actual y su posible pertenencia a grupos empresariales",
+        "requirement_text": "Explicar la estructura accionarial actual y su posible pertenencia a grupos empresariales.",
+        "score_max": 0.5,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.9,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "960856a9-ddab-4634-aaf3-2b15cce0031f",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 4,
+            "page_end": 4,
+            "section": null,
+            "quote": "Estructura accionarial actual y su posible pertenencia a grupos empresariales (máx. 0,5 puntos) | Estructura accionarial actual y su posible pertenencia a grupos empresariales (máx. 0,5 puntos) | Estructura accionarial actual y su posible pertenencia a grupos empresariales (máx. 0,5 puntos) Aportación de datos económicos actuales, así como su variación en los últimos 5 años (máx. 2 puntos, 0,5 puntos por item).",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "e78190be-1e55-40ff-9753-b527246f9636",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 24,
+            "page_end": 24,
+            "section": null,
+            "quote": "3832 Valorización de materiales ya clasificados. ANEXO II Criterios y reglas de evaluación de proyectos La evaluación de las solicitudes se realizará aplicando los criterios y reglas descritos a continuación para cada uno de los siguientes apartados obligatorios de la memoria descriptiva: 0. JUSTIFICACIÓN DE LA VINCULACIÓN DE LA pyme INDUSTRIAL CON EL SECTOR (NO PUNTUABLE PERO SÍ EXCLUYENTE EN CASO DE INSUFICIENCIA) Deberá justificarse de manera detallada la vinculación de la empresa con el sector al que se presenta, identificando su CNAE de vinculación directa. I- DESCRIPCIÓN DE LA EMPRESA (MÁXIMO 8 PUNTOS. UMBRAL MÍNIMO 3 PUNTOS) Se valora hasta con un máximo de 8 puntos la aportación de información sobre los siguientes aspectos: Campo de información Contenido ANTECEDENTES Y EVOLUCIÓN (MÁXIMO 4 PUNTOS) Explicar cómo (máx. 0,5 puntos) y cuándo se constituyó la empresa (máx. 0,5 puntos), evolución de la empresa y de su propiedad (máx. 0,5 puntos), su estructura accionarial actual y su posible pertenencia a grupos empresariales (máx. 0,5 puntos), y aportación de datos económicos actuales, así como su variación en los últimos 5 años para cada variable económica: empleos (máx.",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.subcriterion.i_a_evolucion_propiedad",
+        "entity_type": "evaluation_subcriterion",
+        "parent_entity_id": "inpyme2026.criterion.i_a_antecedentes_evolucion",
+        "official_code": null,
+        "label": "Evolución de la empresa y su propiedad",
+        "requirement_text": "Explicar la evolución de la empresa y de su propiedad.",
+        "score_max": 0.5,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.9,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "99c76234-6138-4dde-899f-15dbd5e32874",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 3,
+            "page_end": 3,
+            "section": null,
+            "quote": "0,5 puntos) | Evolución de la empresa y su propiedad (máx. 0,5 puntos) | Evolución de la empresa y su propiedad (máx. 0,5 puntos)",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "e78190be-1e55-40ff-9753-b527246f9636",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 24,
+            "page_end": 24,
+            "section": null,
+            "quote": "3832 Valorización de materiales ya clasificados. ANEXO II Criterios y reglas de evaluación de proyectos La evaluación de las solicitudes se realizará aplicando los criterios y reglas descritos a continuación para cada uno de los siguientes apartados obligatorios de la memoria descriptiva: 0. JUSTIFICACIÓN DE LA VINCULACIÓN DE LA pyme INDUSTRIAL CON EL SECTOR (NO PUNTUABLE PERO SÍ EXCLUYENTE EN CASO DE INSUFICIENCIA) Deberá justificarse de manera detallada la vinculación de la empresa con el sector al que se presenta, identificando su CNAE de vinculación directa. I- DESCRIPCIÓN DE LA EMPRESA (MÁXIMO 8 PUNTOS. UMBRAL MÍNIMO 3 PUNTOS) Se valora hasta con un máximo de 8 puntos la aportación de información sobre los siguientes aspectos: Campo de información Contenido ANTECEDENTES Y EVOLUCIÓN (MÁXIMO 4 PUNTOS) Explicar cómo (máx. 0,5 puntos) y cuándo se constituyó la empresa (máx. 0,5 puntos), evolución de la empresa y de su propiedad (máx. 0,5 puntos), su estructura accionarial actual y su posible pertenencia a grupos empresariales (máx. 0,5 puntos), y aportación de datos económicos actuales, así como su variación en los últimos 5 años para cada variable económica: empleos (máx.",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.subcriterion.ii_b_fuentes_financiacion",
+        "entity_type": "evaluation_subcriterion",
+        "parent_entity_id": "inpyme2026.criterion.ii_b_viabilidad_economica_inversion",
+        "official_code": null,
+        "label": "Fuentes de financiación",
+        "requirement_text": "Debe aportarse información sobre las fuentes de financiación del proyecto.",
+        "score_max": 1.0,
+        "threshold_min": null,
+        "scoring_status": null,
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": null,
+        "confidence": null,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "0d165843-e7a9-4430-9e3e-080c9fecd4ed",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 6,
+            "page_end": 6,
+            "section": null,
+            "quote": "Describir detalladamente los motivos estratégicos que han llevado a seleccionar los concretos activos (máx. 3 puntos) | Describir detalladamente los motivos estratégicos que han llevado a seleccionar los concretos activos (máx. 3 puntos) | Describir detalladamente los motivos estratégicos que han llevado a seleccionar los concretos activos (máx. 3 puntos) B. | Viabilidad económica de la inversión (Máximo 4 puntos) | Viabilidad económica de la inversión (Máximo 4 puntos) Se valorará la adecuada justificación de la rentabilidad del proyecto mediante la aportación de, al menos, una ratio de rentabilidad y el método para su obtención máx. 2 puntos) | Se valorará la adecuada justificación de la rentabilidad del proyecto mediante la aportación de, al menos, una ratio de rentabilidad y el método para su obtención máx. 2 puntos) | Se valorará la adecuada justificación de la rentabilidad del proyecto mediante la aportación de, al menos, una ratio de rentabilidad y el método para su obtención máx. 2 puntos) Fuentes de financiación (máx. 1 puntos) | Fuentes de financiación (máx. 1 puntos) | Fuentes de financiación (máx.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "9e16239a-4604-43db-a019-91e3d6a94a8d",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 25,
+            "page_end": 25,
+            "section": null,
+            "quote": "Núm. 10301 / 12.02.2026 25 / 31 CVE: DOGV-C-2026-4406 https://dogv.gva.es/ Se valorará, hasta con un máximo de 55 puntos, la aportación de la siguiente información: Campo de información Contenido ESTRATEGIA EMPRESARIAL Y MOTIVOS DE LA INVERSIÓN (MÁXIMO 6 PUNTOS) Describir detalladamente los motivos estratégicos que han llevado a la concreta decisión sobre la inversión que se solicita subvencionar (máx. 3 puntos) y a seleccionar todos los concretos activos del proyecto (máx. 3 puntos). VIABILIDAD ECONÓMICA DE LA INVERSIÓN (MÁXIMO 4 PUNTOS) Se valorará la adecuada justificación de la rentabilidad del proyecto mediante la aportación de, al menos, una ratio de rentabilidad y el método para su obtención (máx.2 puntos), fuentes de financiación (máx.1 punto) y periodo en que se espera recuperar la inversión, mediante el pay-back o periodo de recuperación de la inversión y el método para su obtención (máx.1 pto). DESCRIPCIÓN TÉCNICA DEL PROYECTO (MÁXIMO 40 PUNTOS) Describir técnicamente el proyecto, debiendo detallar de forma pormenorizada e individualizada cada uno de los activos, costes e ingeniería desglosados en la tabla de costes estimados (máx. 25 puntos);",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.subcriterion.iv_a_justificacion_reduccion_consumo",
+        "entity_type": "evaluation_subcriterion",
+        "parent_entity_id": "inpyme2026.criterion.iv_a_reduccion_consumo_energia_agua_materias",
+        "official_code": null,
+        "label": "Justificación cualitativa y cuantitativa de la reducción de consumo o mejora de eficiencia energética",
+        "requirement_text": "Se valorará la adecuada justificación y la aportación de datos concretos cualitativos y cuantitativos que acrediten cómo la inversión supone claramente la reducción sustancial del consumo de energía, agua u otras materias primas o recursos naturales que son inputs en el proceso productivo antes de la inversión, o la mejora de la eficiencia energética de la producción.",
+        "score_max": 2.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.9,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "d0c8430c-3a4a-4087-8a95-21a3115ef479",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 26,
+            "page_end": 26,
+            "section": null,
+            "quote": "Núm. 10301 / 12.02.2026 26 / 31 CVE: DOGV-C-2026-4406 https://dogv.gva.es/ Campo de información Contenido INVERSIONES QUE IMPLIQUEN UNA REDUCCIÓN SUSTANCIAL DEL CONSUMO DE ENERGÍA, AGUA O MATERIAS PRIMAS. (MÁXIMO 4 PUNTOS) Se valorará la adecuada justificación y la aportación de datos concretos cualitativos y cuantitativos que acrediten cómo la inversión supone claramente la reducción sustancial del consumo de energía, agua u otras materias primas o recursos naturales que son inputs en el proceso productivo antes de la inversión, o la mejora de la eficiencia energética de la producción (máx. 2 puntos), que se respalden mediante cifras comparativas, informes externos o certificados acreditativos de las mejoras medioambientales, no siendo suficiente mencionar únicamente porcentajes (máx. 2 puntos).",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "ffea1f68-2154-494b-a246-0694c9706df1",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 10,
+            "page_end": 10,
+            "section": null,
+            "quote": "A. | Inversiones que impliquen una reducción sustancial del consumo de energía, agua o materias primas (Máximo 4 puntos): | Inversiones que impliquen una reducción sustancial del consumo de energía, agua o materias primas (Máximo 4 puntos): Se valorará la adecuada justificación y la aportación de datos concretos cualitativos y cuantitativos que acrediten cómo la inversión supone claramente la reducción sustancial del consumo de energía, agua u otras materias primas o recursos naturales que son inputs en el proceso productivo antes de la inversión, o la mejora de la eficiencia energética de la producción (máx. 2 puntos) | Se valorará la adecuada justificación y la aportación de datos concretos cualitativos y cuantitativos que acrediten cómo la inversión supone claramente la reducción sustancial del consumo de energía, agua u otras materias primas o recursos naturales que son inputs en el proceso productivo antes de la inversión, o la mejora de la eficiencia energética de la producción (máx.",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.subcriterion.iv_b_justificacion_reduccion_residuos",
+        "entity_type": "evaluation_subcriterion",
+        "parent_entity_id": "inpyme2026.criterion.iv_b_reduccion_residuos_economia_circular",
+        "official_code": null,
+        "label": "Justificación cualitativa y cuantitativa de la reducción de emisiones, efluentes, residuos o contaminación",
+        "requirement_text": "Se valorará la adecuada justificación y la aportación de datos concretos cualitativos y cuantitativos que acrediten cómo la inversión va a suponer claramente una reducción sustancial de la producción de emisiones, efluentes, residuos o contaminaciones ambientales respecto de los que se producían antes de la inversión.",
+        "score_max": 2.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.9,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "90366a7a-4383-4407-95cc-d8be0096666c",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 26,
+            "page_end": 26,
+            "section": null,
+            "quote": "INVERSIONES QUE IMPLIQUEN UNA REDUCCIÓN SUSTANCIAL DE RESIDUOS O CONTAMINANTES, O LA IMPLANTACIÓN DE ECONOMÍA CIRCULAR (MÁXIMO 4 PUNTOS) Se valorará la adecuada justificación y la aportación de datos concretos cualitativos y cuantitativos que acrediten cómo la inversión va a suponer claramente una reducción sustancial de la producción de emisiones, efluentes, residuos o contaminaciones ambientales que se producen en el proceso productivo respecto de los que se producían antes de la inversión. (máx. 2 puntos), que se respalden mediante cifras comparativas, informes externos o certificados acreditativos de las mejoras medioambientales, no siendo suficiente mencionar únicamente porcentajes (máx. 2 puntos). INVERSIONES QUE IMPLIQUEN REDUCIR LA HUELLA DE CARBONO (MÁXIMO 4 PUNTOS) Detallar la ubicación provincial de las empresas proveedoras de los activos adquiridos, e indicar el porcentaje económico del total del proyecto de inversión cuya provisión procede de empresas de la Comunitat Valenciana, así como de otras partes de España o del extranjero. 4 ptos si el 100% del coste del proyecto se provee de empresas de la Comunitat Valenciana. 3 ptos si es más del 75%.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "1214d46c-7e66-4031-873d-c580914eb1a1",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 11,
+            "page_end": 11,
+            "section": null,
+            "quote": "Se valorará la adecuada justificación y la aportación de datos concretos cualitativos y cuantitativos que acrediten cómo la inversión va a suponer claramente una reducción sustancial de la producción de emisiones, efluentes, residuos o contaminaciones ambientales que se producen en el proceso productivo respecto de los que se producían antes de la inversión. (máx. 2 puntos) | Se valorará la adecuada justificación y la aportación de datos concretos cualitativos y cuantitativos que acrediten cómo la inversión va a suponer claramente una reducción sustancial de la producción de emisiones, efluentes, residuos o contaminaciones ambientales que se producen en el proceso productivo respecto de los que se producían antes de la inversión. (máx. 2 puntos) | Se valorará la adecuada justificación y la aportación de datos concretos cualitativos y cuantitativos que acrediten cómo la inversión va a suponer claramente una reducción sustancial de la producción de emisiones, efluentes, residuos o contaminaciones ambientales que se producen en el proceso productivo respecto de los que se producían antes de la inversión. (máx.",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.subcriterion.ii_d_medios_tecnicos_humanos",
+        "entity_type": "evaluation_subcriterion",
+        "parent_entity_id": "inpyme2026.criterion.ii_d_adecuacion_recursos",
+        "official_code": null,
+        "label": "Medios técnicos y humanos del proyecto",
+        "requirement_text": "Especificar los medios técnicos y humanos que se van a utilizar para llevar a cabo el proyecto (máx. 1,5 puntos).",
+        "score_max": 1.5,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.95,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "c490b5e2-d807-4885-a991-d3035d25ea79",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 7,
+            "page_end": 7,
+            "section": null,
+            "quote": "3 puntos) | Describir la ubicación y conexión de cada activo dentro del proceso productivo mediante la aportación gráfico o diagrama de bloques o de flujo de trabajo (máx. 3 puntos) Plano comprensible de la distribución de los activos o equipamientos subvencionables (máx. 2 puntos) | Plano comprensible de la distribución de los activos o equipamientos subvencionables (máx. 2 puntos) | Plano comprensible de la distribución de los activos o equipamientos subvencionables (máx. 2 puntos) D. | Adecuación de los recursos (Máximo 3 puntos). | Adecuación de los recursos (Máximo 3 puntos). Especificar las capacidades y experiencia de los proveedores (máx. 1,5 puntos) | Especificar las capacidades y experiencia de los proveedores (máx. 1,5 puntos) | Especificar las capacidades y experiencia de los proveedores (máx. 1,5 puntos) Especificar los medios técnicos y humanos que se van a utilizar para llevar a cabo el proyecto (máx. 1,5 puntos) | Especificar los medios técnicos y humanos que se van a utilizar para llevar a cabo el proyecto (máx. 1,5 puntos) | Especificar los medios técnicos y humanos que se van a utilizar para llevar a cabo el proyecto (máx. 1,5 puntos)",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "1c3a0c6e-fed5-43d9-ba00-f27e909ce7fe",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 25,
+            "page_end": 25,
+            "section": null,
+            "quote": "En caso de aportar documentos técnicos de los activos (de 2,5 puntos a 5 puntos según la calidad y detalle); En caso de aportar una factura, presupuesto, documento de encargo u otro documento equivalente (2,5 puntos); si se aporta varios de los documentos anteriores (5 puntos). También se deberá describir la ubicación y conexión de cada activo dentro del proceso productivo mediante la aportación gráfico o diagrama de bloques o de flujo de trabajo (3 ptos), aportando un plano comprensible de la distribución de los activos o equipamientos subvencionables. (2 ptos). ADECUACIÓN DE LOS RECURSOS (MÁXIMO 3 PUNTOS) Especificar las capacidades y experiencia de los proveedores (máx. 1,5 puntos), así como de los medios técnicos y humanos que se van a utilizar para llevar a cabo el proyecto (máx. 1,5 puntos). PLAN DE TRABAJO (MÁXIMO 2 PUNTOS) Identificar las etapas del plan de trabajo, indicando el detalle y fechas de inicio y finalización para la ejecución de cada una de ellas, dentro del plazo comprendido entre 1 de enero de 2026 y el plazo máximo de justificación. No se supera el umbral mínimo si la suma de las puntuaciones no alcanza los 15 puntos.",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.subcriterion.ii_a_motivos_decision_inversion",
+        "entity_type": "evaluation_subcriterion",
+        "parent_entity_id": "inpyme2026.criterion.ii_a_estrategia_empresarial_motivos",
+        "official_code": null,
+        "label": "Motivos estratégicos de la decisión de inversión",
+        "requirement_text": "Describir detalladamente los motivos estratégicos que han llevado a la concreta decisión sobre la inversión que se solicita subvencionar (máx. 3 puntos).",
+        "score_max": 3.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.95,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "284ba109-8b18-4523-9e1f-c0e10d4a0019",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 5,
+            "page_end": 5,
+            "section": null,
+            "quote": "3 puntos) | Describir detalladamente los motivos estratégicos que han llevado a la concreta toma de la decisión sobre la inversión que se solicita subvencionar (máx. 3 puntos) | Describir detalladamente los motivos estratégicos que han llevado a la concreta toma de la decisión sobre la inversión que se solicita subvencionar (máx. 3 puntos)",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "9e16239a-4604-43db-a019-91e3d6a94a8d",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 25,
+            "page_end": 25,
+            "section": null,
+            "quote": "Núm. 10301 / 12.02.2026 25 / 31 CVE: DOGV-C-2026-4406 https://dogv.gva.es/ Se valorará, hasta con un máximo de 55 puntos, la aportación de la siguiente información: Campo de información Contenido ESTRATEGIA EMPRESARIAL Y MOTIVOS DE LA INVERSIÓN (MÁXIMO 6 PUNTOS) Describir detalladamente los motivos estratégicos que han llevado a la concreta decisión sobre la inversión que se solicita subvencionar (máx. 3 puntos) y a seleccionar todos los concretos activos del proyecto (máx. 3 puntos). VIABILIDAD ECONÓMICA DE LA INVERSIÓN (MÁXIMO 4 PUNTOS) Se valorará la adecuada justificación de la rentabilidad del proyecto mediante la aportación de, al menos, una ratio de rentabilidad y el método para su obtención (máx.2 puntos), fuentes de financiación (máx.1 punto) y periodo en que se espera recuperar la inversión, mediante el pay-back o periodo de recuperación de la inversión y el método para su obtención (máx.1 pto). DESCRIPCIÓN TÉCNICA DEL PROYECTO (MÁXIMO 40 PUNTOS) Describir técnicamente el proyecto, debiendo detallar de forma pormenorizada e individualizada cada uno de los activos, costes e ingeniería desglosados en la tabla de costes estimados (máx. 25 puntos);",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.subcriterion.ii_a_motivos_seleccion_activos",
+        "entity_type": "evaluation_subcriterion",
+        "parent_entity_id": "inpyme2026.criterion.ii_a_estrategia_empresarial_motivos",
+        "official_code": null,
+        "label": "Motivos estratégicos de selección de los activos",
+        "requirement_text": "Describir detalladamente los motivos estratégicos que han llevado a seleccionar todos los concretos activos del proyecto (máx. 3 puntos).",
+        "score_max": 3.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.95,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "0d165843-e7a9-4430-9e3e-080c9fecd4ed",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 6,
+            "page_end": 6,
+            "section": null,
+            "quote": "Describir detalladamente los motivos estratégicos que han llevado a seleccionar los concretos activos (máx. 3 puntos) | Describir detalladamente los motivos estratégicos que han llevado a seleccionar los concretos activos (máx. 3 puntos) | Describir detalladamente los motivos estratégicos que han llevado a seleccionar los concretos activos (máx. 3 puntos) B. | Viabilidad económica de la inversión (Máximo 4 puntos) | Viabilidad económica de la inversión (Máximo 4 puntos) Se valorará la adecuada justificación de la rentabilidad del proyecto mediante la aportación de, al menos, una ratio de rentabilidad y el método para su obtención máx. 2 puntos) | Se valorará la adecuada justificación de la rentabilidad del proyecto mediante la aportación de, al menos, una ratio de rentabilidad y el método para su obtención máx. 2 puntos) | Se valorará la adecuada justificación de la rentabilidad del proyecto mediante la aportación de, al menos, una ratio de rentabilidad y el método para su obtención máx. 2 puntos) Fuentes de financiación (máx. 1 puntos) | Fuentes de financiación (máx. 1 puntos) | Fuentes de financiación (máx.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "9e16239a-4604-43db-a019-91e3d6a94a8d",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 25,
+            "page_end": 25,
+            "section": null,
+            "quote": "Núm. 10301 / 12.02.2026 25 / 31 CVE: DOGV-C-2026-4406 https://dogv.gva.es/ Se valorará, hasta con un máximo de 55 puntos, la aportación de la siguiente información: Campo de información Contenido ESTRATEGIA EMPRESARIAL Y MOTIVOS DE LA INVERSIÓN (MÁXIMO 6 PUNTOS) Describir detalladamente los motivos estratégicos que han llevado a la concreta decisión sobre la inversión que se solicita subvencionar (máx. 3 puntos) y a seleccionar todos los concretos activos del proyecto (máx. 3 puntos). VIABILIDAD ECONÓMICA DE LA INVERSIÓN (MÁXIMO 4 PUNTOS) Se valorará la adecuada justificación de la rentabilidad del proyecto mediante la aportación de, al menos, una ratio de rentabilidad y el método para su obtención (máx.2 puntos), fuentes de financiación (máx.1 punto) y periodo en que se espera recuperar la inversión, mediante el pay-back o periodo de recuperación de la inversión y el método para su obtención (máx.1 pto). DESCRIPCIÓN TÉCNICA DEL PROYECTO (MÁXIMO 40 PUNTOS) Describir técnicamente el proyecto, debiendo detallar de forma pormenorizada e individualizada cada uno de los activos, costes e ingeniería desglosados en la tabla de costes estimados (máx. 25 puntos);",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.subcriterion.ii_b_payback",
+        "entity_type": "evaluation_subcriterion",
+        "parent_entity_id": "inpyme2026.criterion.ii_b_viabilidad_economica_inversion",
+        "official_code": null,
+        "label": "Periodo de recuperación de la inversión (pay-back)",
+        "requirement_text": "Debe indicarse el periodo en que se espera recuperar la inversión mediante el pay-back o periodo de recuperación de la inversión y el método para su obtención.",
+        "score_max": 1.0,
+        "threshold_min": null,
+        "scoring_status": null,
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": null,
+        "confidence": null,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "b956b789-0a43-413b-bbc3-b0e041deb36b",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 6,
+            "page_end": 6,
+            "section": null,
+            "quote": "1 puntos) Periodo en que se espera recuperar la inversión, mediante el pay-back o periodo de recuperación de la inversión y el método para su obtención (máx. 1 puntos) | Periodo en que se espera recuperar la inversión, mediante el pay-back o periodo de recuperación de la inversión y el método para su obtención (máx. 1 puntos) | Periodo en que se espera recuperar la inversión, mediante el pay-back o periodo de recuperación de la inversión y el método para su obtención (máx. 1 puntos) C. | Descripción técnica del proyecto (Máximo 40 puntos). | Descripción técnica del proyecto (Máximo 40 puntos). Describir técnicamente el proyecto, debiendo detallar de forma pormenorizada e individualizada cada uno de los activos, costes e ingeniería desglosados en la tabla de costes estimados (máx. 25 puntos) | Describir técnicamente el proyecto, debiendo detallar de forma pormenorizada e individualizada cada uno de los activos, costes e ingeniería desglosados en la tabla de costes estimados (máx. 25 puntos) | Describir técnicamente el proyecto, debiendo detallar de forma pormenorizada e individualizada cada uno de los activos, costes e ingeniería desglosados en la tabla de costes estimados (máx.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "9e16239a-4604-43db-a019-91e3d6a94a8d",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 25,
+            "page_end": 25,
+            "section": null,
+            "quote": "Núm. 10301 / 12.02.2026 25 / 31 CVE: DOGV-C-2026-4406 https://dogv.gva.es/ Se valorará, hasta con un máximo de 55 puntos, la aportación de la siguiente información: Campo de información Contenido ESTRATEGIA EMPRESARIAL Y MOTIVOS DE LA INVERSIÓN (MÁXIMO 6 PUNTOS) Describir detalladamente los motivos estratégicos que han llevado a la concreta decisión sobre la inversión que se solicita subvencionar (máx. 3 puntos) y a seleccionar todos los concretos activos del proyecto (máx. 3 puntos). VIABILIDAD ECONÓMICA DE LA INVERSIÓN (MÁXIMO 4 PUNTOS) Se valorará la adecuada justificación de la rentabilidad del proyecto mediante la aportación de, al menos, una ratio de rentabilidad y el método para su obtención (máx.2 puntos), fuentes de financiación (máx.1 punto) y periodo en que se espera recuperar la inversión, mediante el pay-back o periodo de recuperación de la inversión y el método para su obtención (máx.1 pto). DESCRIPCIÓN TÉCNICA DEL PROYECTO (MÁXIMO 40 PUNTOS) Describir técnicamente el proyecto, debiendo detallar de forma pormenorizada e individualizada cada uno de los activos, costes e ingeniería desglosados en la tabla de costes estimados (máx. 25 puntos);",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.subcriterion.ii_c_plano_distribucion",
+        "entity_type": "evaluation_subcriterion",
+        "parent_entity_id": "inpyme2026.criterion.ii_c_descripcion_tecnica_proyecto",
+        "official_code": null,
+        "label": "Plano de distribución de los activos o equipamientos subvencionables",
+        "requirement_text": "Plano comprensible de la distribución de los activos o equipamientos subvencionables (máx. 2 puntos).",
+        "score_max": 2.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.95,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "c490b5e2-d807-4885-a991-d3035d25ea79",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 7,
+            "page_end": 7,
+            "section": null,
+            "quote": "3 puntos) | Describir la ubicación y conexión de cada activo dentro del proceso productivo mediante la aportación gráfico o diagrama de bloques o de flujo de trabajo (máx. 3 puntos) Plano comprensible de la distribución de los activos o equipamientos subvencionables (máx. 2 puntos) | Plano comprensible de la distribución de los activos o equipamientos subvencionables (máx. 2 puntos) | Plano comprensible de la distribución de los activos o equipamientos subvencionables (máx. 2 puntos) D. | Adecuación de los recursos (Máximo 3 puntos). | Adecuación de los recursos (Máximo 3 puntos). Especificar las capacidades y experiencia de los proveedores (máx. 1,5 puntos) | Especificar las capacidades y experiencia de los proveedores (máx. 1,5 puntos) | Especificar las capacidades y experiencia de los proveedores (máx. 1,5 puntos) Especificar los medios técnicos y humanos que se van a utilizar para llevar a cabo el proyecto (máx. 1,5 puntos) | Especificar los medios técnicos y humanos que se van a utilizar para llevar a cabo el proyecto (máx. 1,5 puntos) | Especificar los medios técnicos y humanos que se van a utilizar para llevar a cabo el proyecto (máx. 1,5 puntos)",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "1c3a0c6e-fed5-43d9-ba00-f27e909ce7fe",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 25,
+            "page_end": 25,
+            "section": null,
+            "quote": "En caso de aportar documentos técnicos de los activos (de 2,5 puntos a 5 puntos según la calidad y detalle); En caso de aportar una factura, presupuesto, documento de encargo u otro documento equivalente (2,5 puntos); si se aporta varios de los documentos anteriores (5 puntos). También se deberá describir la ubicación y conexión de cada activo dentro del proceso productivo mediante la aportación gráfico o diagrama de bloques o de flujo de trabajo (3 ptos), aportando un plano comprensible de la distribución de los activos o equipamientos subvencionables. (2 ptos). ADECUACIÓN DE LOS RECURSOS (MÁXIMO 3 PUNTOS) Especificar las capacidades y experiencia de los proveedores (máx. 1,5 puntos), así como de los medios técnicos y humanos que se van a utilizar para llevar a cabo el proyecto (máx. 1,5 puntos). PLAN DE TRABAJO (MÁXIMO 2 PUNTOS) Identificar las etapas del plan de trabajo, indicando el detalle y fechas de inicio y finalización para la ejecución de cada una de ellas, dentro del plazo comprendido entre 1 de enero de 2026 y el plazo máximo de justificación. No se supera el umbral mínimo si la suma de las puntuaciones no alcanza los 15 puntos.",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.subcriterion.ii_b_rentabilidad_proyecto",
+        "entity_type": "evaluation_subcriterion",
+        "parent_entity_id": "inpyme2026.criterion.ii_b_viabilidad_economica_inversion",
+        "official_code": null,
+        "label": "Rentabilidad del proyecto",
+        "requirement_text": "Debe justificarse adecuadamente la rentabilidad del proyecto mediante la aportación de, al menos, una ratio de rentabilidad y el método para su obtención.",
+        "score_max": 2.0,
+        "threshold_min": null,
+        "scoring_status": null,
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": null,
+        "confidence": null,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "0d165843-e7a9-4430-9e3e-080c9fecd4ed",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 6,
+            "page_end": 6,
+            "section": null,
+            "quote": "Describir detalladamente los motivos estratégicos que han llevado a seleccionar los concretos activos (máx. 3 puntos) | Describir detalladamente los motivos estratégicos que han llevado a seleccionar los concretos activos (máx. 3 puntos) | Describir detalladamente los motivos estratégicos que han llevado a seleccionar los concretos activos (máx. 3 puntos) B. | Viabilidad económica de la inversión (Máximo 4 puntos) | Viabilidad económica de la inversión (Máximo 4 puntos) Se valorará la adecuada justificación de la rentabilidad del proyecto mediante la aportación de, al menos, una ratio de rentabilidad y el método para su obtención máx. 2 puntos) | Se valorará la adecuada justificación de la rentabilidad del proyecto mediante la aportación de, al menos, una ratio de rentabilidad y el método para su obtención máx. 2 puntos) | Se valorará la adecuada justificación de la rentabilidad del proyecto mediante la aportación de, al menos, una ratio de rentabilidad y el método para su obtención máx. 2 puntos) Fuentes de financiación (máx. 1 puntos) | Fuentes de financiación (máx. 1 puntos) | Fuentes de financiación (máx.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "9e16239a-4604-43db-a019-91e3d6a94a8d",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 25,
+            "page_end": 25,
+            "section": null,
+            "quote": "Núm. 10301 / 12.02.2026 25 / 31 CVE: DOGV-C-2026-4406 https://dogv.gva.es/ Se valorará, hasta con un máximo de 55 puntos, la aportación de la siguiente información: Campo de información Contenido ESTRATEGIA EMPRESARIAL Y MOTIVOS DE LA INVERSIÓN (MÁXIMO 6 PUNTOS) Describir detalladamente los motivos estratégicos que han llevado a la concreta decisión sobre la inversión que se solicita subvencionar (máx. 3 puntos) y a seleccionar todos los concretos activos del proyecto (máx. 3 puntos). VIABILIDAD ECONÓMICA DE LA INVERSIÓN (MÁXIMO 4 PUNTOS) Se valorará la adecuada justificación de la rentabilidad del proyecto mediante la aportación de, al menos, una ratio de rentabilidad y el método para su obtención (máx.2 puntos), fuentes de financiación (máx.1 punto) y periodo en que se espera recuperar la inversión, mediante el pay-back o periodo de recuperación de la inversión y el método para su obtención (máx.1 pto). DESCRIPCIÓN TÉCNICA DEL PROYECTO (MÁXIMO 40 PUNTOS) Describir técnicamente el proyecto, debiendo detallar de forma pormenorizada e individualizada cada uno de los activos, costes e ingeniería desglosados en la tabla de costes estimados (máx. 25 puntos);",
+            "extraction_method": "native"
+          }
+        ]
+      },
+      {
+        "entity_id": "inpyme2026.subcriterion.ii_c_diagrama_flujo_proceso",
+        "entity_type": "evaluation_subcriterion",
+        "parent_entity_id": "inpyme2026.criterion.ii_c_descripcion_tecnica_proyecto",
+        "official_code": null,
+        "label": "Ubicación y conexión de cada activo dentro del proceso productivo (gráfico o diagrama de flujo)",
+        "requirement_text": "Describir la ubicación y conexión de cada activo dentro del proceso productivo mediante la aportación de un gráfico o diagrama de bloques o de flujo de trabajo (máx. 3 puntos).",
+        "score_max": 3.0,
+        "threshold_min": null,
+        "scoring_status": "scored",
+        "is_exclusionary": false,
+        "rule_payload": null,
+        "evidence_status": "accredited",
+        "evidence_grade": "A",
+        "confidence": 0.95,
+        "review_status": "pending",
+        "evidence_refs": [
+          {
+            "evidence_segment_id": "98e51cab-6dc4-4ae7-8c03-2856a0591202",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 7,
+            "page_end": 7,
+            "section": null,
+            "quote": "En caso de aportar documentos técnicos de los activos (de 2,5 puntos a 5 puntos) | En caso de aportar documentos técnicos de los activos (de 2,5 puntos a 5 puntos) | En caso de aportar documentos técnicos de los activos (de 2,5 puntos a 5 puntos) En caso de aportar una factura, presupuesto, documento de encargo u otro documento equivalente (2,5 puntos); si se aporta varios de los documentos anteriores (5 puntos). | En caso de aportar una factura, presupuesto, documento de encargo u otro documento equivalente (2,5 puntos); si se aporta varios de los documentos anteriores (5 puntos). | En caso de aportar una factura, presupuesto, documento de encargo u otro documento equivalente (2,5 puntos); si se aporta varios de los documentos anteriores (5 puntos). Describir la ubicación y conexión de cada activo dentro del proceso productivo mediante la aportación gráfico o diagrama de bloques o de flujo de trabajo (máx. 3 puntos) | Describir la ubicación y conexión de cada activo dentro del proceso productivo mediante la aportación gráfico o diagrama de bloques o de flujo de trabajo (máx.",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "c490b5e2-d807-4885-a991-d3035d25ea79",
+            "document_id": "0a02ca58-7eea-4d9b-9535-b99960a5cfc5",
+            "document_version_id": "4b41b88a-1bc4-4f03-9da8-084a86316aeb",
+            "document_title": "F88114.docx",
+            "page_start": 7,
+            "page_end": 7,
+            "section": null,
+            "quote": "3 puntos) | Describir la ubicación y conexión de cada activo dentro del proceso productivo mediante la aportación gráfico o diagrama de bloques o de flujo de trabajo (máx. 3 puntos) Plano comprensible de la distribución de los activos o equipamientos subvencionables (máx. 2 puntos) | Plano comprensible de la distribución de los activos o equipamientos subvencionables (máx. 2 puntos) | Plano comprensible de la distribución de los activos o equipamientos subvencionables (máx. 2 puntos) D. | Adecuación de los recursos (Máximo 3 puntos). | Adecuación de los recursos (Máximo 3 puntos). Especificar las capacidades y experiencia de los proveedores (máx. 1,5 puntos) | Especificar las capacidades y experiencia de los proveedores (máx. 1,5 puntos) | Especificar las capacidades y experiencia de los proveedores (máx. 1,5 puntos) Especificar los medios técnicos y humanos que se van a utilizar para llevar a cabo el proyecto (máx. 1,5 puntos) | Especificar los medios técnicos y humanos que se van a utilizar para llevar a cabo el proyecto (máx. 1,5 puntos) | Especificar los medios técnicos y humanos que se van a utilizar para llevar a cabo el proyecto (máx. 1,5 puntos)",
+            "extraction_method": "native"
+          },
+          {
+            "evidence_segment_id": "1c3a0c6e-fed5-43d9-ba00-f27e909ce7fe",
+            "document_id": "374f4e3a-6b89-4eec-ab8d-487e02b8908d",
+            "document_version_id": "6f302b49-7d5c-4f1a-8545-9c91d67c8707",
+            "document_title": "2026_4406_es.pdf",
+            "page_start": 25,
+            "page_end": 25,
+            "section": null,
+            "quote": "En caso de aportar documentos técnicos de los activos (de 2,5 puntos a 5 puntos según la calidad y detalle); En caso de aportar una factura, presupuesto, documento de encargo u otro documento equivalente (2,5 puntos); si se aporta varios de los documentos anteriores (5 puntos). También se deberá describir la ubicación y conexión de cada activo dentro del proceso productivo mediante la aportación gráfico o diagrama de bloques o de flujo de trabajo (3 ptos), aportando un plano comprensible de la distribución de los activos o equipamientos subvencionables. (2 ptos). ADECUACIÓN DE LOS RECURSOS (MÁXIMO 3 PUNTOS) Especificar las capacidades y experiencia de los proveedores (máx. 1,5 puntos), así como de los medios técnicos y humanos que se van a utilizar para llevar a cabo el proyecto (máx. 1,5 puntos). PLAN DE TRABAJO (MÁXIMO 2 PUNTOS) Identificar las etapas del plan de trabajo, indicando el detalle y fechas de inicio y finalización para la ejecución de cada una de ellas, dentro del plazo comprendido entre 1 de enero de 2026 y el plazo máximo de justificación. No se supera el umbral mínimo si la suma de las puntuaciones no alcanza los 15 puntos.",
+            "extraction_method": "native"
+          }
+        ]
+      }
+    ]
+  },
+  "knowledge_gaps": []
+}

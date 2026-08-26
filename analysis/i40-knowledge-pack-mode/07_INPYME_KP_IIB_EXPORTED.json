@@ -1,0 +1,54 @@
+{
+  "codigo": "II.B",
+  "nombre": "Viabilidad económica de la inversión",
+  "puntos_max": 4,
+  "prompt": "Redacta el apartado II.B — Viabilidad económica de la inversión de la memoria descriptiva.\nEl baremo asigna un máximo de 4 puntos a este apartado, repartidos entre tres subcriterios:\n(1) ratio de rentabilidad y método para su obtención (hasta 2 puntos), (2) fuentes de\nfinanciación (hasta 1 punto, pendiente de validación humana según el Knowledge Pack) y\n(3) periodo de recuperación de la inversión mediante pay-back y método para su obtención\n(hasta 1 punto, aunque el Knowledge Pack no confirma este peso de forma explícita; márcalo\ncon [DATO PENDIENTE] si fuera relevante señalarlo en el texto).\n\nTienes adjunto el Perfil Estratégico de Empresa (Ruta i40) como fuente principal de datos\ngenerales de la empresa. Úsalo para contextualizar la solidez financiera de la empresa y\nsu capacidad para asumir la inversión, pero no repitas información que ya conste en\napartados anteriores de la memoria.\n\nLos cálculos de rentabilidad (ratio o ratios calculadas) y el pay-back los aporta la\naplicación como datos ya calculados. Incorpóralos exactamente tal como se te suministran\nen el bloque de datos: no los recalcules ni modifiques. Lo que sí debes hacer es explicar\ncon claridad el método empleado para obtener cada uno, las hipótesis de partida\n(incremento de ingresos previsto, ahorros de coste, horizonte temporal considerado) y\npor qué esas hipótesis son razonables a la vista de la actividad y los datos de la empresa.\nEl desglose de partidas de inversión proviene de la tabla de inversiones del expediente:\núsalo como dato dado para referirte al importe total cuando sea necesario, sin\nreproducirlo en el texto.\n\nPara el subcriterio de fuentes de financiación, describe de forma precisa cómo se cubre\nel coste total del proyecto: qué parte con recursos propios, qué parte con financiación\najena (indicando instrumento y entidad si se dispone del dato) y qué parte corresponde a\nla subvención solicitada. Si se aporta documentación bancaria que acredite la\ndisponibilidad de los fondos, menciónala expresamente porque refuerza la credibilidad del\napartado.\n\nEstructura el texto en tres bloques claramente diferenciados, uno por subcriterio. Extensión\norientativa: entre 300 y 450 palabras en total. El tono debe ser técnico y concreto: cada\nafirmación sobre rentabilidad o recuperación de la inversión debe quedar respaldada por\nun número o por la referencia explícita a la hipótesis que lo genera. Evita afirmaciones\ngenéricas del tipo \"la inversión es rentable\" sin el dato que las sustente.\n\nDonde falte cualquier dato necesario para completar el texto, escribe\n[DATO PENDIENTE: descripción del dato que falta] en el lugar exacto donde correspondería,\nsin inventar cifras ni suponer valores. Esto incluye cualquier elemento normativo que\nel apartado pudiera requerir y que no esté cubierto por los datos suministrados.",
+  "requiere_calculo_rentabilidad": true,
+  "usa_tabla_inversiones": true,
+  "inputs": [
+    {
+      "id": "datos-economicos-actuales-empresa",
+      "label": "Datos económicos actuales de la empresa (facturación, beneficios, estructura financiera general)",
+      "tipo": "dato_empresa",
+      "nivel": "minimo",
+      "ref_campo_empresa": "datos-economicos-actuales"
+    },
+    {
+      "id": "rentabilidad",
+      "label": "Cálculo de rentabilidad (VAN, TIR, payback)",
+      "tipo": "rentabilidad",
+      "nivel": "completo"
+    },
+    {
+      "id": "inversion",
+      "label": "Desglose de la inversión por partidas",
+      "tipo": "inversion",
+      "nivel": "minimo"
+    },
+    {
+      "id": "fuentes-financiacion-proyecto",
+      "label": "Fuentes de financiación previstas (recursos propios, financiación ajena, subvención solicitada)",
+      "tipo": "texto_libre",
+      "nivel": "minimo"
+    },
+    {
+      "id": "oferta-carta-condiciones-bancarias",
+      "label": "Oferta o carta de condiciones bancarias, póliza de crédito o documento equivalente",
+      "tipo": "documento",
+      "nivel": "completo"
+    },
+    {
+      "id": "hipotesis-ingresos-ahorros-rentabilidad",
+      "label": "Hipótesis de ingresos adicionales o ahorros de coste que sustentan las ratios de rentabilidad",
+      "tipo": "texto_libre",
+      "nivel": "completo"
+    }
+  ],
+  "documentos_requeridos": [
+    {
+      "nombre": "Oferta o carta de condiciones bancarias, póliza de crédito o documento equivalente",
+      "fuente": "cliente"
+    }
+  ],
+  "contexto_evaluador": "El baremo asigna un máximo de 4 puntos distribuidos en tres subcriterios:\n\n- Ratio de rentabilidad y método para su obtención: hasta 2 puntos. Se exige aportar al menos una ratio de rentabilidad y explicar con claridad el método empleado para calcularla.\n- Fuentes de financiación: hasta 1 punto. (Pendiente de validación humana en el Knowledge Pack.)\n- Periodo de recuperación de la inversión (pay-back) y método para su obtención: [DATO PENDIENTE: el Knowledge Pack no incluye descripción del subcriterio de pay-back ni confirma su peso de 1 punto; solo consta el subcriterio de fuentes de financiación con esa puntuación, pendiente de validación humana.]"
+}

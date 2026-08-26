@@ -1,0 +1,451 @@
+{
+  "knowledge_gaps": [
+    {
+      "codigo": "0",
+      "kind": "missing_entity_type",
+      "detail": "No hay ninguna entidad de tipo 'criterion' utilizable en el Knowledge Pack para 0. La plantilla podría mencionar una puntuación, pero no se toma de ahí: se registra como hueco de conocimiento.",
+      "entity_type": "criterion",
+      "entity_id": null
+    },
+    {
+      "codigo": "I.C",
+      "kind": "missing_entity_type",
+      "detail": "No hay ninguna entidad de tipo 'criterion' utilizable en el Knowledge Pack para I.C. La plantilla podría mencionar una puntuación, pero no se toma de ahí: se registra como hueco de conocimiento.",
+      "entity_type": "criterion",
+      "entity_id": null
+    },
+    {
+      "codigo": "I.C",
+      "kind": "entity_unknown",
+      "detail": "'Puntuación máxima de I.C Experiencia en la actividad proyectada' referenciado para I.C pero su valor es not_located (desconocido, no ausente); no se usa como hecho ni se infiere del entregable.",
+      "entity_type": "criterion",
+      "entity_id": "inpyme26-ic-criterion"
+    },
+    {
+      "codigo": "II.B",
+      "kind": "entity_unknown",
+      "detail": "'Periodo de recuperación de la inversión (pay-back) y método para su obtención' referenciado para II.B pero su valor es not_located (desconocido, no ausente); no se usa como hecho ni se infiere del entregable.",
+      "entity_type": "subcriterion",
+      "entity_id": "inpyme26-iib-sub-payback"
+    },
+    {
+      "codigo": "III.B",
+      "kind": "missing_entity_type",
+      "detail": "No hay ninguna entidad de tipo 'criterion' utilizable en el Knowledge Pack para III.B. La plantilla podría mencionar una puntuación, pero no se toma de ahí: se registra como hueco de conocimiento.",
+      "entity_type": "criterion",
+      "entity_id": null
+    },
+    {
+      "codigo": "III.B",
+      "kind": "entity_unknown",
+      "detail": "'Puntuación máxima de III.B Innovación de los procesos o en los productos' referenciado para III.B pero su valor es not_located (desconocido, no ausente); no se usa como hecho ni se infiere del entregable.",
+      "entity_type": "criterion",
+      "entity_id": "inpyme26-iiib-criterion"
+    },
+    {
+      "codigo": "III.C",
+      "kind": "missing_entity_type",
+      "detail": "No hay ninguna entidad de tipo 'criterion' utilizable en el Knowledge Pack para III.C. La plantilla podría mencionar una puntuación, pero no se toma de ahí: se registra como hueco de conocimiento.",
+      "entity_type": "criterion",
+      "entity_id": null
+    },
+    {
+      "codigo": "III.C",
+      "kind": "entity_unknown",
+      "detail": "'Puntuación máxima de III.C Diversificación de productos o apertura de nuevos mercados o clientes' referenciado para III.C pero su valor es not_provided (no aportado); no se usa como hecho ni se infiere del entregable.",
+      "entity_type": "criterion",
+      "entity_id": "inpyme26-iiic-criterion"
+    },
+    {
+      "codigo": "V.B",
+      "kind": "missing_entity_type",
+      "detail": "No hay ninguna entidad de tipo 'criterion' utilizable en el Knowledge Pack para V.B. La plantilla podría mencionar una puntuación, pero no se toma de ahí: se registra como hueco de conocimiento.",
+      "entity_type": "criterion",
+      "entity_id": null
+    },
+    {
+      "codigo": "V.B",
+      "kind": "conflict_unresolved",
+      "detail": "Entidad 'inpyme26-vb-criterion' (Puntuación máxima de V.B Lucha contra la despoblación) en conflicto: 2 versiones sin resolver. No se eleva a hecho categórico.",
+      "entity_type": "criterion",
+      "entity_id": "inpyme26-vb-criterion"
+    },
+    {
+      "codigo": "(convocatoria)",
+      "kind": "no_match",
+      "detail": "No hay entidad utilizable de 'tres ofertas' en el Knowledge Pack; tres_ofertas queda con los valores de escape del contrato.",
+      "entity_type": "procedural_rule",
+      "entity_id": null
+    }
+  ],
+  "sections": {
+    "0": {
+      "deliverable_section": "0",
+      "knowledge_refs": [
+        "inpyme26-0-exclusion"
+      ],
+      "evidence_refs": [
+        {
+          "entity_id": "inpyme26-0-exclusion",
+          "document_id": "inpyme26-anexo-ii",
+          "quote": "Apartado 0. Justificación de la vinculación de la pyme industrial con el sector (criterio excluyente)",
+          "section": "Anexo II"
+        }
+      ],
+      "knowledge_gaps": [
+        {
+          "kind": "missing_entity_type",
+          "entity_type": "criterion",
+          "detail": "No hay ninguna entidad de tipo 'criterion' utilizable en el Knowledge Pack para 0. La plantilla podría mencionar una puntuación, pero no se toma de ahí: se registra como hueco de conocimiento."
+        }
+      ],
+      "conflicts_used": [],
+      "unvalidated_knowledge_used": []
+    },
+    "I.A": {
+      "deliverable_section": "I.A",
+      "knowledge_refs": [
+        "inpyme26-ia-criterion"
+      ],
+      "evidence_refs": [
+        {
+          "entity_id": "inpyme26-ia-criterion",
+          "document_id": "inpyme26-anexo-ii",
+          "quote": "Antecedentes y evolución (Máximo 4 puntos)",
+          "section": "Anexo II, bloque I"
+        }
+      ],
+      "knowledge_gaps": [],
+      "conflicts_used": [],
+      "unvalidated_knowledge_used": []
+    },
+    "I.B": {
+      "deliverable_section": "I.B",
+      "knowledge_refs": [
+        "inpyme26-ib-criterion"
+      ],
+      "evidence_refs": [
+        {
+          "entity_id": "inpyme26-ib-criterion",
+          "document_id": "inpyme26-anexo-ii",
+          "quote": "Actividades actuales de la empresa (Máximo 1 punto)",
+          "section": "Anexo II, bloque I"
+        }
+      ],
+      "knowledge_gaps": [],
+      "conflicts_used": [],
+      "unvalidated_knowledge_used": [
+        "inpyme26-ib-criterion"
+      ]
+    },
+    "I.C": {
+      "deliverable_section": "I.C",
+      "knowledge_refs": [],
+      "evidence_refs": [],
+      "knowledge_gaps": [
+        {
+          "kind": "missing_entity_type",
+          "entity_type": "criterion",
+          "detail": "No hay ninguna entidad de tipo 'criterion' utilizable en el Knowledge Pack para I.C. La plantilla podría mencionar una puntuación, pero no se toma de ahí: se registra como hueco de conocimiento."
+        },
+        {
+          "kind": "entity_unknown",
+          "entity_type": "criterion",
+          "detail": "'Puntuación máxima de I.C Experiencia en la actividad proyectada' referenciado para I.C pero su valor es not_located (desconocido, no ausente); no se usa como hecho ni se infiere del entregable."
+        }
+      ],
+      "conflicts_used": [],
+      "unvalidated_knowledge_used": []
+    },
+    "II.A": {
+      "deliverable_section": "II.A",
+      "knowledge_refs": [
+        "inpyme26-iia-criterion"
+      ],
+      "evidence_refs": [
+        {
+          "entity_id": "inpyme26-iia-criterion",
+          "document_id": "inpyme26-anexo-ii",
+          "quote": "Estrategia empresarial y motivos de la inversión (Máximo 6 puntos)",
+          "section": "Anexo II, bloque II"
+        }
+      ],
+      "knowledge_gaps": [],
+      "conflicts_used": [],
+      "unvalidated_knowledge_used": []
+    },
+    "II.B": {
+      "deliverable_section": "II.B",
+      "knowledge_refs": [
+        "inpyme26-iib-criterion",
+        "inpyme26-iib-sub-ratio-rentabilidad",
+        "inpyme26-iib-sub-fuentes-financiacion"
+      ],
+      "evidence_refs": [
+        {
+          "entity_id": "inpyme26-iib-criterion",
+          "document_id": "inpyme26-anexo-ii",
+          "quote": "VIABILIDAD ECONÓMICA DE LA INVERSIÓN (MÁXIMO 4 PUNTOS)",
+          "section": "Anexo II, bloque II"
+        },
+        {
+          "entity_id": "inpyme26-iib-sub-ratio-rentabilidad",
+          "document_id": "inpyme26-anexo-ii",
+          "quote": "aportación de, al menos, una ratio de rentabilidad y el método para su obtención (máx. 2 puntos)",
+          "section": "Anexo II, bloque II.B"
+        },
+        {
+          "entity_id": "inpyme26-iib-sub-fuentes-financiacion",
+          "document_id": "inpyme26-anexo-ii",
+          "quote": "fuentes de financiación (máx. 1 punto)",
+          "section": "Anexo II, bloque II.B"
+        }
+      ],
+      "knowledge_gaps": [
+        {
+          "kind": "entity_unknown",
+          "entity_type": "subcriterion",
+          "detail": "'Periodo de recuperación de la inversión (pay-back) y método para su obtención' referenciado para II.B pero su valor es not_located (desconocido, no ausente); no se usa como hecho ni se infiere del entregable."
+        }
+      ],
+      "conflicts_used": [],
+      "unvalidated_knowledge_used": [
+        "inpyme26-iib-sub-fuentes-financiacion"
+      ]
+    },
+    "II.C": {
+      "deliverable_section": "II.C",
+      "knowledge_refs": [
+        "inpyme26-iic-criterion"
+      ],
+      "evidence_refs": [
+        {
+          "entity_id": "inpyme26-iic-criterion",
+          "document_id": "inpyme26-anexo-ii",
+          "quote": "Descripción técnica del proyecto (Máximo 40 puntos)",
+          "section": "Anexo II, bloque II"
+        }
+      ],
+      "knowledge_gaps": [],
+      "conflicts_used": [],
+      "unvalidated_knowledge_used": []
+    },
+    "II.D": {
+      "deliverable_section": "II.D",
+      "knowledge_refs": [
+        "inpyme26-iid-criterion"
+      ],
+      "evidence_refs": [
+        {
+          "entity_id": "inpyme26-iid-criterion",
+          "document_id": "inpyme26-anexo-ii",
+          "quote": "Adecuación de los recursos (Máximo 3 puntos)",
+          "section": "Anexo II, bloque II"
+        }
+      ],
+      "knowledge_gaps": [],
+      "conflicts_used": [],
+      "unvalidated_knowledge_used": [
+        "inpyme26-iid-criterion"
+      ]
+    },
+    "II.E": {
+      "deliverable_section": "II.E",
+      "knowledge_refs": [
+        "inpyme26-iie-criterion"
+      ],
+      "evidence_refs": [
+        {
+          "entity_id": "inpyme26-iie-criterion",
+          "document_id": "inpyme26-anexo-ii",
+          "quote": "Plan de trabajo (Máximo 2 puntos)",
+          "section": "Anexo II, bloque II"
+        }
+      ],
+      "knowledge_gaps": [],
+      "conflicts_used": [],
+      "unvalidated_knowledge_used": [
+        "inpyme26-iie-criterion"
+      ]
+    },
+    "III.A": {
+      "deliverable_section": "III.A",
+      "knowledge_refs": [
+        "inpyme26-iiia-criterion"
+      ],
+      "evidence_refs": [
+        {
+          "entity_id": "inpyme26-iiia-criterion",
+          "document_id": "inpyme26-anexo-ii",
+          "quote": "Impacto en la competitividad o la productividad (Máximo 4 puntos)",
+          "section": "Anexo II, bloque III"
+        }
+      ],
+      "knowledge_gaps": [],
+      "conflicts_used": [],
+      "unvalidated_knowledge_used": []
+    },
+    "III.B": {
+      "deliverable_section": "III.B",
+      "knowledge_refs": [],
+      "evidence_refs": [],
+      "knowledge_gaps": [
+        {
+          "kind": "missing_entity_type",
+          "entity_type": "criterion",
+          "detail": "No hay ninguna entidad de tipo 'criterion' utilizable en el Knowledge Pack para III.B. La plantilla podría mencionar una puntuación, pero no se toma de ahí: se registra como hueco de conocimiento."
+        },
+        {
+          "kind": "entity_unknown",
+          "entity_type": "criterion",
+          "detail": "'Puntuación máxima de III.B Innovación de los procesos o en los productos' referenciado para III.B pero su valor es not_located (desconocido, no ausente); no se usa como hecho ni se infiere del entregable."
+        }
+      ],
+      "conflicts_used": [],
+      "unvalidated_knowledge_used": []
+    },
+    "III.C": {
+      "deliverable_section": "III.C",
+      "knowledge_refs": [],
+      "evidence_refs": [],
+      "knowledge_gaps": [
+        {
+          "kind": "missing_entity_type",
+          "entity_type": "criterion",
+          "detail": "No hay ninguna entidad de tipo 'criterion' utilizable en el Knowledge Pack para III.C. La plantilla podría mencionar una puntuación, pero no se toma de ahí: se registra como hueco de conocimiento."
+        },
+        {
+          "kind": "entity_unknown",
+          "entity_type": "criterion",
+          "detail": "'Puntuación máxima de III.C Diversificación de productos o apertura de nuevos mercados o clientes' referenciado para III.C pero su valor es not_provided (no aportado); no se usa como hecho ni se infiere del entregable."
+        }
+      ],
+      "conflicts_used": [],
+      "unvalidated_knowledge_used": []
+    },
+    "IV.A": {
+      "deliverable_section": "IV.A",
+      "knowledge_refs": [
+        "inpyme26-iva-criterion",
+        "inpyme26-ivb-criterion"
+      ],
+      "evidence_refs": [
+        {
+          "entity_id": "inpyme26-iva-criterion",
+          "document_id": "inpyme26-anexo-ii",
+          "quote": "reducción sustancial del consumo de energía, agua o materias primas (Máximo 4 puntos)",
+          "section": "Anexo II, bloque IV"
+        },
+        {
+          "entity_id": "inpyme26-ivb-criterion",
+          "document_id": "inpyme26-anexo-ii",
+          "quote": "reducción sustancial de residuos o contaminantes, o la implantación de economía circular (Máximo 4 puntos)",
+          "section": "Anexo II, bloque IV"
+        }
+      ],
+      "knowledge_gaps": [],
+      "conflicts_used": [],
+      "unvalidated_knowledge_used": []
+    },
+    "IV.B": {
+      "deliverable_section": "IV.B",
+      "knowledge_refs": [
+        "inpyme26-ivb-criterion",
+        "inpyme26-iva-criterion"
+      ],
+      "evidence_refs": [
+        {
+          "entity_id": "inpyme26-ivb-criterion",
+          "document_id": "inpyme26-anexo-ii",
+          "quote": "reducción sustancial de residuos o contaminantes, o la implantación de economía circular (Máximo 4 puntos)",
+          "section": "Anexo II, bloque IV"
+        },
+        {
+          "entity_id": "inpyme26-iva-criterion",
+          "document_id": "inpyme26-anexo-ii",
+          "quote": "reducción sustancial del consumo de energía, agua o materias primas (Máximo 4 puntos)",
+          "section": "Anexo II, bloque IV"
+        }
+      ],
+      "knowledge_gaps": [],
+      "conflicts_used": [],
+      "unvalidated_knowledge_used": []
+    },
+    "IV.C": {
+      "deliverable_section": "IV.C",
+      "knowledge_refs": [
+        "inpyme26-ivc-criterion"
+      ],
+      "evidence_refs": [
+        {
+          "entity_id": "inpyme26-ivc-criterion",
+          "document_id": "inpyme26-anexo-ii",
+          "quote": "reducir la huella de carbono (Máximo 4 puntos)",
+          "section": "Anexo II, bloque IV"
+        }
+      ],
+      "knowledge_gaps": [],
+      "conflicts_used": [],
+      "unvalidated_knowledge_used": [
+        "inpyme26-ivc-criterion"
+      ]
+    },
+    "V.A": {
+      "deliverable_section": "V.A",
+      "knowledge_refs": [
+        "inpyme26-va-criterion"
+      ],
+      "evidence_refs": [
+        {
+          "entity_id": "inpyme26-va-criterion",
+          "document_id": "inpyme26-anexo-ii",
+          "quote": "Creación de empleo (Máximo 2 puntos)",
+          "section": "Anexo II, bloque V"
+        }
+      ],
+      "knowledge_gaps": [],
+      "conflicts_used": [],
+      "unvalidated_knowledge_used": []
+    },
+    "V.B": {
+      "deliverable_section": "V.B",
+      "knowledge_refs": [],
+      "evidence_refs": [],
+      "knowledge_gaps": [
+        {
+          "kind": "missing_entity_type",
+          "entity_type": "criterion",
+          "detail": "No hay ninguna entidad de tipo 'criterion' utilizable en el Knowledge Pack para V.B. La plantilla podría mencionar una puntuación, pero no se toma de ahí: se registra como hueco de conocimiento."
+        },
+        {
+          "kind": "conflict_unresolved",
+          "entity_type": "criterion",
+          "detail": "Entidad 'inpyme26-vb-criterion' (Puntuación máxima de V.B Lucha contra la despoblación) en conflicto: 2 versiones sin resolver. No se eleva a hecho categórico."
+        }
+      ],
+      "conflicts_used": [
+        "inpyme26-vb-criterion"
+      ],
+      "unvalidated_knowledge_used": []
+    },
+    "V.C": {
+      "deliverable_section": "V.C",
+      "knowledge_refs": [
+        "inpyme26-vc-criterion"
+      ],
+      "evidence_refs": [
+        {
+          "entity_id": "inpyme26-vc-criterion",
+          "document_id": "inpyme26-anexo-ii",
+          "quote": "Apoyo a proyectos sociales (Máximo 1 punto)",
+          "section": "Anexo II, bloque V"
+        }
+      ],
+      "knowledge_gaps": [],
+      "conflicts_used": [],
+      "unvalidated_knowledge_used": [
+        "inpyme26-vc-criterion"
+      ]
+    }
+  }
+}

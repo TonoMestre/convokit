@@ -1,0 +1,304 @@
+{
+  "_disclaimer": "MUESTRA SINTÉTICA construida para este test. No existe hoy ningún export real de i40 Analiza para convocatorias de ayudas (i40 Analiza puntúa el Índice i40 de empresas/programas bajo la Matriz i40; no extrae baremos de convocatorias para redacción de memorias). Se construyó reutilizando entity_id, entity_type, evidence_status y evidence_refs del vocabulario REAL de i40 Analiza (apps/web/src/lib/contracts/schemas/evidence-*.schema.json), aplicado a hechos reales de INPYME 2026 ya verificados en el análisis previo (analysis/convokit-memorai-contract-inpyme-2026/01_INPYME_SOURCE_DOCUMENTS.md), para que el test sea representativo. Es DELIBERADAMENTE incompleta para Application Knowledge, tal y como pide el encargo: cubre bien II.B (con un hueco real: el pay-back) y solo a nivel de 'criterion' (sin subcriterios) el resto de apartados.",
+  "pack_id": "kp-inpyme-2026-synthetic-v1",
+  "schema_version": "0.1-synthetic",
+  "convocatoria_ref": "INPYME-2026",
+  "convocatoria_metadata": {
+    "anio": 2026,
+    "organismo": "Conselleria de Industria, Turismo, Innovación y Comercio (GVA)",
+    "tipo_ayuda": "inversion_productiva"
+  },
+  "entities": [
+    {
+      "entity_id": "inpyme26-0-exclusion",
+      "entity_type": "exclusion",
+      "section_ref": "0 Justificación de la vinculación de la pyme industrial con el sector",
+      "label": "Criterio excluyente sin puntuación: justificación de vinculación con el sector industrial",
+      "value": {"es_excluyente": true, "puntos_max": null},
+      "evidence_status": "accredited",
+      "review_state": "human_validated",
+      "confidence": 0.95,
+      "evidence_refs": [
+        {"document_id": "inpyme26-anexo-ii", "quote": "Apartado 0. Justificación de la vinculación de la pyme industrial con el sector (criterio excluyente)", "section": "Anexo II"}
+      ]
+    },
+    {
+      "entity_id": "inpyme26-ia-criterion",
+      "entity_type": "criterion",
+      "section_ref": "I.A Antecedentes y evolución",
+      "label": "Puntuación máxima de I.A Antecedentes y evolución",
+      "value": {"puntos_max": 4},
+      "evidence_status": "accredited",
+      "review_state": "human_validated",
+      "confidence": 0.9,
+      "evidence_refs": [{"document_id": "inpyme26-anexo-ii", "quote": "Antecedentes y evolución (Máximo 4 puntos)", "section": "Anexo II, bloque I"}]
+    },
+    {
+      "entity_id": "inpyme26-ib-criterion",
+      "entity_type": "criterion",
+      "section_ref": "I.B Actividades actuales de la empresa",
+      "label": "Puntuación máxima de I.B Actividades actuales de la empresa",
+      "value": {"puntos_max": 1},
+      "evidence_status": "accredited",
+      "review_state": "unvalidated",
+      "confidence": 0.7,
+      "evidence_refs": [{"document_id": "inpyme26-anexo-ii", "quote": "Actividades actuales de la empresa (Máximo 1 punto)", "section": "Anexo II, bloque I"}]
+    },
+    {
+      "entity_id": "inpyme26-ic-criterion",
+      "entity_type": "criterion",
+      "section_ref": "I.C Experiencia en la actividad proyectada",
+      "label": "Puntuación máxima de I.C Experiencia en la actividad proyectada",
+      "value": null,
+      "evidence_status": "not_located",
+      "review_state": "unvalidated",
+      "confidence": null,
+      "evidence_refs": []
+    },
+    {
+      "entity_id": "inpyme26-iia-criterion",
+      "entity_type": "criterion",
+      "section_ref": "II.A Estrategia empresarial y motivos de la inversión",
+      "label": "Puntuación máxima de II.A Estrategia empresarial y motivos de la inversión",
+      "value": {"puntos_max": 6},
+      "evidence_status": "accredited",
+      "review_state": "human_validated",
+      "confidence": 0.9,
+      "evidence_refs": [{"document_id": "inpyme26-anexo-ii", "quote": "Estrategia empresarial y motivos de la inversión (Máximo 6 puntos)", "section": "Anexo II, bloque II"}]
+    },
+    {
+      "entity_id": "inpyme26-iib-criterion",
+      "entity_type": "criterion",
+      "section_ref": "II.B Viabilidad económica de la inversión",
+      "label": "Puntuación máxima de II.B Viabilidad económica de la inversión",
+      "value": {"puntos_max": 4},
+      "evidence_status": "accredited",
+      "review_state": "human_validated",
+      "confidence": 0.95,
+      "evidence_refs": [
+        {"document_id": "inpyme26-anexo-ii", "quote": "VIABILIDAD ECONÓMICA DE LA INVERSIÓN (MÁXIMO 4 PUNTOS)", "section": "Anexo II, bloque II"}
+      ]
+    },
+    {
+      "entity_id": "inpyme26-iib-sub-ratio-rentabilidad",
+      "entity_type": "subcriterion",
+      "section_ref": "II.B Viabilidad económica de la inversión",
+      "label": "Ratio de rentabilidad y método para su obtención",
+      "value": {"puntos_max": 2, "descripcion": "Aportación de, al menos, una ratio de rentabilidad y el método para su obtención."},
+      "evidence_status": "accredited",
+      "review_state": "human_validated",
+      "confidence": 0.92,
+      "evidence_refs": [
+        {"document_id": "inpyme26-anexo-ii", "quote": "aportación de, al menos, una ratio de rentabilidad y el método para su obtención (máx. 2 puntos)", "section": "Anexo II, bloque II.B"}
+      ]
+    },
+    {
+      "entity_id": "inpyme26-iib-sub-fuentes-financiacion",
+      "entity_type": "subcriterion",
+      "section_ref": "II.B Viabilidad económica de la inversión",
+      "label": "Fuentes de financiación",
+      "value": {"puntos_max": 1},
+      "evidence_status": "accredited",
+      "review_state": "unvalidated",
+      "confidence": 0.68,
+      "evidence_refs": [
+        {"document_id": "inpyme26-anexo-ii", "quote": "fuentes de financiación (máx. 1 punto)", "section": "Anexo II, bloque II.B"}
+      ]
+    },
+    {
+      "entity_id": "inpyme26-iib-sub-payback",
+      "entity_type": "subcriterion",
+      "section_ref": "II.B Viabilidad económica de la inversión",
+      "label": "Periodo de recuperación de la inversión (pay-back) y método para su obtención",
+      "value": null,
+      "evidence_status": "not_located",
+      "review_state": "unvalidated",
+      "confidence": null,
+      "evidence_refs": [],
+      "_gap_reason": "No extraído todavía por i40 Analiza para esta convocatoria; hueco real de Application Knowledge, a propósito del test (punto 9 del encargo)."
+    },
+    {
+      "entity_id": "inpyme26-iic-criterion",
+      "entity_type": "criterion",
+      "section_ref": "II.C Descripción técnica del proyecto",
+      "label": "Puntuación máxima de II.C Descripción técnica del proyecto",
+      "value": {"puntos_max": 40},
+      "evidence_status": "accredited",
+      "review_state": "human_validated",
+      "confidence": 0.9,
+      "evidence_refs": [{"document_id": "inpyme26-anexo-ii", "quote": "Descripción técnica del proyecto (Máximo 40 puntos)", "section": "Anexo II, bloque II"}]
+    },
+    {
+      "entity_id": "inpyme26-iid-criterion",
+      "entity_type": "criterion",
+      "section_ref": "II.D Adecuación de los recursos",
+      "label": "Puntuación máxima de II.D Adecuación de los recursos",
+      "value": {"puntos_max": 3},
+      "evidence_status": "accredited",
+      "review_state": "unvalidated",
+      "confidence": 0.65,
+      "evidence_refs": [{"document_id": "inpyme26-anexo-ii", "quote": "Adecuación de los recursos (Máximo 3 puntos)", "section": "Anexo II, bloque II"}]
+    },
+    {
+      "entity_id": "inpyme26-iie-criterion",
+      "entity_type": "criterion",
+      "section_ref": "II.E Plan de trabajo",
+      "label": "Puntuación máxima de II.E Plan de trabajo",
+      "value": {"puntos_max": 2},
+      "evidence_status": "accredited",
+      "review_state": "unvalidated",
+      "confidence": 0.65,
+      "evidence_refs": [{"document_id": "inpyme26-anexo-ii", "quote": "Plan de trabajo (Máximo 2 puntos)", "section": "Anexo II, bloque II"}]
+    },
+    {
+      "entity_id": "inpyme26-iiia-criterion",
+      "entity_type": "criterion",
+      "section_ref": "III.A Impacto en la competitividad o la productividad",
+      "label": "Puntuación máxima de III.A Impacto en la competitividad o la productividad",
+      "value": {"puntos_max": 4},
+      "evidence_status": "accredited",
+      "review_state": "human_validated",
+      "confidence": 0.85,
+      "evidence_refs": [{"document_id": "inpyme26-anexo-ii", "quote": "Impacto en la competitividad o la productividad (Máximo 4 puntos)", "section": "Anexo II, bloque III"}]
+    },
+    {
+      "entity_id": "inpyme26-iiib-criterion",
+      "entity_type": "criterion",
+      "section_ref": "III.B Innovación de los procesos o en los productos",
+      "label": "Puntuación máxima de III.B Innovación de los procesos o en los productos",
+      "value": null,
+      "evidence_status": "not_located",
+      "review_state": "unvalidated",
+      "confidence": null,
+      "evidence_refs": []
+    },
+    {
+      "entity_id": "inpyme26-iiic-criterion",
+      "entity_type": "criterion",
+      "section_ref": "III.C Diversificación de productos o apertura de nuevos mercados o clientes",
+      "label": "Puntuación máxima de III.C Diversificación de productos o apertura de nuevos mercados o clientes",
+      "value": null,
+      "evidence_status": "not_provided",
+      "review_state": "unvalidated",
+      "confidence": null,
+      "evidence_refs": []
+    },
+    {
+      "entity_id": "inpyme26-iva-criterion",
+      "entity_type": "criterion",
+      "section_ref": "IV.A Inversiones que impliquen una reducción sustancial del consumo de energía, agua o materias primas",
+      "label": "Puntuación máxima de IV.A (reducción de consumo de energía, agua o materias primas)",
+      "value": {"puntos_max": 4},
+      "evidence_status": "accredited",
+      "review_state": "human_validated",
+      "confidence": 0.85,
+      "evidence_refs": [{"document_id": "inpyme26-anexo-ii", "quote": "reducción sustancial del consumo de energía, agua o materias primas (Máximo 4 puntos)", "section": "Anexo II, bloque IV"}]
+    },
+    {
+      "entity_id": "inpyme26-ivb-criterion",
+      "entity_type": "criterion",
+      "section_ref": "IV.B Inversiones que impliquen una reducción sustancial de residuos o contaminantes, o la implantación de economía circular",
+      "label": "Puntuación máxima de IV.B (reducción de residuos/contaminantes o economía circular)",
+      "value": {"puntos_max": 4},
+      "evidence_status": "accredited",
+      "review_state": "human_validated",
+      "confidence": 0.85,
+      "evidence_refs": [{"document_id": "inpyme26-anexo-ii", "quote": "reducción sustancial de residuos o contaminantes, o la implantación de economía circular (Máximo 4 puntos)", "section": "Anexo II, bloque IV"}]
+    },
+    {
+      "entity_id": "inpyme26-ivc-criterion",
+      "entity_type": "criterion",
+      "section_ref": "IV.C Inversiones que impliquen reducir la huella de carbono",
+      "label": "Puntuación máxima de IV.C (reducción de huella de carbono)",
+      "value": {"puntos_max": 4},
+      "evidence_status": "accredited",
+      "review_state": "unvalidated",
+      "confidence": 0.6,
+      "evidence_refs": [{"document_id": "inpyme26-anexo-ii", "quote": "reducir la huella de carbono (Máximo 4 puntos)", "section": "Anexo II, bloque IV"}]
+    },
+    {
+      "entity_id": "inpyme26-va-criterion",
+      "entity_type": "criterion",
+      "section_ref": "V.A Creación de empleo",
+      "label": "Puntuación máxima de V.A Creación de empleo",
+      "value": {"puntos_max": 2},
+      "evidence_status": "accredited",
+      "review_state": "human_validated",
+      "confidence": 0.85,
+      "evidence_refs": [{"document_id": "inpyme26-anexo-ii", "quote": "Creación de empleo (Máximo 2 puntos)", "section": "Anexo II, bloque V"}]
+    },
+    {
+      "entity_id": "inpyme26-vb-criterion",
+      "entity_type": "criterion",
+      "section_ref": "V.B Lucha contra la despoblación",
+      "label": "Puntuación máxima de V.B Lucha contra la despoblación",
+      "value": {"puntos_max": 10},
+      "evidence_status": "conflict",
+      "review_state": "unvalidated",
+      "confidence": null,
+      "conflict_group_id": "inpyme26-vb-conflict",
+      "conflicting_values": [{"puntos_max": 10, "fuente": "Anexo II"}, {"puntos_max": 8, "fuente": "borrador de corrección de errores no confirmado"}],
+      "evidence_refs": [
+        {"document_id": "inpyme26-anexo-ii", "quote": "Lucha contra la despoblación (Máximo 10 puntos)", "section": "Anexo II, bloque V"},
+        {"document_id": "inpyme26-borrador-correccion", "quote": "Lucha contra la despoblación (Máximo 8 puntos)", "section": "borrador de corrección de errores"}
+      ]
+    },
+    {
+      "entity_id": "inpyme26-vc-criterion",
+      "entity_type": "criterion",
+      "section_ref": "V.C Apoyo a proyectos sociales",
+      "label": "Puntuación máxima de V.C Apoyo a proyectos sociales",
+      "value": {"puntos_max": 1},
+      "evidence_status": "accredited",
+      "review_state": "unvalidated",
+      "confidence": 0.6,
+      "evidence_refs": [{"document_id": "inpyme26-anexo-ii", "quote": "Apoyo a proyectos sociales (Máximo 1 punto)", "section": "Anexo II, bloque V"}]
+    },
+    {
+      "entity_id": "inpyme26-limite-ingenieria-porcentaje",
+      "entity_type": "limit",
+      "section_ref": "Reglas de coste - ingeniería industrial",
+      "label": "Límite máximo de ingeniería industrial sobre el presupuesto subvencionable",
+      "value": {"valor": 15, "unidad": "%", "nota": "Con tope adicional absoluto, ver inpyme26-limite-ingenieria-euros."},
+      "evidence_status": "accredited",
+      "review_state": "human_validated",
+      "confidence": 0.9,
+      "evidence_refs": [{"document_id": "inpyme26-modelo-costes", "quote": "no podrá superar el 15% del total de gastos admitidos como subvencionables ni el importe de 20.000 €, IVA excluido", "section": "Modelo normalizado de tabla de costes estimados"}]
+    },
+    {
+      "entity_id": "inpyme26-limite-ingenieria-euros",
+      "entity_type": "limit",
+      "section_ref": "Reglas de coste - ingeniería industrial",
+      "label": "Límite máximo absoluto de ingeniería industrial",
+      "value": {"valor": 20000, "unidad": "EUR"},
+      "evidence_status": "accredited",
+      "review_state": "human_validated",
+      "confidence": 0.9,
+      "evidence_refs": [{"document_id": "inpyme26-modelo-costes", "quote": "ni el importe de 20.000 €, IVA excluido", "section": "Modelo normalizado de tabla de costes estimados"}]
+    },
+    {
+      "entity_id": "inpyme26-tres-ofertas",
+      "entity_type": "procedural_rule",
+      "section_ref": "Regla de tres ofertas comparativas",
+      "label": "Umbral de tres ofertas comparativas",
+      "value": {"umbral": 15000, "exencion_gasto_antes_resolucion": false, "condiciones_exencion": ""},
+      "evidence_status": "inferred",
+      "review_state": "unvalidated",
+      "confidence": 0.4,
+      "evidence_refs": [],
+      "_gap_reason": "Inferido por defecto del art. 31.3 LGS (umbral general de suministros/servicios), no acreditado con cita literal de INPYME 2026: i40 Analiza no localizó una regla propia de tres ofertas en el corpus analizado para esta convocatoria."
+    },
+    {
+      "entity_id": "inpyme26-doc-certificado-corriente-pago",
+      "entity_type": "documentation",
+      "section_ref": "Documentación general de la solicitud",
+      "label": "Certificado de estar al corriente de obligaciones tributarias y con la Seguridad Social",
+      "value": {"fuente": "cliente", "obligatorio": true},
+      "evidence_status": "accredited",
+      "review_state": "unvalidated",
+      "confidence": 0.55,
+      "evidence_refs": [{"document_id": "inpyme26-guia-solicitud", "quote": "Certificado de estar al corriente de obligaciones tributarias y con la Seguridad Social.", "section": "Documentación a aportar"}],
+      "_nota": "Evidencia del corpus propio de i40 Analiza (incluye la guía del convocante); ConvoKit no carga ese documento en modo Knowledge Pack, solo consume esta entidad ya extraída."
+    }
+  ]
+}

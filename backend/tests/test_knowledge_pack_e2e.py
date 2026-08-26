@@ -17,6 +17,7 @@ from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault("APP_PASSWORD", "")  # no exigir login al importar main
+os.environ.setdefault("ANTHROPIC_API_KEY", "test-key-not-used-network-is-mocked")
 
 import main
 import exporters
@@ -272,6 +273,187 @@ class TestMemorAICompatibility(unittest.TestCase):
         self.assertTrue(convokit_validator.es_json_v2(root))
         errores = convokit_validator.validar(root)
         self.assertEqual(errores, [], f"convokit_validator.validar encontró errores: {errores}")
+
+
+# ---------------------------------------------------------------------------
+# Fases 2/3/4/5 del encargo de formalización (i40 Knowledge Pack mode como
+# vía oficial): red de seguridad determinista sobre scoring_expectation,
+# identidad/readiness en la auditoría, y el entrypoint oficial async.
+# ---------------------------------------------------------------------------
+
+_FAKE_KP_WITH_EXCLUSION = {
+    "pack_id": "kp-fake-excl",
+    "convocatoria_ref": "FAKE-2026",
+    "convocatoria_metadata": {"anio": 2026, "organismo": "Organismo Falso", "tipo_ayuda": "otro"},
+    "entities": [
+        {
+            "entity_id": "apartado-0-exclusion", "entity_type": "exclusion", "section_ref": "0 Vinculación",
+            "label": "Vinculación con el sector",
+            "value": {"scoring_status": "not_scored", "is_exclusionary": True, "requirement_text": "Debe justificarse."},
+            "evidence_status": "accredited", "review_state": "human_validated", "evidence_refs": [],
+        },
+    ],
+}
+
+
+def _fake_claude_dispatcher_hallucinates_score_for_apartado_0(captured_calls):
+    """Como _fake_claude_dispatcher, pero simula un extractor JSON que 'alucina'
+    una puntuación para un apartado que el Knowledge Pack ya declara not_scored
+    — exactamente el escenario que la red de seguridad determinista de
+    main._generate_output_4_kp debe corregir, sin depender de que el modelo
+    real respete la instrucción SCORING_EXPECTATION del prompt."""
+
+    def fake(client, system, user, max_tokens=2000, model=None, _track=None):
+        captured_calls.append({"system": system, "user": user})
+
+        if system == main.p.SECTION_STRUCTURE_EXTRACTOR_PROMPT_KP:
+            return json.dumps({"secciones": [{"codigo": "0", "nombre": "Vinculación"}]})
+
+        if system == main.p.SECTION_PROMPT_SYSTEM_KP:
+            return (
+                "### Sección 0: Vinculación ([criterio excluyente])\n\n"
+                "**Requiere cálculo de rentabilidad:** No\n**Usa tabla de inversiones:** No\n\n"
+                "**QUÉ BUSCA EL EVALUADOR**\nCriterio excluyente, no puntuable.\n\n"
+                "**QUÉ DEBES APORTAR ANTES DE GENERAR**\n\n"
+                "**INSTRUCCIÓN A CLAUDE**\n```\nRedacta el apartado excluyente.\n```"
+            )
+
+        if system == main.p.OUTPUT_4_JSON_EXTRACTOR:
+            # Deliberadamente incorrecto: un extractor real nunca debería hacer
+            # esto, pero el código no puede depender de que nunca ocurra.
+            return json.dumps({
+                "codigo": "0", "nombre": "Vinculación", "puntos_max": 5,
+                "contexto_evaluador": "Criterio excluyente, no puntuable.",
+                "requiere_calculo_rentabilidad": False, "usa_tabla_inversiones": False,
+                "inputs": [], "documentos_requeridos": [], "prompt": "Redacta el apartado excluyente.",
+            })
+
+        if system == main.p.OUTPUT_4_CAMPOS_EMPRESA_CONSOLIDATOR:
+            return json.dumps({"campos_empresa": [], "remapeo": []})
+
+        if system == main.p.OUTPUT_4_CAMPOS_PROYECTO_CONSOLIDATOR:
+            return json.dumps({"campos_proyecto": [], "remapeo_inputs": [], "remapeo_datos_aplicativo": [], "duplicados_datos_aplicativo": []})
+
+        raise AssertionError(f"system prompt inesperado en el test: {system[:60]}...")
+
+    return fake
+
+
+class TestScoringExpectationEnforcement(unittest.TestCase):
+    """Fase 2 — formaliza en código (no solo en el prompt) que el Knowledge
+    Pack manda: un apartado que declara scoring_status='not_scored' nunca
+    termina con puntos_max distinto de None, pase lo que pase en la respuesta
+    del modelo o del extractor JSON."""
+
+    def test_not_scored_section_forces_puntos_max_null_even_if_extractor_hallucinates_points(self):
+        calls = []
+        deliverable_docs = [{"etiqueta": "plantilla_memoria", "texto": "Apartado 0, excluyente.", "nombre_archivo": "p.docx"}]
+        with mock.patch.object(main, "_claude", side_effect=_fake_claude_dispatcher_hallucinates_score_for_apartado_0(calls)):
+            with mock.patch("time.sleep"):
+                _, root, audit = main._generate_output_4_kp(
+                    client=None, conv_name="FAKE 2026",
+                    deliverable_documents_json=deliverable_docs, knowledge_pack_raw=_FAKE_KP_WITH_EXCLUSION,
+                )
+        apartado_0 = next(a for a in root["apartados"] if a["codigo"] == "0")
+        self.assertIsNone(apartado_0["puntos_max"])
+        self.assertEqual(audit["sections"]["0"]["puntos_max_forced_null"], 5)
+
+    def test_scoring_expectation_line_present_in_prompt_sent_to_model(self):
+        calls = []
+        deliverable_docs = [{"etiqueta": "plantilla_memoria", "texto": "Apartado 0.", "nombre_archivo": "p.docx"}]
+        with mock.patch.object(main, "_claude", side_effect=_fake_claude_dispatcher_hallucinates_score_for_apartado_0(calls)):
+            with mock.patch("time.sleep"):
+                main._generate_output_4_kp(
+                    client=None, conv_name="FAKE 2026",
+                    deliverable_documents_json=deliverable_docs, knowledge_pack_raw=_FAKE_KP_WITH_EXCLUSION,
+                )
+        section_calls = [c for c in calls if c["system"] == main.p.SECTION_PROMPT_SYSTEM_KP]
+        self.assertTrue(section_calls)
+        self.assertIn("SCORING_EXPECTATION: not_scored", section_calls[0]["user"])
+
+
+class TestPackIdentityAndReadinessInAudit(unittest.TestCase):
+    """Fases 3/5 — la auditoría interna (nunca enviada a MemorAI) lleva la
+    identidad determinista del pack y su readiness; el .md de trabajo humano
+    lleva un aviso visible cuando el pack es draft."""
+
+    def test_audit_carries_pack_identity_and_readiness_and_markdown_warns_when_draft(self):
+        calls = []
+        deliverable_docs = [{"etiqueta": "plantilla_memoria", "texto": "II.A y II.B.", "nombre_archivo": "p.docx"}]
+        with mock.patch.object(main, "_claude", side_effect=_fake_claude_dispatcher(calls)):
+            with mock.patch("time.sleep"):
+                markdown, root, audit = main._generate_output_4_kp(
+                    client=None, conv_name="FAKE 2026",
+                    deliverable_documents_json=deliverable_docs, knowledge_pack_raw=_FAKE_KP,
+                )
+
+        identity = audit["pack_identity"]
+        self.assertEqual(identity["pack_id"], "kp-fake-1")
+        self.assertEqual(identity["schema_version"], "0.1-synthetic")
+        self.assertEqual(len(identity["pack_hash"]), 64)
+        # _FAKE_KP tiene una entidad 'unvalidated' (iib-sub-secreta) -> draft
+        self.assertEqual(identity["readiness"], "draft")
+        self.assertIn("draft", markdown.lower())
+
+        # nunca se envía a MemorAI: exportar no debe arrastrar pack_identity
+        exported = exporters.export_output_4(json.dumps(root, ensure_ascii=False))
+        self.assertNotIn("pack_identity", json.dumps(exported, ensure_ascii=False))
+
+
+class TestOfficialAsyncEntrypoint(unittest.TestCase):
+    """Fase 4 — entrypoint oficial: main._run_kp_generation_job es exactamente
+    el código que ejecuta POST /convocatorias/{id}/generate/kp/async en un
+    hilo de fondo (mismo patrón que _process_job para el modo documental).
+    Se prueba llamándolo directamente, sin threading real ni sqlite real:
+    se monkeypatchea el módulo main.db completo."""
+
+    def test_job_completes_and_persists_entregables_with_pack_identity(self):
+        calls = []
+        fake_conv = {
+            "nombre": "FAKE 2026",
+            "documentos_json": [{"etiqueta": "plantilla_memoria", "texto": "II.A y II.B.", "nombre_archivo": "p.docx"}],
+            "entregables_json": {main._KP_ENTREGABLE_KEY: json.dumps(_FAKE_KP)},
+        }
+        job_updates = []
+        entregables_saved = {}
+
+        with mock.patch.object(main, "_claude", side_effect=_fake_claude_dispatcher(calls)), \
+             mock.patch.object(main.db, "get_convocatoria", return_value=fake_conv), \
+             mock.patch.object(main.db, "update_job", side_effect=lambda jid, status, progress: job_updates.append((jid, status, progress))), \
+             mock.patch.object(main.db, "update_entregables", side_effect=lambda cid, data: entregables_saved.update(data)), \
+             mock.patch("time.sleep"):
+            main._run_kp_generation_job(job_id=42, convocatoria_id=99, instrucciones="")
+
+        last_job_id, last_status, last_progress = job_updates[-1]
+        self.assertEqual(last_job_id, 42)
+        self.assertEqual(last_status, "completed")
+        outcome = last_progress["outputs"]["4_kp"]
+        self.assertEqual(outcome["status"], "completed")
+        self.assertEqual(outcome["pack_identity"]["pack_id"], "kp-fake-1")
+
+        self.assertIn("4_kp", entregables_saved)
+        self.assertIn("4_kp_json", entregables_saved)
+        self.assertIn("4_kp_audit", entregables_saved)
+        root = json.loads(entregables_saved["4_kp_json"])
+        self.assertEqual(root["version_esquema"], "2.5")
+
+    def test_job_reports_error_status_when_no_pack_uploaded(self):
+        """La misma validación 404/422 del endpoint síncrono se aplica dentro
+        del job: nunca se deja un job colgado en 'running' si la entrada es
+        inválida antes de gastar ninguna llamada a Claude."""
+        fake_conv = {
+            "nombre": "FAKE 2026",
+            "documentos_json": [{"etiqueta": "plantilla_memoria", "texto": "x", "nombre_archivo": "p.docx"}],
+            "entregables_json": {},  # sin pack subido
+        }
+        job_updates = []
+
+        with mock.patch.object(main.db, "get_convocatoria", return_value=fake_conv), \
+             mock.patch.object(main.db, "update_job", side_effect=lambda jid, status, progress: job_updates.append((status, progress))):
+            main._run_kp_generation_job(job_id=1, convocatoria_id=1)
+
+        self.assertEqual(job_updates[-1][0], "error")
+        self.assertIn("Knowledge Pack", job_updates[-1][1]["outputs"]["4_kp"]["error"])
 
 
 if __name__ == "__main__":

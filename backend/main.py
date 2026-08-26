@@ -1247,7 +1247,24 @@ def _generate_output_4_kp(
     criterion" en apartados que el Knowledge Pack no dice si puntúan.
     """
     model = model or pricing.MODEL_PER_OUTPUT[4]
-    pack = kp.parse_knowledge_pack(knowledge_pack_raw)
+    try:
+        pack = kp.parse_knowledge_pack(knowledge_pack_raw)
+    except kp.KnowledgePackError as exc:
+        raise HTTPException(status_code=422, detail=f"Knowledge Pack inválido: {exc}")
+
+    readiness = kp.compute_pack_readiness(pack)
+    pack_identity = {
+        "pack_id": pack.pack_id,
+        "pack_hash": pack.content_hash,
+        "schema_version": pack.schema_version,
+        "convocatoria_ref": pack.convocatoria_ref,
+        "readiness": readiness,
+        "entities_count": len(pack.entities),
+    }
+    print(
+        f"[kp] generación iniciada: pack_id={pack.pack_id} hash={pack.content_hash[:12]} "
+        f"schema_version={pack.schema_version} entidades={len(pack.entities)} readiness={readiness}"
+    )
 
     prohibited = {d.get("etiqueta") for d in deliverable_documents_json} & {
         "bases_reguladoras", "convocatoria", "resolucion_anterior", "guia_convocante",
@@ -1291,10 +1308,24 @@ def _generate_output_4_kp(
         "no de las bases/convocatoria/guía (no cargadas en este modo). El **Perfil Estratégico de "
         "Empresa** (Ruta i40) sigue siendo la fuente principal de datos de empresa.\n\n---"
     )
+    if readiness == "draft":
+        # Fase 3 — el pack no está production_ready (al menos una entidad sin
+        # `review_state="human_validated"`): el consultor que lee este .md no
+        # debe tratar la normativa citada como validada humanamente. El JSON
+        # v2.5 (4_kp_json) no lleva esta advertencia porque el contrato con
+        # MemorAI no se toca; el aviso vive en el documento de trabajo humano
+        # y en la auditoría interna (audit["pack_identity"]["readiness"]).
+        header += (
+            "\n\n> **⚠️ Knowledge Pack en borrador (draft):** al menos un hecho normativo de este "
+            "pack no ha sido validado por un humano en i40 Analiza todavía (`review_state` "
+            "distinto de `human_validated`). El contenido normativo usado aquí puede citarse, "
+            "pero no debe presentarse al cliente como definitivamente validado hasta que el pack "
+            "pase a `production_ready`."
+        )
     markdown_parts = [header]
     apartados: list[dict] = []
     datos_pedidos: list[dict] = []
-    audit: dict = {"knowledge_gaps": [], "sections": {}}
+    audit: dict = {"knowledge_gaps": [], "sections": {}, "pack_identity": pack_identity}
 
     def _registro_block() -> str:
         if not datos_pedidos:
@@ -1333,7 +1364,8 @@ def _generate_output_4_kp(
 
         user_msg = (
             f"Convocatoria: {conv_name}\n"
-            f"Apartado: {seccion['codigo']} — {seccion['nombre']}\n\n"
+            f"Apartado: {seccion['codigo']} — {seccion['nombre']}\n"
+            f"SCORING_EXPECTATION: {scoring_expectation}\n\n"
             f"NORMATIVE_CONTEXT (i40 Knowledge Pack):\n{normative_context}\n\n"
             f"DELIVERABLE_CONTEXT (solo estructura, plantilla/Excel):\n{deliverable_context}"
         )
@@ -1387,6 +1419,19 @@ def _generate_output_4_kp(
             )
 
         parsed_sec["codigo"] = seccion["codigo"]
+
+        # Fase 2 — autoridad del Knowledge Pack, red de seguridad determinista:
+        # no confiar solo en que el modelo respete SCORING_EXPECTATION por
+        # instrucción (mismo motivo que el endurecimiento 1 de
+        # sanitize_deliverable_context: cumplimiento "en espíritu" ya falló una
+        # vez en la ejecución real). Si el pack ya afirma que el apartado no
+        # puntúa, ninguna cifra que el extractor JSON haya podido copiar de
+        # DELIVERABLE_CONTEXT o alucinar sobrevive al objeto final.
+        if scoring_expectation == "not_scored":
+            original_puntos_max = parsed_sec.get("puntos_max")
+            if original_puntos_max not in (None, 0):
+                prov_dict["puntos_max_forced_null"] = original_puntos_max
+            parsed_sec["puntos_max"] = None
 
         if not (parsed_sec.get("contexto_evaluador") or "").strip():
             ev_match = _KP_EVIDENCE_HEADER_RE.search(raw_section or "")
@@ -1473,6 +1518,11 @@ def _generate_output_4_kp(
         "documentos_convocatoria": documentos_convocatoria,
         "datos_aplicativo": datos_aplicativo,
     }
+
+    print(
+        f"[kp] generación completada: pack_id={pack.pack_id} hash={pack.content_hash[:12]} "
+        f"apartados={len(apartados)} knowledge_gaps={len(audit['knowledge_gaps'])} readiness={readiness}"
+    )
 
     return markdown, root, audit
 
@@ -2406,10 +2456,20 @@ async def upload_knowledge_pack(
 
     db.update_entregables(convocatoria_id, {_KP_ENTREGABLE_KEY: json.dumps(raw, ensure_ascii=False)})
 
+    readiness = kp.compute_pack_readiness(pack)
+    print(
+        f"[kp] pack subido: convocatoria_id={convocatoria_id} pack_id={pack.pack_id} "
+        f"hash={pack.content_hash[:12]} schema_version={pack.schema_version} "
+        f"entidades={len(pack.entities)} readiness={readiness}"
+    )
+
     return {
         "convocatoria_id": convocatoria_id,
         "pack_id": pack.pack_id,
+        "pack_hash": pack.content_hash,
+        "schema_version": pack.schema_version,
         "convocatoria_ref": pack.convocatoria_ref,
+        "readiness": readiness,
         "entities_count": len(pack.entities),
         "entities_by_type": {
             t: len(pack.by_type(t)) for t in sorted(kp.ENTITY_TYPES) if pack.by_type(t)
@@ -2425,10 +2485,14 @@ class GenerateKPRequest(BaseModel):
     instrucciones_adicionales: str = ""
 
 
-@app.post("/convocatorias/{convocatoria_id}/generate/kp")
-def generate_output_4_kp_endpoint(convocatoria_id: int, body: GenerateKPRequest):
-    """Genera la salida 4 en modo Knowledge Pack (síncrono: pensado para el
-    caso de prueba instrumentado, no para el volumen del modo tradicional)."""
+def _load_kp_generation_inputs(convocatoria_id: int) -> tuple[dict, list, dict]:
+    """Validaciones compartidas por las dos vías de entrada del modo Knowledge
+    Pack (síncrona y async, fase 4): convocatoria existe, tiene un pack subido,
+    tiene al menos un entregable a cumplimentar. Devuelve (conv, deliverable_docs,
+    raw_pack_dict) o lanza HTTPException — se centraliza aquí para que un
+    desarrollador futuro tenga UN solo sitio que tocar si cambian las reglas de
+    entrada, en vez de mantenerlas duplicadas entre el endpoint síncrono y el job
+    de background."""
     conv = db.get_convocatoria(convocatoria_id)
     if conv is None:
         raise HTTPException(status_code=404, detail="Convocatoria no encontrada.")
@@ -2452,11 +2516,25 @@ def generate_output_4_kp_endpoint(convocatoria_id: int, body: GenerateKPRequest)
                    "o un entregable ('anexo') antes de generar en modo Knowledge Pack.",
         )
 
+    return conv, deliverable_docs, json.loads(raw_pack)
+
+
+@app.post("/convocatorias/{convocatoria_id}/generate/kp")
+def generate_output_4_kp_endpoint(convocatoria_id: int, body: GenerateKPRequest):
+    """Genera la salida 4 en modo Knowledge Pack de forma síncrona: pensado para
+    el caso de prueba instrumentado (convocatorias pequeñas, ejecución vigilada),
+    no como entrypoint de uso habitual — una convocatoria real puede tardar
+    ~15-20 min (ver analysis/i40-knowledge-pack-mode/.../00_MANIFEST.md), tiempo
+    que bloquearía la conexión HTTP y no sobrevive a un reinicio del proceso.
+    El entrypoint oficial para uso habitual es
+    POST /convocatorias/{id}/generate/kp/async + GET /jobs/{job_id}."""
+    conv, deliverable_docs, raw_pack = _load_kp_generation_inputs(convocatoria_id)
+
     client = _get_anthropic_client()
     track = _make_tracker(convocatoria_id, "4_kp")
 
     markdown, root, audit = _generate_output_4_kp(
-        client, conv["nombre"], deliverable_docs, json.loads(raw_pack),
+        client, conv["nombre"], deliverable_docs, raw_pack,
         instrucciones=body.instrucciones_adicionales, _track=track,
     )
 
@@ -2470,7 +2548,84 @@ def generate_output_4_kp_endpoint(convocatoria_id: int, body: GenerateKPRequest)
         "convocatoria_id": convocatoria_id,
         "apartados_generados": len(root["apartados"]),
         "knowledge_gaps_count": len(audit["knowledge_gaps"]),
+        "pack_identity": audit["pack_identity"],
     }
+
+
+# ---------------------------------------------------------------------------
+# Entrypoint oficial (fase 4): generación async con seguimiento de progreso,
+# mismo patrón que /generate/async + /jobs/{job_id} del modo documental. Un
+# desarrollador que reciba un Knowledge Pack nuevo mañana no necesita
+# reconstruir manualmente la llamada a _generate_output_4_kp (como sí hizo
+# falta para el caso de prueba real, ver 00_DELIVERY_REPORT.md sección 9,
+# "operativa"): sube el pack, sube los entregables, llama a este endpoint y
+# sondea /jobs/{job_id} hasta 'completed'/'error'.
+# ---------------------------------------------------------------------------
+
+def _run_kp_generation_job(job_id: int, convocatoria_id: int, instrucciones: str = "") -> None:
+    """Hilo de fondo del entrypoint oficial. Mismo patrón que _process_job:
+    progreso y resultado parcial persistidos en SQLite conforme avanza, para
+    que la generación sobreviva a que se cierre el navegador o se reinicie
+    uvicorn --reload a mitad (la razón operativa por la que el caso de prueba
+    real se ejecutó con un script directo en vez de por HTTP)."""
+    progress = {"outputs": {"4_kp": {"status": "running"}}}
+    db.update_job(job_id, "running", progress)
+
+    def progress_cb(actual: int, total: int) -> None:
+        progress["outputs"]["4_kp"] = {"status": "running", "actual": actual, "total": total}
+        db.update_job(job_id, "running", progress)
+
+    try:
+        conv, deliverable_docs, raw_pack = _load_kp_generation_inputs(convocatoria_id)
+
+        client = _get_anthropic_client()
+        track = _make_tracker(convocatoria_id, "4_kp")
+
+        markdown, root, audit = _generate_output_4_kp(
+            client, conv["nombre"], deliverable_docs, raw_pack,
+            instrucciones=instrucciones, _track=track, _progress_cb=progress_cb,
+        )
+
+        db.update_entregables(convocatoria_id, {
+            "4_kp": markdown,
+            "4_kp_json": json.dumps(root, ensure_ascii=False),
+            "4_kp_audit": json.dumps(audit, ensure_ascii=False),
+        })
+
+        progress["outputs"]["4_kp"] = {
+            "status": "completed",
+            "apartados_generados": len(root["apartados"]),
+            "knowledge_gaps_count": len(audit["knowledge_gaps"]),
+            "pack_identity": audit["pack_identity"],
+        }
+        db.update_job(job_id, "completed", progress)
+
+    except HTTPException as exc:
+        progress["outputs"]["4_kp"] = {"status": "error", "error": exc.detail}
+        db.update_job(job_id, "error", progress)
+    except Exception as exc:
+        progress["outputs"]["4_kp"] = {"status": "error", "error": str(exc)}
+        db.update_job(job_id, "error", progress)
+
+
+@app.post("/convocatorias/{convocatoria_id}/generate/kp/async", status_code=202)
+def generate_output_4_kp_async(convocatoria_id: int, body: GenerateKPRequest):
+    """Entrypoint oficial del modo Knowledge Pack. Valida la entrada de forma
+    síncrona (404/422 inmediatos si falta el pack o los entregables) y lanza la
+    generación real en un hilo de fondo, igual que /generate/async. Consultar
+    progreso y resultado en GET /jobs/{job_id}; la auditoría completa de
+    procedencia sigue en GET /convocatorias/{id}/audit/4-kp una vez 'completed'."""
+    _load_kp_generation_inputs(convocatoria_id)  # valida antes de crear el job
+
+    job_id = db.create_job(convocatoria_id, [{"output_type": "4_kp"}])
+    thread = threading.Thread(
+        target=_run_kp_generation_job,
+        args=(job_id, convocatoria_id, body.instrucciones_adicionales),
+        daemon=True,
+    )
+    thread.start()
+
+    return {"job_id": job_id}
 
 
 @app.get("/convocatorias/{convocatoria_id}/json/4-kp")

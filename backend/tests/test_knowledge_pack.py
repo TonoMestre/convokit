@@ -9,6 +9,7 @@ Ejecutar: python -m unittest backend.tests.test_knowledge_pack -v
 (desde la raíz del repo, o `python -m unittest discover -s backend/tests`)
 """
 import copy
+import json
 import os
 import re
 import sys
@@ -1042,6 +1043,155 @@ class TestNotScoredSignal(unittest.TestCase):
                 self.assertEqual(gap_kinds, [])
                 expected = "not_scored" if codigo == "0" else "scored"
                 self.assertEqual(scoring_expectation, expected)
+
+
+# ---------------------------------------------------------------------------
+# Fases 2/3/5/7 del encargo de formalización (i40 Knowledge Pack mode como
+# vía oficial): autoridad de fuentes, readiness, identidad del pack y
+# boundary de compatibilidad de versión.
+# ---------------------------------------------------------------------------
+
+
+class TestPackHash(unittest.TestCase):
+    """Fase 5 — identidad determinista del pack (hash de contenido)."""
+
+    def test_same_content_same_hash_regardless_of_key_order(self):
+        raw_a = _pack([_entity()])
+        raw_b = {"convocatoria_ref": raw_a["convocatoria_ref"], "entities": raw_a["entities"], "pack_id": raw_a["pack_id"]}
+        self.assertEqual(kp.compute_pack_hash(raw_a), kp.compute_pack_hash(raw_b))
+
+    def test_different_content_different_hash(self):
+        raw_a = _pack([_entity()])
+        raw_b = _pack([_entity(value={"puntos_max": 999})])
+        self.assertNotEqual(kp.compute_pack_hash(raw_a), kp.compute_pack_hash(raw_b))
+
+    def test_parse_knowledge_pack_sets_content_hash(self):
+        raw = _pack([_entity()])
+        pack = kp.parse_knowledge_pack(raw)
+        self.assertEqual(pack.content_hash, kp.compute_pack_hash(raw))
+        self.assertEqual(len(pack.content_hash), 64)  # sha256 hex digest
+
+
+class TestPackReadiness(unittest.TestCase):
+    """Fase 3 — draft vs. production_ready, derivado exclusivamente del
+    `review_state` que YA envía i40 Analiza por entidad (ningún campo nuevo)."""
+
+    def test_all_human_validated_is_production_ready(self):
+        pack = kp.parse_knowledge_pack(_pack([
+            _entity(entity_id="a", review_state="human_validated"),
+            _entity(entity_id="b", review_state="human_validated"),
+        ]))
+        self.assertEqual(kp.compute_pack_readiness(pack), "production_ready")
+
+    def test_any_unvalidated_entity_makes_the_whole_pack_draft(self):
+        """Interpretación conservadora deliberada (documentada en el módulo):
+        ámbito TODO el pack, no solo las entidades relevantes para algún
+        apartado — una sola entidad sin validar basta para 'draft'."""
+        pack = kp.parse_knowledge_pack(_pack([
+            _entity(entity_id="a", review_state="human_validated"),
+            _entity(entity_id="b", review_state="unvalidated"),
+        ]))
+        self.assertEqual(kp.compute_pack_readiness(pack), "draft")
+
+    def test_all_unvalidated_is_draft(self):
+        pack = kp.parse_knowledge_pack(_pack([_entity(review_state="unvalidated")]))
+        self.assertEqual(kp.compute_pack_readiness(pack), "draft")
+
+
+class TestSchemaVersionCompatibility(unittest.TestCase):
+    """Fase 7 — boundary de versión. No se acepta a ciegas cualquier
+    schema_version solo porque el JSON es sintácticamente válido."""
+
+    def test_synthetic_default_is_compatible(self):
+        pack = kp.parse_knowledge_pack(_pack([_entity()]))
+        self.assertEqual(pack.schema_version, "0.1-synthetic")
+
+    def test_real_i40_family_0x_is_compatible(self):
+        raw = _pack([_entity()])
+        raw["schema_version"] = "i40-application-knowledge-pack/0.1"
+        pack = kp.parse_knowledge_pack(raw)
+        self.assertEqual(pack.schema_version, "i40-application-knowledge-pack/0.1")
+
+    def test_unrecognized_major_version_is_rejected(self):
+        raw = _pack([_entity()])
+        raw["schema_version"] = "i40-application-knowledge-pack/2.0"
+        with self.assertRaises(kp.KnowledgePackError):
+            kp.parse_knowledge_pack(raw)
+
+    def test_completely_unknown_schema_version_is_rejected(self):
+        raw = _pack([_entity()])
+        raw["schema_version"] = "not-a-real-schema"
+        with self.assertRaises(kp.KnowledgePackError):
+            kp.parse_knowledge_pack(raw)
+
+
+class TestForwardCompatibleOptionalFields(unittest.TestCase):
+    """Fase 7 — un campo opcional NUEVO y desconocido en una entidad (algo que
+    una versión futura del pack podría añadir de forma aditiva) no debe romper
+    el parseo: _parse_entity solo lee campos conocidos vía dict.get, así que
+    cualquier clave extra ya es ignorada de forma segura hoy. Se deja como
+    test explícito para que un cambio futuro que empiece a validar el pack
+    con un esquema estricto (p.ej. jsonschema additionalProperties=False) no
+    rompa esto sin que salte una prueba."""
+
+    def test_unknown_optional_entity_field_ignored_safely(self):
+        raw = _pack([_entity(future_field_no_reconocido={"algo": "nuevo"})])
+        pack = kp.parse_knowledge_pack(raw)
+        self.assertEqual(len(pack.entities), 1)
+
+    def test_unknown_optional_pack_level_field_ignored_safely(self):
+        raw = _pack([_entity()])
+        raw["future_pack_field"] = "algo que ConvoKit todavía no conoce"
+        pack = kp.parse_knowledge_pack(raw)
+        self.assertEqual(pack.pack_id, "kp-test")
+
+
+class TestNormativeContextStructuredRuleFormatting(unittest.TestCase):
+    """Fase 2 — autoridad del Knowledge Pack: un rule_payload estructurado
+    (bands/rule_type, forma real de to_convokit_pack — ver value.rule en
+    02_inpyme2026_convokit_pack_real.json) debe llegar íntegro y sin
+    ambigüedad al bloque NORMATIVE_CONTEXT, en vez de la representación
+    Python (comillas simples, 'None' en vez de 'null') que producía str()."""
+
+    def test_structured_rule_payload_survives_verbatim_as_json(self):
+        rule_payload = {
+            "puntos_max": 3.0,
+            "rule": {
+                "unit": "years", "rule_type": "score_by_bands", "metric": "years_experience",
+                "bands": [{"label": "menos de 5 años", "score": 0.0}, {"label": "más de 10 años", "score": 3.0}],
+            },
+        }
+        pack = kp.parse_knowledge_pack(_pack([
+            _entity(section_ref="III.B", label="Experiencia en la actividad proyectada", value=rule_payload),
+        ]))
+        match = kp.match_section_to_knowledge("III.B", "Experiencia en la actividad proyectada", pack)
+        ctx = kp.format_normative_context(match)
+        self.assertIn(json.dumps(rule_payload, ensure_ascii=False), ctx)
+        # ninguna representación Python cruda (comillas simples de dict) se cuela
+        self.assertNotIn("'puntos_max'", ctx)
+
+
+class TestSourceOfAuthorityOverAmbiguousDeliverableText(unittest.TestCase):
+    """Fase 2 — el Knowledge Pack manda sobre un texto documental ambiguo o
+    contradictorio, formalizado en dos capas independientes: (1) el valor del
+    Knowledge Pack llega íntegro a NORMATIVE_CONTEXT: (2) sanitize_deliverable_context
+    (endurecimiento 1) impide que la cifra ambigua/discrepante de la plantilla
+    llegue siquiera mencionada desde DELIVERABLE_CONTEXT."""
+
+    def test_kp_score_max_survives_while_ambiguous_deliverable_text_is_stripped(self):
+        # II.C dice 40 puntos en el Knowledge Pack; la plantilla (ambigua/desactualizada)
+        # sugiere "máximo 35 puntos" para el mismo apartado — nunca debe llegar al modelo.
+        pack = kp.parse_knowledge_pack(_pack([
+            _entity(section_ref="II.C", label="Impacto y sostenibilidad", value={"puntos_max": 40}),
+        ]))
+        match = kp.match_section_to_knowledge("II.C", "Impacto y sostenibilidad", pack)
+        ctx = kp.format_normative_context(match)
+        self.assertIn('"puntos_max": 40', ctx)
+
+        deliverable_text = "II.C Impacto y sostenibilidad (máximo 35 puntos)"
+        sanitized, hits = kp.sanitize_deliverable_context(deliverable_text)
+        self.assertNotIn("35 puntos", sanitized)
+        self.assertTrue(hits)
 
 
 if __name__ == "__main__":

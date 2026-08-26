@@ -31,6 +31,8 @@ mismo `exporters.export_output_4` sin modificarlo.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 import unicodedata
 from dataclasses import dataclass, field
@@ -74,6 +76,58 @@ EntityType = Literal[
 
 class KnowledgePackError(ValueError):
     """JSON de entrada que no es un Knowledge Pack válido o utilizable."""
+
+
+# ---------------------------------------------------------------------------
+# Fase 7 — boundary de versión/compatibilidad
+# ---------------------------------------------------------------------------
+#
+# Nunca se construye un sistema de plugins ni un registro de versiones
+# soportadas por entity_type: el vocabulario cerrado (ENTITY_TYPES,
+# EVIDENCE_STATUS_VALUES) ya es ese endurecimiento para el contenido de cada
+# entidad, y un entity_type/evidence_status fuera de vocabulario ya aborta
+# todo el parseo (fail-closed) en vez de aceptarlo en silencio o descartar
+# solo esa entidad — decisión deliberada: una entidad de un tipo que ConvoKit
+# no reconoce podría ser normativamente crítica (una nueva forma de
+# exclusión, por ejemplo) y "ignorarla de forma seguro" arriesgaría perder un
+# hecho normativo sin que nadie se entere, que es justo lo que este módulo
+# existe para evitar. Lo que SÍ falta antes de este endurecimiento es un
+# boundary sobre `schema_version`: hoy _parse_entity/parse_knowledge_pack
+# acepta cualquier cadena sin comprobarla. Un campo opcional nuevo en una
+# entidad (algo que el resto del parser ya ignora de forma segura vía
+# `dict.get`, ver test_unknown_optional_entity_field_ignored_safely) es
+# compatible por construcción; un cambio de versión MAYOR del esquema (que sí
+# podría reordenar o resignificar campos existentes) no debe aceptarse a
+# ciegas solo porque el JSON sigue siendo sintácticamente válido.
+_COMPATIBLE_SCHEMA_VERSION_PREFIXES = (
+    "0.1-synthetic",              # fixture interno de ConvoKit (tests, ejemplos)
+    "i40-application-knowledge-pack/0.",  # familia real de i40 Analiza, cualquier 0.x
+)
+
+
+def _check_schema_version_compatible(schema_version: str) -> None:
+    if any(schema_version.startswith(prefix) for prefix in _COMPATIBLE_SCHEMA_VERSION_PREFIXES):
+        return
+    raise KnowledgePackError(
+        f"schema_version '{schema_version}' no está en la lista de versiones compatibles "
+        f"{_COMPATIBLE_SCHEMA_VERSION_PREFIXES}. Un cambio de versión mayor del Knowledge Pack "
+        "puede resignificar campos existentes; se rechaza explícitamente en vez de interpretarlo "
+        "con las reglas de una versión distinta."
+    )
+
+
+def compute_pack_hash(raw: dict) -> str:
+    """
+    SHA-256 determinista del JSON canónico de entrada (fase 5 — identidad del
+    pack). Mismo pack (mismo contenido, con independencia del orden de claves
+    en el JSON original) -> mismo hash siempre; cualquier cambio de contenido
+    -> hash distinto. Se calcula sobre el `raw` tal cual llega (antes de
+    perder ningún campo al construir NormativeEntity), para que sea
+    reproducible por quien emitió el pack sin depender de ningún detalle de
+    ConvoKit.
+    """
+    canonical = json.dumps(raw, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 # ---------------------------------------------------------------------------
@@ -136,6 +190,12 @@ class KnowledgePack:
     # convocatoria; en modo Knowledge Pack, si el pack no los trae, quedan
     # como valor de escape (nunca se infieren de la plantilla).
     convocatoria_metadata: dict = field(default_factory=dict)
+    # Identidad determinista del contenido exacto recibido (fase 5): SHA-256
+    # del JSON canónico de entrada, calculado por parse_knowledge_pack. Vive
+    # aquí (no solo como valor de retorno separado) para que cualquier código
+    # que ya tenga un KnowledgePack en la mano pueda responder "qué pack
+    # exacto es este" sin tener que conservar el dict crudo por separado.
+    content_hash: str = ""
 
     def by_type(self, entity_type: EntityType) -> list[NormativeEntity]:
         return [e for e in self.entities if e.entity_type == entity_type]
@@ -231,6 +291,9 @@ def parse_knowledge_pack(raw: dict) -> KnowledgePack:
     if not isinstance(entities_raw, list) or not entities_raw:
         raise KnowledgePackError("'entities' debe ser un array no vacío.")
 
+    schema_version = str(raw.get("schema_version") or "0.1-synthetic")
+    _check_schema_version_compatible(schema_version)
+
     entities = [_parse_entity(e, i) for i, e in enumerate(entities_raw)]
 
     ids = [e.entity_id for e in entities]
@@ -242,8 +305,9 @@ def parse_knowledge_pack(raw: dict) -> KnowledgePack:
         pack_id=str(raw["pack_id"]),
         convocatoria_ref=str(raw["convocatoria_ref"]),
         entities=entities,
-        schema_version=str(raw.get("schema_version") or "0.1-synthetic"),
+        schema_version=schema_version,
         convocatoria_metadata=dict(raw.get("convocatoria_metadata") or {}),
+        content_hash=compute_pack_hash(raw),
     )
 
 
@@ -414,6 +478,33 @@ def compute_scoring_expectation(section_match: SectionMatch) -> ScoringExpectati
         return "not_scored"
 
     return "unknown"
+
+
+# ---------------------------------------------------------------------------
+# Fase 3 — readiness del pack (draft vs. production_ready)
+# ---------------------------------------------------------------------------
+#
+# No se inventa ningún campo de contrato nuevo: i40 Analiza ya envía
+# `review_state` por entidad (human_validated | unvalidated, ver
+# EntityType/REVIEW_STATES arriba). Esta función solo agrega una señal que
+# YA existe en el pack para responder, a nivel de todo el pack, la pregunta
+# de producto de i40 Analiza ("¿puede tratarse como conocimiento normativo
+# validado?"): decisión deliberadamente conservadora, ámbito TODO el pack,
+# no solo las entidades que acaben siendo relevantes para algún apartado
+# (eso ya existe con más grano vía SectionProvenance.unvalidated_knowledge_used
+# / usable_entities, por sección). Un pack con una sola entidad sin validar
+# es "draft" aunque esa entidad concreta no llegue a usarse en ningún
+# apartado: es la lectura más segura mientras no haya una señal de i40 que
+# distinga "relevante" de "irrelevante" dentro del propio pack.
+PackReadiness = Literal["draft", "production_ready"]
+
+
+def compute_pack_readiness(pack: KnowledgePack) -> PackReadiness:
+    if not pack.entities:
+        return "draft"
+    if all(e.review_state == "human_validated" for e in pack.entities):
+        return "production_ready"
+    return "draft"
 
 
 def match_section_to_knowledge(codigo: str, nombre: str, pack: KnowledgePack) -> SectionMatch:
@@ -606,7 +697,14 @@ def format_normative_context(section_match: SectionMatch) -> str:
     lines = []
     for entity in usable:
         tag = "" if entity.review_state == "human_validated" else " [PENDIENTE DE VALIDACIÓN HUMANA]"
-        lines.append(f"- ({entity.entity_type}) {entity.label}: {entity.value}{tag}")
+        # json.dumps, no str()/f-string del objeto Python: un valor estructurado
+        # (p.ej. value={"puntos_max": 4, "rule": {...bands...}} — el rule_payload
+        # real de i40, ver knowledge_pack.py módulo docstring) debe llegar al
+        # prompt sin ambigüedad de comillas simples ni "None" en vez de "null",
+        # para que la regla estructurada (fase 2 — autoridad del Knowledge Pack)
+        # se lea igual de literal que la recibió ConvoKit.
+        value_text = json.dumps(entity.value, ensure_ascii=False)
+        lines.append(f"- ({entity.entity_type}) {entity.label}: {value_text}{tag}")
     return "\n".join(lines)
 
 

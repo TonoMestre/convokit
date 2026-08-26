@@ -767,21 +767,117 @@ modificar. Detalle completo, decisiones y limitaciones en
   ("de X a Y puntos").
 - **Endurecimiento 2 — `scoring_expectation` en tres estados** (`kp.compute_scoring_expectation`,
   sustituye al `expects_scoring: bool` anterior, que siempre pasaba `True`): si un
-  apartado puntúa se deriva EXCLUSIVAMENTE de las entidades `criterion` ya emparejadas
-  del Knowledge Pack, nunca de la plantilla. `"scored"` si hay una entidad `criterion`
-  usable con valor; `"unknown"` en cualquier otro caso (sin `criterion` emparejado, solo
-  en conflicto/missing, o solo con `evidence_status: "not_applicable"`) — nunca se asume
-  `scored` por defecto. `"not_scored"` queda **reservado en el tipo pero nunca se produce
-  todavía**: la primera versión lo derivaba de `evidence_status: "not_applicable"`, pero
-  ese valor significa "este hecho concreto no procede en este caso" (vocabulario real de
-  i40 Analiza, `contracts/evidence-status.schema.json` + `docs/14_NOMENCLATURA_GLOSARIO.md`:
-  "el criterio no procede... y su peso se redistribuye dentro del bloque"), no "este
-  apartado carece de puntuación" — un apartado puntuable puede tener un subcriterio
-  `not_applicable` sin dejar de puntuar. Sin una señal explícita e inequívoca de "este
-  apartado no puntúa" en el modelo interno actual, se prefiere `unknown` a una inferencia
-  semánticamente incorrecta. `compute_knowledge_gaps` ya no exige un `criterion` cuando el
-  estado es `"not_scored"` o `"unknown"`; en `"unknown"` registra en su lugar un gap
-  explícito `scoring_status_unknown` en vez de un `missing_entity_type` falso.
+  apartado puntúa se deriva EXCLUSIVAMENTE de las entidades `criterion`/`exclusion` ya
+  emparejadas del Knowledge Pack, nunca de la plantilla. `"scored"` si hay una entidad
+  `criterion` usable con valor. `"not_scored"` si NO hay `criterion` usable pero SÍ una
+  entidad `exclusion` usable cuyo `value.scoring_status == "not_scored"` — forma real que
+  emite el adaptador de i40 `to_convokit_pack` para un apartado excluyente no puntuable
+  (caso real confirmado, apartado 0 de INPYME 2026: `value = {"scoring_status":
+  "not_scored", "is_exclusionary": true, "requirement_text": "..."}`). Nunca se deriva de
+  `evidence_status: "not_applicable"` (ese valor significa "este hecho concreto no procede
+  en este caso", no "el apartado no puntúa": ver `docs/14_NOMENCLATURA_GLOSARIO.md`).
+  `"unknown"` en cualquier otro caso (sin `criterion` ni `exclusion` con esa señal,
+  señales en conflicto o discrepantes entre sí, o solo entidades missing/`not_applicable`)
+  — nunca se asume `scored` por defecto. `compute_knowledge_gaps` no exige `criterion`
+  cuando el estado es `"not_scored"` o `"unknown"`; en `"unknown"` registra en su lugar un
+  gap explícito `scoring_status_unknown`.
+- **Red de seguridad determinista sobre `not_scored`** (`_generate_output_4_kp`, main.py):
+  no basta con que `SECTION_PROMPT_SYSTEM_KP` reciba una línea `SCORING_EXPECTATION:
+  not_scored` y se le prohíba asignar puntos — ya ocurrió una vez que un cumplimiento "en
+  espíritu" del prompt no fue literal (ver endurecimiento 1 más abajo). Por eso, cuando
+  `scoring_expectation == "not_scored"`, el código fuerza `puntos_max = None` en el
+  apartado final PASE LO QUE PASE en la respuesta del modelo o del extractor JSON; si el
+  valor original no era ya `None`/`0`, queda registrado en
+  `audit["sections"][cod]["puntos_max_forced_null"]` (interno, nunca a MemorAI).
+
+### Vía oficial: entrypoint, autoridad de fuentes, readiness, identidad y compatibilidad
+
+Formalización posterior a la primera entrega y a `REAL CONVOKIT KNOWLEDGE PACK PASS`
+(pase E2E real con Knowledge Pack nativo de i40 sobre INPYME 2026, documentado en
+`analysis/i40-knowledge-pack-mode/real-application-knowledge-pass-2026-08-26/00_MANIFEST.md`,
+no repetido aquí: no gasta IA de nuevo). Objetivo: que un desarrollador que reciba mañana
+un Knowledge Pack nuevo pueda generar por un entrypoint oficial sin reconstruir a mano el
+flujo usado en esa prueba (guion ad-hoc fuera del repo, coste no registrado en `api_calls`
+— limitación operativa ya documentada en `00_DELIVERY_REPORT.md`, sección 9).
+
+- **Entrypoint oficial — asíncrono**: `POST /convocatorias/{id}/generate/kp/async` crea un
+  job en `generation_jobs` (misma tabla y mismo patrón que `POST .../generate/async` del
+  modo documental) y ejecuta `_generate_output_4_kp` en un hilo de fondo
+  (`_run_kp_generation_job`); progreso y resultado se consultan con el `GET /jobs/{job_id}`
+  ya existente. Sustituye a `POST .../generate/kp` (síncrono) como vía de uso habitual: una
+  convocatoria real tarda ~15-20 min, tiempo que bloquearía la conexión HTTP y no sobrevive
+  a un reinicio de `uvicorn --reload` — la razón por la que la prueba real se ejecutó con un
+  script directo en vez de por HTTP. El endpoint síncrono se mantiene para el caso de
+  prueba instrumentado (convocatorias pequeñas, ejecución vigilada paso a paso), no se
+  elimina. Ambas vías comparten la validación de entrada (`_load_kp_generation_inputs`):
+  pack subido, al menos un entregable (`plantilla_memoria`/`anexo`) cargado.
+- **Identidad determinista del pack (fase 5)** (`kp.compute_pack_hash`,
+  `KnowledgePack.content_hash`): SHA-256 del JSON canónico de entrada, calculado en
+  `parse_knowledge_pack`. Aparece en la respuesta de `POST .../knowledge-pack` (subida), en
+  la respuesta de los dos entrypoints de generación, y en `audit["pack_identity"]` (dentro
+  de `4_kp_audit`) junto a `pack_id`, `schema_version`, `convocatoria_ref`, `readiness` y
+  `entities_count`. Nunca se envía a MemorAI (no toca `exporters.export_output_4`); permite
+  responder "qué versión exacta del conocimiento normativo generó esta memoria" sin releer
+  nada. Logs estructurados (`print("[kp] ...")`, mismo estilo que el resto de main.py, que
+  no usa un framework de logging) marcan inicio y fin de cada generación con pack_id/hash/
+  schema_version/entidades/readiness — nunca contenido normativo ni evidencia completa.
+- **Readiness: draft vs. production_ready (fase 3)** (`kp.compute_pack_readiness`): NO es
+  un campo nuevo del contrato i40↔ConvoKit — se deriva del `review_state` que i40 Analiza
+  YA envía por entidad (`human_validated | unvalidated`). `"production_ready"` solo si
+  TODAS las entidades del pack son `human_validated`; en cualquier otro caso, `"draft"`
+  (interpretación deliberadamente conservadora y de ámbito TODO el pack, no solo las
+  entidades relevantes para algún apartado concreto — esa granularidad más fina ya existe
+  por sección vía `SectionProvenance.unvalidated_knowledge_used`). Si el pack es `draft`,
+  el `.md` de trabajo (`4_kp`) lleva un aviso visible al principio para el consultor; el
+  JSON v2.5 (`4_kp_json`) NO lo lleva (el contrato con MemorAI no se toca). Si en el futuro
+  i40 Analiza envía una señal de readiness explícita a nivel de pack (no solo por entidad),
+  es un cambio de contrato que hay que evaluar entonces — hoy no existe, así que no se
+  inventa.
+- **Boundary de compatibilidad de versión (fase 7)** (`kp._check_schema_version_compatible`,
+  llamado desde `parse_knowledge_pack`): un `schema_version` fuera de las familias conocidas
+  (`0.1-synthetic`, `i40-application-knowledge-pack/0.x`) se rechaza con `KnowledgePackError`
+  (422 en los endpoints) en vez de interpretarse a ciegas con las reglas de esta versión. Un
+  campo nuevo y desconocido en una entidad o en el pack (algo que una versión futura podría
+  añadir de forma aditiva) NO rompe el parseo hoy — `_parse_entity`/`parse_knowledge_pack`
+  solo leen campos conocidos vía `dict.get`, así que cualquier clave extra ya se ignora de
+  forma segura (verificado en `test_knowledge_pack.py::TestForwardCompatibleOptionalFields`).
+  Deliberadamente NO se construye un sistema de plugins ni un registro de "tipos de entidad
+  ignorables": un `entity_type`/`evidence_status` fuera del vocabulario cerrado sigue
+  abortando todo el parseo (fail-closed), porque una entidad de un tipo no reconocido podría
+  ser normativamente crítica y "ignorarla de forma segura" arriesgaría perder un hecho
+  normativo en silencio — justo lo que este módulo existe para evitar.
+- **Gaps y fallbacks conocidos, clasificados** (ninguno nuevo introducido por esta
+  formalización; clasificación explícita para que un futuro cambio sepa cuál es cuál):
+  - *Fallback seguro* (no pierde información, solo declara ausencia): `puntos_max: null`
+    cuando `scoring_expectation != "scored"`; `tres_ofertas` con sus valores de escape
+    (`umbral: null`, etc.) cuando no hay entidad utilizable — siempre acompañado de un
+    `knowledge_gap` explícito.
+  - *Fallback que pierde información pero la declara*: `convocatoria.tipo_ayuda: "otro"`
+    cuando el pack no trae `convocatoria_metadata.tipo_ayuda` — vocabulario cerrado válido,
+    pero degrada el registro de redacción en MemorAI (no bloquea nada crítico); queda
+    registrado como gap. Igual para `anio`/`organismo` ausentes.
+  - *Gap conocido sin resolver, fuera de alcance de ConvoKit* (documentado en
+    `analysis/i40-knowledge-pack-mode/real-application-knowledge-pass-2026-08-26/01_GAPS_ANALYSIS.md`):
+    `tres_ofertas` para INPYME 2026 remite a la legislación de contratación pública, no a
+    una cifra literal — Application Knowledge (i40) hoy solo modela baremo
+    (`evaluation_block/criterion/subcriterion`), no reglas procedimentales de este tipo; el
+    cambio mínimo requiere ampliar el catálogo de Application Knowledge en i40, no algo que
+    ConvoKit pueda resolver leyendo el pack de otra forma.
+  - No hay ningún fallback catalogado como "silencioso peligroso" (que convierta una
+    ausencia normativa en una afirmación positiva inventada) a día de esta formalización;
+    si aparece uno en una convocatoria futura, se corrige igual que se hizo con el
+    endurecimiento 1 (sanitización de `DELIVERABLE_CONTEXT`).
+- **Hardcodes/deuda real restante**: ninguno de INPYME en la lógica productiva de
+  `knowledge_pack.py`/`_generate_output_4_kp` (la tabla de 18 apartados/puntos de INPYME
+  vive solo en fixtures de test, `test_knowledge_pack.py::TestNotScoredSignal`). Deuda real:
+  (1) `tres_ofertas` para reglas procedimentales no está resuelto porque depende de un
+  cambio de catálogo en i40 Analiza, no de ConvoKit; (2) `compute_pack_readiness` opera a
+  nivel de TODO el pack, no solo de las entidades relevantes por apartado — una lectura más
+  fina es posible pero requeriría ejecutar el matching contra todas las secciones antes de
+  poder responder "readiness" al subir el pack (hoy se responde en la propia subida, antes
+  de conocer la plantilla); (3) no existe superficie de frontend para este modo (subir pack,
+  lanzar generación, ver progreso) — se opera por API, decisión de alcance deliberada y
+  documentada en `00_DELIVERY_REPORT.md`.
 
 ## Las dos apps (importante)
 

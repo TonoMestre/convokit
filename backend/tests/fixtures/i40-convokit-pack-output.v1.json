@@ -1,0 +1,125 @@
+{
+  "convocatoria_metadata": {
+    "anio": 2026,
+    "nombre": "CONTRACT-FIXTURE-2026",
+    "organismo": "Organismo Ejemplo"
+  },
+  "convocatoria_ref": "CONTRACT-FIXTURE-2026",
+  "entities": [
+    {
+      "confidence": 0.9,
+      "entity_id": "fixture.block.ii.score",
+      "entity_type": "criterion",
+      "evidence_refs": [],
+      "evidence_status": "accredited",
+      "label": "Bloque de ejemplo",
+      "review_state": "human_validated",
+      "section_ref": "Bloque II (aplica también a II.B): Bloque de ejemplo",
+      "value": {
+        "puntos_max": 55.0
+      }
+    },
+    {
+      "confidence": 0.9,
+      "entity_id": "fixture.block.ii.threshold",
+      "entity_type": "threshold",
+      "evidence_refs": [],
+      "evidence_status": "accredited",
+      "label": "Bloque de ejemplo",
+      "review_state": "human_validated",
+      "section_ref": "Bloque II (aplica también a II.B): Bloque de ejemplo",
+      "value": {
+        "puntos_min": 15.0
+      }
+    },
+    {
+      "confidence": 0.9,
+      "entity_id": "fixture.criterion.ii_b",
+      "entity_type": "criterion",
+      "evidence_refs": [],
+      "evidence_status": "accredited",
+      "label": "Criterio de ejemplo",
+      "review_state": "human_validated",
+      "section_ref": "II.B Criterio de ejemplo",
+      "value": {
+        "puntos_max": 4.0
+      }
+    },
+    {
+      "confidence": 0.9,
+      "entity_id": "fact.importe_maximo",
+      "entity_type": "limit",
+      "evidence_refs": [
+        {
+          "document_id": "convocatoria-fixture.pdf",
+          "page_end": 8,
+          "page_start": 8,
+          "quote": "no podra superar los 200.000 euros",
+          "section": null
+        }
+      ],
+      "evidence_status": "accredited",
+      "label": "Máximo por beneficiario/proyecto.",
+      "review_state": "human_validated",
+      "section_ref": "Convocatoria (parámetro): Máximo por beneficiario/proyecto.",
+      "value": "200000"
+    },
+    {
+      "confidence": 0.75,
+      "entity_id": "fact.gastos_subvencionables",
+      "entity_type": "cost_rule",
+      "evidence_refs": [],
+      "evidence_status": "accredited",
+      "label": "Categorías de coste.",
+      "review_state": "unvalidated",
+      "section_ref": "Convocatoria (parámetro): Categorías de coste.",
+      "value": "Gastos incluidos en el presupuesto aprobado"
+    },
+    {
+      "confidence": 0.7,
+      "conflicting_values": [
+        "2026-11-04",
+        "2026-12-31"
+      ],
+      "entity_id": "fact.periodo_elegible_fin",
+      "entity_type": "limit",
+      "evidence_refs": [],
+      "evidence_status": "conflict",
+      "label": "Fin de gasto elegible.",
+      "review_state": "unvalidated",
+      "section_ref": "Convocatoria (parámetro): Fin de gasto elegible.",
+      "value": "2026-11-04"
+    },
+    {
+      "conflicting_values": [
+        "Compatible con otras ayudas para costes distintos",
+        "Incompatible con cualquier otra ayuda para el mismo proyecto"
+      ],
+      "entity_id": "fact.compatibilidad",
+      "entity_type": "requirement",
+      "evidence_refs": [
+        {
+          "document_id": "convocatoria-fixture.pdf",
+          "page_end": 4,
+          "page_start": 4,
+          "quote": "podran recibir otras ayudas publicas para costes distintos",
+          "section": null
+        },
+        {
+          "document_id": "guia-fixture.pdf",
+          "page_end": 9,
+          "page_start": 9,
+          "quote": "no podra recibir ninguna otra ayuda para el mismo proyecto",
+          "section": null
+        }
+      ],
+      "evidence_status": "conflict",
+      "label": "Compatibilidad con otras ayudas.",
+      "review_state": "unvalidated",
+      "section_ref": "Convocatoria (parámetro): Compatibilidad con otras ayudas.",
+      "value": null
+    }
+  ],
+  "pack_id": "kp-contract-fixture-v1",
+  "schema_version": "i40-application-knowledge-pack/0.2"
+}

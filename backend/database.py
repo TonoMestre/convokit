@@ -332,3 +332,121 @@ def _row_to_dict(row: sqlite3.Row) -> dict:
     data["documentos_json"] = json.loads(data["documentos_json"])
     data["entregables_json"] = json.loads(data["entregables_json"])
     return data
+
+
+# ---------------------------------------------------------------------------
+# Consultas de la landing (formulario de contacto): control de duplicados
+# ---------------------------------------------------------------------------
+# Solo guarda la clave de idempotencia (identificador enviado por el cliente o
+# huella hash del contenido) y el ESTADO de cada uno de los dos emails. No
+# guarda nombre, email, teléfono ni mensaje: un reintento vuelve a traer los
+# datos en la propia solicitud. La tabla se crea al vuelo y no toca init_db().
+
+
+def _ensure_contact_table(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS contact_submissions (
+            submission_key      TEXT PRIMARY KEY,
+            state               TEXT NOT NULL,
+            internal_status     TEXT NOT NULL DEFAULT 'pending',
+            client_status       TEXT NOT NULL DEFAULT 'pending',
+            internal_resend_id  TEXT,
+            client_resend_id    TEXT,
+            attempts            INTEGER NOT NULL DEFAULT 1,
+            created_at          TEXT NOT NULL,
+            updated_at          TEXT NOT NULL
+        )
+        """
+    )
+
+
+def claim_contact_submission(
+    key: str, window_seconds: int = 24 * 3600, stale_seconds: int = 120
+) -> dict:
+    """
+    Reserva el envío de una consulta de forma atómica.
+
+    Devuelve {"action": ..., "internal_status": ..., "client_status": ...}:
+    - "send":        este proceso debe enviar los emails cuyo estado no sea 'accepted'.
+    - "duplicate":   los dos emails ya fueron aceptados por Resend; no reenviar nada.
+    - "in_progress": otra solicitud igual se está procesando ahora mismo.
+
+    Las claves por huella ("fp:") caducan a las `window_seconds`: pasado ese
+    tiempo el mismo contenido cuenta como un envío nuevo. Las claves por
+    identificador del cliente ("id:") no caducan.
+    """
+    now = datetime.now(timezone.utc)
+    ts = now.isoformat()
+    conn = _get_connection()
+    try:
+        _ensure_contact_table(conn)
+        conn.execute("BEGIN IMMEDIATE")
+        row = conn.execute(
+            "SELECT * FROM contact_submissions WHERE submission_key = ?", (key,)
+        ).fetchone()
+
+        expired = False
+        if row is not None and key.startswith("fp:"):
+            age = (now - datetime.fromisoformat(row["created_at"])).total_seconds()
+            expired = age > window_seconds
+
+        if row is None or expired:
+            conn.execute("DELETE FROM contact_submissions WHERE submission_key = ?", (key,))
+            conn.execute(
+                "INSERT INTO contact_submissions (submission_key, state, created_at, updated_at) "
+                "VALUES (?, 'processing', ?, ?)",
+                (key, ts, ts),
+            )
+            conn.commit()
+            return {"action": "send", "internal_status": "pending", "client_status": "pending"}
+
+        internal, client = row["internal_status"], row["client_status"]
+        if internal == "accepted" and client == "accepted":
+            conn.commit()
+            return {"action": "duplicate", "internal_status": internal, "client_status": client}
+
+        if row["state"] == "processing":
+            idle = (now - datetime.fromisoformat(row["updated_at"])).total_seconds()
+            if idle < stale_seconds:
+                conn.commit()
+                return {"action": "in_progress", "internal_status": internal, "client_status": client}
+
+        conn.execute(
+            "UPDATE contact_submissions SET state = 'processing', attempts = attempts + 1, "
+            "updated_at = ? WHERE submission_key = ?",
+            (ts, key),
+        )
+        conn.commit()
+        return {"action": "send", "internal_status": internal, "client_status": client}
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def finish_contact_submission(
+    key: str,
+    internal_status: str,
+    client_status: str,
+    internal_resend_id: str | None = None,
+    client_resend_id: str | None = None,
+) -> None:
+    """Registra el resultado de los dos emails ('accepted' | 'failed' | 'pending')."""
+    accepted = [internal_status == "accepted", client_status == "accepted"]
+    state = "sent" if all(accepted) else ("partial" if any(accepted) else "failed")
+    conn = _get_connection()
+    try:
+        _ensure_contact_table(conn)
+        conn.execute(
+            "UPDATE contact_submissions SET state = ?, internal_status = ?, client_status = ?, "
+            "internal_resend_id = COALESCE(?, internal_resend_id), "
+            "client_resend_id = COALESCE(?, client_resend_id), updated_at = ? "
+            "WHERE submission_key = ?",
+            (state, internal_status, client_status, internal_resend_id, client_resend_id,
+             datetime.now(timezone.utc).isoformat(), key),
+        )
+        conn.commit()
+    finally:
+        conn.close()

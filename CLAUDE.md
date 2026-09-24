@@ -64,6 +64,11 @@ operativo.
 - `result_email.py` — construcción del HTML de los correos de resultado del evaluador
   (interno a Innóvate y al cliente), enviados vía Resend desde `/submit-evaluation`
 - `pricing.py` — definición de modelos y precios por token; registro en api_calls
+- `contact_form.py` / `contact_email.py` — `POST /submit-contact` (formulario «Quiero que
+  reviséis mi caso» de la landing de INPYME): validación, antispam, límites, CORS acotado a
+  `CONTACT_ALLOWED_ORIGINS`, y los dos emails por Resend. Independiente de `/submit-evaluation`
+  (no comparte modelo ni plantillas); control de duplicados en la tabla `contact_submissions`
+  (solo claves y estados, sin datos personales). Contrato en `docs/contrato-submit-contact.md`.
 
 ## Reglas de código
 

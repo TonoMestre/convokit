@@ -17,12 +17,15 @@ import anthropic
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from pydantic import BaseModel
+from starlette.concurrency import run_in_threadpool
 
 load_dotenv()
 
 import resend
+import contact_email
+import contact_form
 import database as db
 import exporters
 import extractors
@@ -1770,7 +1773,7 @@ app = FastAPI(title="ConvoKit API", lifespan=lifespan)
 
 APP_PASSWORD = os.environ.get("APP_PASSWORD", "")
 
-_PUBLIC_PATHS = {"/health", "/login", "/submit-evaluation", "/send-result-email"}
+_PUBLIC_PATHS = {"/health", "/login", "/submit-evaluation", "/send-result-email", "/submit-contact"}
 _PUBLIC_PREFIXES = ("/assets/", "/demo/")
 
 
@@ -1822,6 +1825,47 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# CORS restringido SOLO para /submit-contact. Se registra después del
+# CORSMiddleware global (que sigue permitiendo "*" para el resto de rutas,
+# incluido /submit-evaluation) para quedar por fuera de él y sobrescribir sus
+# cabeceras únicamente en esta ruta: orígenes permitidos en CONTACT_ALLOWED_ORIGINS.
+_CONTACT_PATH = "/submit-contact"
+
+
+@app.middleware("http")
+async def restrict_contact_cors(request: Request, call_next):
+    if request.url.path != _CONTACT_PATH:
+        return await call_next(request)
+
+    origin = request.headers.get("origin", "")
+    allowed = contact_form.is_origin_allowed(origin)
+
+    if request.method == "OPTIONS":
+        if not allowed:
+            return JSONResponse(status_code=403, content={
+                "success": False, "status": "forbidden", "code": "origin_not_allowed",
+                "message": "Origen no autorizado.",
+            })
+        return Response(status_code=204, headers={
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type",
+            "Access-Control-Max-Age": "600",
+            "Vary": "Origin",
+        })
+
+    if not allowed:
+        return JSONResponse(status_code=403, content={
+            "success": False, "status": "forbidden", "code": "origin_not_allowed",
+            "message": "Origen no autorizado.",
+        })
+
+    response = await call_next(request)
+    response.headers["Access-Control-Allow-Origin"] = origin
+    response.headers["Vary"] = "Origin"
+    return response
 
 
 # ---------------------------------------------------------------------------
@@ -2841,3 +2885,202 @@ def submit_evaluation(req: SubmitEvaluationRequest):
         })
 
     return {"success": True}
+
+
+# ---------------------------------------------------------------------------
+# Submit contact (formulario «Quiero que reviséis mi caso» de /inpyme/ — vía Resend)
+# ---------------------------------------------------------------------------
+# Independiente de /submit-evaluation: no calcula ni envía resultados de
+# evaluación y no comparte su modelo de datos. Contrato completo en
+# docs/contrato-submit-contact.md.
+
+_CONTACT_IP_LIMITER = contact_form.RateLimiter(limit=5, window_seconds=600)
+_CONTACT_EMAIL_LIMITER = contact_form.RateLimiter(limit=3, window_seconds=3600)
+_CONTACT_INTERNAL_DEFAULT = "hola@innovate40.es"
+
+
+def _contact_body(success: bool, status: str, message: str, **extra) -> dict:
+    body = {"success": success, "status": status, "message": message}
+    body.update({k: v for k, v in extra.items() if v is not None})
+    return body
+
+
+def _send_contact_email(params: dict, idempotency_key: str) -> tuple[str, str | None]:
+    """
+    Envía un email por Resend. Devuelve ("accepted", id) si Resend lo ACEPTÓ,
+    ("failed", None) en cualquier otro caso. "Aceptado" no significa
+    "entregado en la bandeja": no hay webhooks de entrega en este backend.
+    La clave de idempotencia hace que un reintento del mismo email no se
+    duplique aunque falle nuestra propia base de datos.
+    """
+    try:
+        result = resend.Emails.send(params, {"idempotency_key": idempotency_key})
+    except Exception as exc:
+        print(f"[submit-contact] Resend rechazó el envío: {type(exc).__name__}")
+        return "failed", None
+    email_id = result.get("id") if isinstance(result, dict) else getattr(result, "id", None)
+    if not email_id:
+        print("[submit-contact] Resend no devolvió identificador de email")
+        return "failed", None
+    return "accepted", str(email_id)
+
+
+def _process_contact(payload: dict) -> tuple[int, dict]:
+    api_key = os.environ.get("RESEND_API_KEY", "")
+    if not api_key:
+        return 503, _contact_body(
+            False, "unavailable",
+            "No hemos podido enviar tu consulta en este momento. "
+            "Inténtalo de nuevo o escríbenos a hola@innovate40.es.",
+            code="email_not_configured",
+        )
+    resend.api_key = api_key
+
+    key = contact_form.dedupe_key(payload)
+    reference = contact_form.hash_identifier(key)
+    claim = db.claim_contact_submission(key)
+
+    if claim["action"] == "duplicate":
+        return 200, _contact_body(
+            True, "duplicate",
+            "Esta consulta ya se había recibido. No se ha reenviado ningún correo.",
+            reference=reference,
+            emails={"internal": "accepted", "client": "accepted"},
+            delivery_confirmed=False,
+        )
+    if claim["action"] == "in_progress":
+        return 409, _contact_body(
+            False, "in_progress",
+            "Tu consulta se está procesando. Espera unos segundos antes de reintentar.",
+            code="in_progress",
+            reference=reference,
+            retry_allowed=True,
+        )
+
+    internal_status = claim["internal_status"]
+    client_status = claim["client_status"]
+    internal_id = client_id = None
+
+    # Un envío nuevo (ningún email aceptado todavía) consume cupo por email:
+    # evita usar el formulario para mandar confirmaciones a terceros. Los
+    # reintentos de un envío ya iniciado no consumen cupo.
+    if internal_status == "pending" and client_status == "pending":
+        if not _CONTACT_EMAIL_LIMITER.allow(contact_form.hash_identifier(payload["email"])):
+            db.finish_contact_submission(key, internal_status, client_status)
+            return 429, _contact_body(
+                False, "rate_limited",
+                "Has enviado varias consultas seguidas. Inténtalo de nuevo más tarde "
+                "o escríbenos a hola@innovate40.es.",
+                code="rate_limited",
+            )
+
+    from_email = os.environ.get("RESEND_FROM_EMAIL", "Innóvate 4.0 <hola@innovate40.es>")
+    internal_to = os.environ.get("CONTACT_INTERNAL_EMAIL", "").strip() or _CONTACT_INTERNAL_DEFAULT
+    client_reply_to = (
+        os.environ.get("CONTACT_REPLY_TO_EMAIL", "") or os.environ.get("EVALUATOR_REPLY_TO_EMAIL", "")
+    ).strip()
+    backend_url = output6_template._get_backend_url()
+    logo_url = f"{backend_url}/assets/logo.png" if backend_url else ""
+    idem = hashlib.sha256(key.encode("utf-8")).hexdigest()[:40]
+
+    try:
+        if internal_status != "accepted":
+            internal_status, internal_id = _send_contact_email(
+                {
+                    "from": from_email,
+                    "to": [internal_to],
+                    # El cliente ya pasó la validación de email: responder al
+                    # aviso interno contesta directamente al cliente.
+                    "reply_to": [payload["email"]],
+                    "subject": contact_email.internal_subject(payload["empresa"]),
+                    "html": contact_email.build_internal_email_html(
+                        payload, reference, contact_email.format_received_at(), logo_url
+                    ),
+                },
+                f"contact-internal-{idem}",
+            )
+        if client_status != "accepted":
+            client_status, client_id = _send_contact_email(
+                {
+                    "from": from_email,
+                    "to": [payload["email"]],
+                    **({"reply_to": [client_reply_to]} if contact_form.is_valid_email(client_reply_to) else {}),
+                    "subject": "Hemos recibido tu consulta sobre INPYME 2027 — Innóvate 4.0",
+                    "html": contact_email.build_client_email_html(payload, logo_url),
+                },
+                f"contact-client-{idem}",
+            )
+    finally:
+        db.finish_contact_submission(key, internal_status, client_status, internal_id, client_id)
+
+    emails = {"internal": internal_status, "client": client_status}
+    if internal_status == "accepted" and client_status == "accepted":
+        return 200, _contact_body(
+            True, "sent",
+            "Hemos recibido tu consulta. Te hemos enviado un correo de confirmación.",
+            reference=reference, emails=emails, delivery_confirmed=False,
+        )
+    if internal_status == "accepted" or client_status == "accepted":
+        return 502, _contact_body(
+            False, "partial_failure",
+            "Hemos recibido tu consulta pero no hemos podido completar todos los envíos. "
+            "Puedes reintentar: no se duplicará lo que ya se envió.",
+            code="partial_failure", reference=reference, emails=emails,
+            retry_allowed=True, delivery_confirmed=False,
+        )
+    return 502, _contact_body(
+        False, "send_failed",
+        "No hemos podido enviar tu consulta en este momento. "
+        "Inténtalo de nuevo o escríbenos a hola@innovate40.es.",
+        code="send_failed", reference=reference, emails=emails,
+        retry_allowed=True, delivery_confirmed=False,
+    )
+
+
+@app.post("/submit-contact")
+async def submit_contact(request: Request):
+    ip = contact_form.client_ip(request.headers, request.client.host if request.client else "")
+    if not _CONTACT_IP_LIMITER.allow(ip):
+        return JSONResponse(status_code=429, content=_contact_body(
+            False, "rate_limited",
+            "Demasiadas solicitudes. Inténtalo de nuevo en unos minutos.",
+            code="rate_limited",
+        ))
+
+    raw = await request.body()
+    if len(raw) > contact_form.MAX_BODY_BYTES:
+        return JSONResponse(status_code=413, content=_contact_body(
+            False, "invalid", "La solicitud es demasiado grande.", code="payload_too_large",
+        ))
+    try:
+        data = json.loads(raw) if raw else None
+    except ValueError:
+        return JSONResponse(status_code=422, content=_contact_body(
+            False, "invalid", "El cuerpo de la solicitud no es un JSON válido.", code="invalid_json",
+        ))
+
+    # Antispam: campo trampa relleno. Se distingue de un error de validación
+    # para que WordPress pueda tratarlo aparte; no se envía ningún email.
+    if contact_form.is_honeypot_filled(data):
+        print("[submit-contact] Envío descartado por antispam (honeypot)")
+        return JSONResponse(status_code=400, content=_contact_body(
+            False, "spam", "No hemos podido procesar la solicitud.", code="spam_detected",
+        ))
+
+    payload, errors = contact_form.validate_payload(data)
+    if errors:
+        return JSONResponse(status_code=422, content=_contact_body(
+            False, "invalid", "Revisa los campos del formulario.",
+            code="validation_error", errors=errors,
+        ))
+
+    try:
+        status_code, body = await run_in_threadpool(_process_contact, payload)
+    except Exception as exc:
+        print(f"[submit-contact] Error inesperado: {type(exc).__name__}")
+        return JSONResponse(status_code=500, content=_contact_body(
+            False, "server_error",
+            "No hemos podido procesar tu consulta. Inténtalo de nuevo o escríbenos a hola@innovate40.es.",
+            code="server_error", retry_allowed=True,
+        ))
+    return JSONResponse(status_code=status_code, content=body)

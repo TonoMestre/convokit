@@ -3005,7 +3005,7 @@ def _process_contact(payload: dict) -> tuple[int, dict]:
                     "from": from_email,
                     "to": [payload["email"]],
                     **({"reply_to": [client_reply_to]} if contact_form.is_valid_email(client_reply_to) else {}),
-                    "subject": "Hemos recibido tu consulta sobre INPYME — Innóvate 4.0",
+                    "subject": "Hemos recibido tu consulta sobre INPYME 2027 — Innóvate 4.0",
                     "html": contact_email.build_client_email_html(payload, logo_url),
                 },
                 f"contact-client-{idem}",

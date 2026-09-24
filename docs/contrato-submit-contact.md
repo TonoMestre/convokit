@@ -15,7 +15,7 @@ Todos los ejemplos usan datos ficticios.
 | Autenticación | ninguna (ruta pública, como `/submit-evaluation`); protegida por origen, antispam y límites |
 | Cuerpo | JSON (`Content-Type: application/json`), máximo 16 KB |
 | CORS | solo los orígenes de `CONTACT_ALLOWED_ORIGINS` (por defecto `https://innovate40.es` y `https://www.innovate40.es`). El resto de rutas conserva su CORS global `*` |
-| Emails | dos, vía Resend: aviso interno a `hola@innovate40.es` y confirmación al cliente |
+| Emails | dos, vía Resend: aviso interno a `hola@innovate40.es` y confirmación al cliente (que la enmarca como consulta sobre la preparación de INPYME 2027, con la información de 2026 como referencia orientativa; no presenta 2027 como convocatoria publicada ni promete la ayuda) |
 
 ## Campos de la solicitud
 
@@ -24,9 +24,9 @@ Todos los ejemplos usan datos ficticios.
 | `nombre` | string | **sí** | 2–100 caracteres |
 | `empresa` | string | **sí** | 2–150 caracteres |
 | `email` | string | **sí** | email válido, máx. 254. Se usa como destinatario de la confirmación y como `reply-to` del aviso interno |
+| `telefono` | string | **sí** | dígitos, espacios y `+ ( ) - .`; 6–20 caracteres. Se exige en el servidor, no solo en el navegador |
 | `privacy` | boolean | **sí** | debe ser `true` (también se acepta `"true"`, `"on"`, `"1"`, `"si"`) |
 | `poblacion` | string | no | máx. 100 |
-| `telefono` | string | no | dígitos, espacios y `+ ( ) - .`; 6–20 caracteres |
 | `mensaje` | string | no | máx. 3000 caracteres |
 | `page_url` | string | no | URL `http(s)://…`, máx. 300 |
 | `submission_id` | string | recomendado | 8–64 caracteres `A-Za-z0-9_-` (un UUID sirve). Ver «Reintentos» |
@@ -38,9 +38,7 @@ El servidor fija siempre `source: "landing_inpyme"` y `form_name: "consulta_inpy
 (el cliente no puede cambiarlos). Los campos desconocidos se ignoran. Los saltos de línea de los
 campos de una línea se colapsan; los textos se escapan en el HTML de los emails.
 
-> Los campos obligatorios son un mínimo pensado para no rechazar envíos legítimos: **hay que
-> contrastarlos con el formulario real de WordPress**. Cambiar el conjunto obligatorio es una línea
-> (`REQUIRED_FIELDS` y las validaciones en `backend/contact_form.py`).
+Obligatorios: `nombre`, `empresa`, `email`, `telefono` y `privacy: true`. Opcionales: `poblacion` y `mensaje` (más `page_url`, `submission_id`, `source` y `form_name`). La validación es siempre del servidor; la del navegador es solo ayuda al usuario.
 
 ## Ejemplo
 
@@ -137,7 +135,9 @@ confirmación.
   `/submit-evaluation` (que responde éxito silencioso), aquí se distingue a propósito para que
   WordPress pueda tratarlo.
 - Origen: se exige cabecera `Origin` de la lista permitida (comparación exacta de esquema y host).
-  Una petición sin `Origin` (curl, servidor) se rechaza.
+  Una petición sin `Origin` (curl, servidor) se rechaza. **`Origin` no es autenticación**: cualquier
+  cliente que no sea un navegador puede fijarlo a mano. Por eso el origen se combina con la validación
+  del servidor, el campo trampa, los límites por IP y por email y la deduplicación.
 - Límites de frecuencia en memoria: 5 solicitudes / 10 min por IP; 3 envíos nuevos / hora por email
   (impide usar el formulario para mandar confirmaciones a terceros). Son por proceso: se reinician
   al desplegar y no se comparten entre réplicas.

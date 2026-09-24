@@ -16,9 +16,10 @@ from threading import Lock
 SOURCE = "landing_inpyme"
 FORM_NAME = "consulta_inpyme"
 
-# Campos que puede rellenar el formulario. Solo los cuatro primeros son
-# obligatorios; el resto se admiten si el formulario los tiene.
-REQUIRED_FIELDS = ("nombre", "empresa", "email", "privacy")
+# Campos que puede rellenar el formulario. Obligatorios (validados aquí, en el
+# servidor, además de en el navegador): nombre, empresa, email, teléfono y
+# privacidad. Opcionales: población y mensaje.
+REQUIRED_FIELDS = ("nombre", "empresa", "email", "telefono", "privacy")
 
 MAX_BODY_BYTES = 16 * 1024
 _MAX_LEN = {
@@ -111,8 +112,11 @@ def validate_payload(data) -> tuple[ContactPayload | None, dict[str, str]]:
         errors["empresa"] = "Indica el nombre de la empresa."
     if "email" not in errors and not is_valid_email(out.get("email", "")):
         errors["email"] = "Introduce un correo electrónico válido."
-    if "telefono" not in errors and out.get("telefono") and not _PHONE_RE.match(out["telefono"]):
-        errors["telefono"] = "Introduce un teléfono válido."
+    if "telefono" not in errors:
+        if not out.get("telefono"):
+            errors["telefono"] = "Indica un teléfono de contacto."
+        elif not _PHONE_RE.match(out["telefono"]):
+            errors["telefono"] = "Introduce un teléfono válido."
     if "page_url" not in errors and out.get("page_url") and not re.match(r"^https?://", out["page_url"]):
         errors["page_url"] = "URL no válida."
 

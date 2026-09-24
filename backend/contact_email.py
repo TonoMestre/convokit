@@ -162,10 +162,13 @@ def build_client_email_html(payload: dict, logo_url: str = "") -> str:
     body = f"""
               <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:{RED};margin:0 0 10px 0;">{_esc(payload.get("empresa", ""))}</p>
               <h1 style="font-family:Georgia,serif;font-weight:700;font-size:26px;color:{NAVY};margin:0 0 24px 0;line-height:1.2;">
-                Hemos recibido tu consulta sobre INPYME
+                Hemos recibido tu consulta sobre INPYME 2027
               </h1>
-              <p style="font-size:15px;line-height:1.65;color:{NAVY};margin:0 0 24px 0;">
+              <p style="font-size:15px;line-height:1.65;color:{NAVY};margin:0 0 16px 0;">
                 {_esc(nombre)}, gracias por escribirnos. Este correo confirma que Innóvate 4.0 ha recibido tu consulta.
+              </p>
+              <p style="font-size:14px;line-height:1.65;color:{NAVY};margin:0 0 24px 0;">
+                Tu consulta se refiere a la preparación de INPYME 2027, para la que tomamos como referencia la información de la convocatoria de 2026. Esa información es orientativa y no presupone las condiciones de una futura convocatoria.
               </p>
               {echo}
               <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 28px 0;">
@@ -181,4 +184,4 @@ def build_client_email_html(payload: dict, logo_url: str = "") -> str:
                 Si quieres añadir algo, responde a este correo o escríbenos a
                 <a href="mailto:hola@innovate40.es" style="color:{NAVY};">hola@innovate40.es</a>.
               </p>"""
-    return _wrap("Hemos recibido tu consulta sobre INPYME", "Consulta recibida", body, logo_url)
+    return _wrap("Hemos recibido tu consulta sobre INPYME 2027", "Consulta recibida", body, logo_url)

@@ -134,16 +134,38 @@ class TestSuccessAndEmails(ContactTestCase):
         for forbidden in ("puntuación", "resultado", "plazo", "concesión", "en 24", "en 48"):
             self.assertNotIn(forbidden, html)
 
+    def test_client_email_frames_the_query_as_inpyme_2027_preparation_using_2026_as_reference(self):
+        self.post()
+        client = self.outbox.to("ana@cliente-ficticio.test")[0]
+        self.assertIn("INPYME 2027", client["subject"])
+        html = client["html"]
+        self.assertIn("preparación de INPYME 2027", html)
+        self.assertIn("información de la convocatoria de 2026", html)
+        self.assertIn("orientativa", html)
+        # INPYME 2027 no se presenta como convocatoria publicada ni se promete la ayuda.
+        for forbidden in ("publicad", "abierta", "concedida", "te concederemos", "garantizamos"):
+            self.assertNotIn(forbidden, html.lower())
+
+    def test_internal_subject_keeps_the_agreed_format(self):
+        self.post(valid_payload(empresa="Otra Empresa Ficticia SA"))
+        self.assertEqual(self.outbox.to("hola@innovate40.es")[0]["subject"],
+                         "Nueva consulta INPYME 2027 · Otra Empresa Ficticia SA")
+
     def test_internal_recipient_is_configurable(self):
         os.environ["CONTACT_INTERNAL_EMAIL"] = "equipo@innovate40.test"
         self.post()
         self.assertEqual(len(self.outbox.to("equipo@innovate40.test")), 1)
         self.assertEqual(len(self.outbox.to("hola@innovate40.es")), 0)
 
-    def test_optional_fields_can_be_omitted(self):
+    def test_only_poblacion_and_mensaje_are_optional(self):
         r = self.post({"nombre": "Ana Ejemplo", "empresa": "Empresa Ficticia SL",
-                       "email": "ana@cliente-ficticio.test", "privacy": True})
+                       "email": "ana@cliente-ficticio.test", "telefono": "600 000 000",
+                       "privacy": True})
         self.assertEqual(r.status_code, 200)
+        internal = self.outbox.to("hola@innovate40.es")[0]["html"]
+        self.assertIn("El cliente no ha escrito ningún mensaje", internal)
+        client = self.outbox.to("ana@cliente-ficticio.test")[0]["html"]
+        self.assertNotIn("Lo que nos has enviado", client)
 
     def test_accepts_matching_source_and_form_name(self):
         r = self.post(valid_payload(source="landing_inpyme", form_name="consulta_inpyme"))
@@ -186,9 +208,28 @@ class TestValidation(ContactTestCase):
         self.assert_invalid(self.post({k: v for k, v in valid_payload().items() if k != "privacy"}), "privacy")
 
     def test_required_fields(self):
-        for field in ("nombre", "empresa", "email"):
+        for field in ("nombre", "empresa", "email", "telefono"):
             with self.subTest(field=field):
                 self.assert_invalid(self.post(valid_payload(**{field: "  "})), field)
+
+    def test_telefono_is_required_on_the_server_even_if_the_browser_skips_validation(self):
+        without_key = {k: v for k, v in valid_payload().items() if k != "telefono"}
+        r = self.post(without_key)
+        self.assert_invalid(r, "telefono")
+        self.assertEqual(r.json()["errors"]["telefono"], "Indica un teléfono de contacto.")
+        self.assert_invalid(self.post(valid_payload(telefono="")), "telefono")
+        self.assert_invalid(self.post(valid_payload(telefono=None)), "telefono")
+
+    def test_every_missing_required_field_is_reported_together(self):
+        r = self.post({"website": ""})
+        self.assertEqual(r.status_code, 422)
+        self.assertEqual(set(r.json()["errors"]), set(contact_form.REQUIRED_FIELDS))
+
+    def test_optional_fields_never_cause_errors_when_empty(self):
+        for field in ("poblacion", "mensaje"):
+            with self.subTest(field=field):
+                self.assertEqual(self.post(valid_payload(**{field: ""})).status_code, 200)
+                main._CONTACT_EMAIL_LIMITER.clear()
 
     def test_invalid_email(self):
         for bad in ("no-es-un-email", "a@b", "a b@c.test", "a@@c.test"):
